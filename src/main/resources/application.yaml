@@ -1,0 +1,8 @@
+# spring.datasource.url: jdbc:h2:file:./camunda-h2-database
+spring.datasource.url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/bpm_sbh?serverTimezone=UTC
+spring.datasource.username: root
+spring.datasource.password:
+
+camunda.bpm.admin-user:
+  id: admin
+  password: admin
