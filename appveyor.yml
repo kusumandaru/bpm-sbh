@@ -1,0 +1,27 @@
+environment:
+  matrix:
+    - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+
+install:
+  - java -version
+  - mvn --version
+
+build_script:
+  - mvn clean install -DskipTests
+
+services:
+  - mysql
+
+# scripts that run before running test
+before_test:
+  # by default, all script lines are interpreted as batch
+  - echo This is test script
+  # to run script as a PowerShell command prepend it with ps:
+  - ps: Write-Host 'This is PowerShell'
+  - ps: $env:MYSQL_PWD="Password12!"
+  - ps: $cmd = '"C:\Program Files\MySQL\MySQL Server 5.7\bin\mysql" -e "create database bpm_sbh;" --user=root'
+  - ps: iex "& $cmd"
+
+cache:
+  - C:\maven\
+  - C:\Users\appveyor\.m2
