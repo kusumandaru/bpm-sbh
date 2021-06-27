@@ -26,3 +26,7 @@ target/*
 
 ### Local Configuration ###
 .env
+flyway.properties
+.settings
+.classpath
+bin/*
