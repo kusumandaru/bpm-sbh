@@ -1,0 +1,5 @@
+flyway.user=root
+flyway.password=Password12!
+flyway.schemas=bpm_sbh
+flyway.url=jdbc:mysql://localhost?serverTimezone=UTC
+flyway.locations=filesystem:db/migration
