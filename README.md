@@ -26,3 +26,4 @@ user demo:
 username: admin 
 password: admin
 
+CustomService and API can be add by adding class on JerseyConfig.java

@@ -30,3 +30,5 @@ flyway.properties
 .settings
 .classpath
 bin/*
+.vscode/settings.json
+src/main/.DS_Store
