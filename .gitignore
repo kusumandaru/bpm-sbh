@@ -22,7 +22,7 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-target/*
+/target
 
 ### Local Configuration ###
 .env
@@ -34,3 +34,8 @@ src/main/.DS_Store
 src/main/resources/bpm-sbh.json
 .vscode
 .apt_generated_tests
+/.vscode
+application-*.yaml
+.factorypath
+.idea
+new-building.iml
