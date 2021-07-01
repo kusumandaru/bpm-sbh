@@ -11,5 +11,6 @@ public class JerseyConfig extends CamundaJerseyResourceConfig {
   @Override
   protected void registerAdditionalResources() {    
     register(CustomController.class);
+    register(NewBuildingController.class);
   }
 }
