@@ -1,11 +1,13 @@
 package com.sbh.bpm;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -13,6 +15,7 @@ import javax.ws.rs.core.Response;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,5 +61,19 @@ public class NewBuildingController {
     }
     String json = new Gson().toJson(obj);
     return Response.ok(json).build();
+  }
+
+
+  @GET
+  @Path(value = "/diagram/{processDefinitionId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getDiagram(@PathParam("processDefinitionId") String processDefinitionId, @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+
+    ProcessDefinition definition = processEngine.getRepositoryService().getProcessDefinition(processDefinitionId);
+    InputStream processDiagram = processEngine.getRepositoryService().getProcessDiagram(processDefinitionId); 
+    String fileName = definition.getDiagramResourceName();
+
+    return Response.ok(fileName).build();
   }
 }
