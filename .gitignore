@@ -32,3 +32,4 @@ flyway.properties
 bin/*
 .vscode/settings.json
 src/main/.DS_Store
+src/main/resources/bpm-sbh.json

@@ -5,6 +5,11 @@ spring.datasource.password: ${env.DB_PASSWORD}
 server.port: ${env.SERVER_PORT}
 cors.urls: ${env.FRONTEND_URL}
 
+gcs:
+  bucket: bpm_sbh
+  project: bpm_sbh
+  json: bpm_sbh.json
+
 camunda.bpm.admin-user:
   id: ${env.ADMIN_ID}
   password: ${env.ADMIN_PASSWORD}
