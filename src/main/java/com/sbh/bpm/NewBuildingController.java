@@ -55,7 +55,6 @@ public class NewBuildingController {
     ) {      
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
-    // // RepositoryService repositoryService = processEngine.getRepositoryService();
 
     Map<String, Object> variables = new HashMap<String,Object>();
     variables.put("certification_type", certificationType);
@@ -72,10 +71,6 @@ public class NewBuildingController {
 
     ProcessInstance instance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
     String activityInstanceId = runtimeService.getActivityInstance(instance.getId()).getId();
-    // String activityId = runtimeService.getActivityInstance(instance.getId()).getActivityId();
-
-    // then
-    // List<VariableInstance> variableInstances = processEngine.getRuntimeService().createVariableInstanceQuery().activityInstanceIdIn(activityInstanceId).list();
 
     GoogleCloudStorage googleCloudStorage;
     try {
