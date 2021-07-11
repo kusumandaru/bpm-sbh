@@ -26,4 +26,7 @@ user demo:
 username: admin 
 password: admin
 
+thunder client:
+src/main/resources/thunder-collection_create_project.json
+
 CustomService and API can be add by adding class on JerseyConfig.java
