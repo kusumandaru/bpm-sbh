@@ -8,7 +8,7 @@ cp .env.example .env [edit configuration file here]
 mvn clean
 
 migrate database:
-mvn clean flyway:migrate -Dflyway.configFiles=flyway.properties
+mvn clean flyway:migrate -DskipTests -Dflyway.configFiles=flyway.properties
 
 run:
 mvn spring-boot:run  
