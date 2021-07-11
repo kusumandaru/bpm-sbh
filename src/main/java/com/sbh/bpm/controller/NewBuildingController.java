@@ -1,4 +1,4 @@
-package com.sbh.bpm;
+package com.sbh.bpm.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
+import com.sbh.bpm.service.GoogleCloudStorage;
 
 import org.apache.commons.io.FilenameUtils;
 import org.camunda.bpm.BpmPlatform;

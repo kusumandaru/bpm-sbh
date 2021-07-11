@@ -1,4 +1,4 @@
-package com.sbh.bpm;
+package com.sbh.bpm.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
+import com.sbh.bpm.service.GoogleCloudStorage;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;

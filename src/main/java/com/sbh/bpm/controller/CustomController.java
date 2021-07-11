@@ -1,4 +1,4 @@
-package com.sbh.bpm;
+package com.sbh.bpm.controller;
 
 import java.util.Collection;
 import java.util.LinkedList;

@@ -1,4 +1,4 @@
-package com.sbh.bpm;
+package com.sbh.bpm.service;
 
 import java.io.InputStream;
 
