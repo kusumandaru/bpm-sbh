@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface ProvinceRepository extends CrudRepository<Province, String> {
+public interface ProvinceRepository extends CrudRepository<Province, Integer> {
 }
 

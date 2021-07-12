@@ -171,13 +171,13 @@ public class NewBuildingController {
 
     String provinceId = String.valueOf(variableMap.get("province"));
     if (provinceId != "null") {
-      Province province = provinceService.findyById(provinceId);
+      Province province = provinceService.findById(Integer.parseInt(provinceId));
       variableMap.put("province_name", province.getName());
     }
 
     String cityId = String.valueOf(variableMap.get("city"));
     if (cityId != "null") {
-      City city = cityService.findyById(cityId);
+      City city = cityService.findById(Integer.parseInt(cityId));
       variableMap.put("city_name", city.getName());
     }
 

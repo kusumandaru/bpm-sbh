@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface CityRepository extends CrudRepository<City, String> {
-  List<City> findByProvinceId(String provinceId);
+public interface CityRepository extends CrudRepository<City, Integer> {
+  List<City> findByProvinceId(Integer provinceId);
 }
 
