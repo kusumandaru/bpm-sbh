@@ -2,8 +2,12 @@ package com.sbh.bpm.controller;
 
 import java.util.List;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -41,8 +45,42 @@ public class MasterController {
   @GET
   @Path(value = "/provinces/{province_id}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getProvince(@HeaderParam("Authorization") String authorization, @PathParam("province_id") String provinceId) {      
-    Province province = (Province) provinceService.findyById(provinceId);
+  public Response getProvince(@HeaderParam("Authorization") String authorization, @PathParam("province_id") Integer provinceId) {      
+    Province province = (Province) provinceService.findById(provinceId);
+
+    String json = new Gson().toJson(province);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/provinces")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response saveProvinces(@HeaderParam("Authorization") String authorization,
+                               @FormParam("name") String name) {   
+    Province province = new Province();
+    province.setName(name);
+    province = provinceService.save(province);
+
+    String json = new Gson().toJson(province);
+    return Response.ok(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/provinces/{province_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response updateProvinces(@HeaderParam("Authorization") String authorization,
+                               @PathParam("province_id") Integer provinceId, 
+                               @FormParam("name") String name) {   
+    
+    Province province = (Province) provinceService.findById(provinceId);
+    if (province == null) {
+      return Response.status(400, "province not found").build();
+    }
+
+    province.setName(name);
+    province = provinceService.save(province);
 
     String json = new Gson().toJson(province);
     return Response.ok(json).build();
@@ -61,8 +99,8 @@ public class MasterController {
   @GET
   @Path(value = "/cities/{city_id}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getCity(@HeaderParam("Authorization") String authorization, @PathParam("city_id") String cityId) {      
-    City city = (City) cityService.findyById(cityId);
+  public Response getCity(@HeaderParam("Authorization") String authorization, @PathParam("city_id") Integer cityId) {      
+    City city = (City) cityService.findById(cityId);
 
     String json = new Gson().toJson(city);
     return Response.ok(json).build();
@@ -71,10 +109,49 @@ public class MasterController {
   @GET
   @Path(value = "/provinces/{province_id}/cities")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response allCitiesByProvince(@HeaderParam("Authorization") String authorization, @PathParam("province_id") String provinceId) { 
+  public Response allCitiesByProvince(@HeaderParam("Authorization") String authorization, @PathParam("province_id") Integer provinceId) { 
     List<City> cities = (List<City>) cityService.findByProvinceId(provinceId);
 
     String json = new Gson().toJson(cities);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/cities")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response saveCities(@HeaderParam("Authorization") String authorization,
+                               @FormParam("name") String name,
+                               @FormParam("province_id") Integer provinceId) {   
+    City city = new City();
+    city.setName(name);
+    city.setProvinceId(provinceId);
+
+    city = cityService.save(city);
+
+    String json = new Gson().toJson(city);
+    return Response.ok(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/cities/{city_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response updateCities(@HeaderParam("Authorization") String authorization,
+                                  @FormParam("name") String name,
+                                  @FormParam("province_id") Integer provinceId,
+                                  @PathParam("city_id") Integer cityId) {   
+
+    City city = (City) cityService.findById(cityId);
+    if (city == null) {
+      return Response.status(400, "city not found").build();
+    }
+    
+    city.setName(name);
+    city.setProvinceId(provinceId);
+    city = cityService.save(city);
+
+    String json = new Gson().toJson(city);
     return Response.ok(json).build();
   }
 }

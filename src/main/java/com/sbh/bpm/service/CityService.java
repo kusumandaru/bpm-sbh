@@ -19,12 +19,17 @@ public class CityService implements ICityService {
   }
 
   @Override
-  public List<City> findByProvinceId(String provinceId) {
+  public List<City> findByProvinceId(Integer provinceId) {
     return (List<City>) repository.findByProvinceId(provinceId);
   }
 
   @Override
-  public City findyById(String cityId) {
+  public City findById(Integer cityId) {
     return repository.findById(cityId).get();
+  }
+
+  @Override
+  public City save(City city) {
+    return repository.save(city);
   }
 }

@@ -19,7 +19,12 @@ public class ProvinceService implements IProvinceService {
   }
 
   @Override
-  public Province findyById(String provinceId) {
+  public Province findById(Integer provinceId) {
     return repository.findById(provinceId).get();
+  }
+
+  @Override
+  public Province save(Province province) {
+    return repository.save(province);
   }
 }

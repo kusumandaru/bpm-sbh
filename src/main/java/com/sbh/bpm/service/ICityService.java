@@ -7,6 +7,7 @@ import com.sbh.bpm.model.City;
 public interface ICityService {
 
   List<City> findAll();
-  List<City> findByProvinceId(String provinceId);
-  City findyById(String cityId);
+  List<City> findByProvinceId(Integer provinceId);
+  City findById(Integer cityId);
+  City save(City city);
 }

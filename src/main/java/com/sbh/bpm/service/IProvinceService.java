@@ -7,5 +7,6 @@ import com.sbh.bpm.model.Province;
 public interface IProvinceService {
 
   List<Province> findAll();
-  Province findyById(String provinceId);
+  Province findById(Integer provinceId);
+  Province save(Province province);
 }
