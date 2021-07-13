@@ -91,7 +91,7 @@ public class NewBuildingController {
     ProcessInstance instance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
     String activityInstanceId = runtimeService.getActivityInstance(instance.getId()).getId();
     
-    if (fileFdcd.getSize() > 0) {
+    if (fileFdcd.getFileName() != null) {
       String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
       String fileName = "invoice__" + activityInstanceId + "." + ext;
 
