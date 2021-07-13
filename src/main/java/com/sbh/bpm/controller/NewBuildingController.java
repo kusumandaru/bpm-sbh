@@ -68,7 +68,8 @@ public class NewBuildingController {
     @FormDataParam("province") String province,
     @FormDataParam("telephone") String telephone,
     @FormDataParam("faximile") String faximile,
-    @FormDataParam("postal_code") String postalCode
+    @FormDataParam("postal_code") String postalCode,
+    @FormDataParam("gross_floor_area") Integer grossFloorArea
     ) {      
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -85,11 +86,15 @@ public class NewBuildingController {
     variables.put("telephone", telephone);
     variables.put("faximile", faximile);
     variables.put("postal_code", postalCode);
+    variables.put("gross_floor_area", grossFloorArea);
 
     ProcessInstance instance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
     String activityInstanceId = runtimeService.getActivityInstance(instance.getId()).getId();
+    
+    if (fileFdcd.getSize() > 0) {
+      String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
+      String fileName = "invoice__" + activityInstanceId + "." + ext;
 
-    if (file != null) {
       GoogleCloudStorage googleCloudStorage;
       try {
         googleCloudStorage = new GoogleCloudStorage();
@@ -97,11 +102,6 @@ public class NewBuildingController {
         e.printStackTrace();
         return Response.status(400, e.getMessage()).build();
       }
-  
-      String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
-  
-      String fileName = "invoice__" + activityInstanceId + "." + ext;
-  
       googleCloudStorage.SaveObject(fileName, file);
       runtimeService.setVariable(instance.getId(), "proof_of_payment", fileName);
     }
@@ -151,32 +151,33 @@ public class NewBuildingController {
     
     Map<String, Object> variableMap = taskService.getVariables(taskId);
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      e.printStackTrace();
-      return Response.status(400, e.getMessage()).build();
-    }
-
     // Get it by blob name
-    String filename = String.valueOf(variableMap.get("proof_of_payment"));
-    Blob blob = googleCloudStorage.GetBlobByName(filename);
-
-    if (blob != null) {
-      googleCloudStorage.SetGcsSignUrl(blob);
-      String publicUrl = googleCloudStorage.GetSignedUrl();
-      variableMap.put("proof_of_payment_url", publicUrl);
+    if (variableMap.get("proof_of_payment") != null) {
+      GoogleCloudStorage googleCloudStorage;
+      try {
+        googleCloudStorage = new GoogleCloudStorage();
+      } catch (IOException e) {
+        e.printStackTrace();
+        return Response.status(400, e.getMessage()).build();
+      }
+      String filename = String.valueOf(variableMap.get("proof_of_payment"));
+      Blob blob = googleCloudStorage.GetBlobByName(filename);
+  
+      if (blob != null) {
+        googleCloudStorage.SetGcsSignUrl(blob);
+        String publicUrl = googleCloudStorage.GetSignedUrl();
+        variableMap.put("proof_of_payment_url", publicUrl);
+      }
     }
 
-    String provinceId = String.valueOf(variableMap.get("province"));
-    if (provinceId != "null") {
+    if (variableMap.get("province") != null) {
+      String provinceId = String.valueOf(variableMap.get("province"));
       Province province = provinceService.findById(Integer.parseInt(provinceId));
       variableMap.put("province_name", province.getName());
     }
 
-    String cityId = String.valueOf(variableMap.get("city"));
-    if (cityId != "null") {
+    if (variableMap.get("city") != null) {
+      String cityId = String.valueOf(variableMap.get("city"));
       City city = cityService.findById(Integer.parseInt(cityId));
       variableMap.put("city_name", city.getName());
     }
