@@ -1,10 +1,14 @@
 package com.sbh.bpm.model;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -19,7 +23,7 @@ public class City {
   @Setter
   private Integer id;
 
-  @Column(name="province_id", length=2)
+  @Column(name="province_id", length=2, nullable=false)
   @Getter
   @Setter
   private Integer provinceId;
@@ -27,6 +31,22 @@ public class City {
   @Getter
   @Setter
   private String name;
+
+  @Column(name="created_at")
+  @Getter
+  @Setter
+  private Date createdAt;
+
+  @Column(name="updated_at")
+  @Getter
+  @Setter
+  private Date updatedAt;
+
+  @ManyToOne(targetEntity = Province.class)
+  @JoinColumn(name="province_id",referencedColumnName="id",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private Province province;
 
   public City() {
   }
