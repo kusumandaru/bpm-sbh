@@ -1,5 +1,8 @@
 package com.sbh.bpm.model;
 
+import java.util.Date;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,6 +24,16 @@ public class Province {
   @Getter
   @Setter
   private String name;
+
+  @Column(name="created_at")
+  @Getter
+  @Setter
+  private Date createdAt;
+
+  @Column(name="updated_at")
+  @Getter
+  @Setter
+  private Date updatedAt;
 
   public Province() {
   }
