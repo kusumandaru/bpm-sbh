@@ -32,6 +32,7 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
+import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -48,8 +49,6 @@ public class NewBuildingController {
   @Autowired
   private ICityService cityService;
 
-  private SbhTask sbhTask;
-  
   @POST
   @Path(value = "/create-project")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -74,6 +73,9 @@ public class NewBuildingController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
 
+    String username = "indofood1";
+    String tenant = "indofood";
+
     Map<String, Object> variables = new HashMap<String,Object>();
     variables.put("certification_type", certificationType);
     variables.put("building_type", buildingType);
@@ -87,10 +89,13 @@ public class NewBuildingController {
     variables.put("faximile", faximile);
     variables.put("postal_code", postalCode);
     variables.put("gross_floor_area", grossFloorArea);
+    variables.put("assignee", username);
+    variables.put("tenant", tenant);
 
-    ProcessInstance instance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
-    String activityInstanceId = runtimeService.getActivityInstance(instance.getId()).getId();
-    
+    ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
+    ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
+    String activityInstanceId = activityInstance.getId();
+
     if (fileFdcd.getFileName() != null) {
       String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
       String fileName = "invoice__" + activityInstanceId + "." + ext;
@@ -103,17 +108,25 @@ public class NewBuildingController {
         return Response.status(400, e.getMessage()).build();
       }
       googleCloudStorage.SaveObject(fileName, file);
-      runtimeService.setVariable(instance.getId(), "proof_of_payment", fileName);
+      runtimeService.setVariable(processInstance.getId(), "proof_of_payment", fileName);
     }
     
+    TaskService taskService = processEngine.getTaskService();
+    Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
+    task.setTenantId(tenant);
+    taskService.claim(task.getId(), username);
+    taskService.setAssignee(task.getId(), username);
+    taskService.complete(task.getId());
+
+    task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
+    taskService.claim(task.getId(), "admin");
+
     JSONObject obj = new JSONObject();
     try {
-      obj.put("process_definition_id", instance.getProcessDefinitionId());
-      obj.put("case_instance_id", instance.getCaseInstanceId());
-      obj.put("business_key", instance.getBusinessKey());
+      obj.put("process_definition_id", processInstance.getProcessDefinitionId());
+      obj.put("case_instance_id", processInstance.getCaseInstanceId());
+      obj.put("business_key", processInstance.getBusinessKey());
       obj.put("activity_instance_id", activityInstanceId);
-      // obj.put("blob_name", blobId.getName());
-      // obj.put("activityId", activityId);
     } catch (JSONException e) {
       e.printStackTrace();
     }
@@ -123,13 +136,13 @@ public class NewBuildingController {
   }
 
   @GET
-  @Path(value = "/tasks")
+  @Path(value = "/tasks/admin")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response Variable(@HeaderParam("Authorization") String authorization) { 
+  public Response AdminTasks(@HeaderParam("Authorization") String authorization) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
-    List<Task> tasks = taskService.createTaskQuery().active().list();
+    List<Task> tasks = taskService.createTaskQuery().taskDefinitionKeyIn("check-registration-project", "check-document-building").active().orderByTaskCreateTime().desc().list();
 
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -141,6 +154,24 @@ public class NewBuildingController {
     return Response.ok(json).build();
   }
 
+  @GET
+  @Path(value = "/tasks/client")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ClientTasks(@HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    List<Task> tasks = taskService.createTaskQuery().taskDefinitionKeyIn("fill-registration-project", "fill-document-building").active().orderByTaskCreateTime().desc().list();
+
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      sbhTasks.add(sbhTask);
+    }
+    String json = new Gson().toJson(sbhTasks);
+    return Response.ok(json).build();
+  }
 
   @GET
   @Path(value = "/variables/{taskId}")
@@ -186,13 +217,52 @@ public class NewBuildingController {
   }
 
   @GET
+  @Path(value = "/accept-register-project/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response AcceptRegisterProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    // Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    taskService.setVariable(taskId, "building_approved", true);
+    taskService.claim(taskId, "admin");
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @GET
+  @Path(value = "/reject-register-project/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response RejectRegisterProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    String processInstanceId = task.getProcessInstanceId();
+
+    taskService.setVariable(taskId, "building_approved", false);
+    taskService.claim(taskId, "admin");
+    taskService.complete(taskId);
+
+    task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
+    String assignee = taskService.getVariable(task.getId(), "assignee").toString();
+    String tenant = taskService.getVariable(task.getId(), "tenant").toString();
+    task.setAssignee(assignee);
+    task.setTenantId(tenant);
+    taskService.claim(task.getId(), assignee);
+
+    return Response.ok().build();
+  }
+
+
+  @GET
   @Path(value = "/diagram/{processDefinitionId}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetDiagram(@PathParam("processDefinitionId") String processDefinitionId, @HeaderParam("Authorization") String authorization) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-
+    
     ProcessDefinition definition = processEngine.getRepositoryService().getProcessDefinition(processDefinitionId);
-    InputStream processDiagram = processEngine.getRepositoryService().getProcessDiagram(processDefinitionId); 
     String fileName = definition.getDiagramResourceName();
 
     return Response.ok(fileName).build();

@@ -1,49 +1,207 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_0fr9mxs" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_0fr9mxs" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
   <bpmn:process id="new-building-process" isExecutable="true" camunda:candidateStarterGroups="camunda-admin">
-    <bpmn:startEvent id="StartEvent_1">
-      <bpmn:outgoing>SequenceFlow_1fp17al</bpmn:outgoing>
+    <bpmn:subProcess id="project_registration" name="Register Project">
+      <bpmn:incoming>flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0szvikc</bpmn:outgoing>
+      <bpmn:startEvent id="Event_03yglwp">
+        <bpmn:outgoing>flow_2</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:userTask id="check-registration-project" name="Check Registration Project" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_0o3wm7i</bpmn:incoming>
+        <bpmn:outgoing>flow_3</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:sequenceFlow id="flow_2" sourceRef="Event_03yglwp" targetRef="fill-registration-project" />
+      <bpmn:exclusiveGateway id="approved_check_building" name="Approved Check Building">
+        <bpmn:incoming>flow_3</bpmn:incoming>
+        <bpmn:outgoing>register_rejected</bpmn:outgoing>
+        <bpmn:outgoing>register_approved</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="flow_3" sourceRef="check-registration-project" targetRef="approved_check_building" />
+      <bpmn:sequenceFlow id="register_rejected" name="Rejected" sourceRef="approved_check_building" targetRef="fill-registration-project">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${building_approved==false}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:endEvent id="Event_0jwd3q7">
+        <bpmn:incoming>register_approved</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="register_approved" name="Approved" sourceRef="approved_check_building" targetRef="Event_0jwd3q7">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${building_approved==true}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_0o3wm7i" sourceRef="fill-registration-project" targetRef="check-registration-project" />
+      <bpmn:userTask id="fill-registration-project" name="Fill Registration Project">
+        <bpmn:incoming>flow_2</bpmn:incoming>
+        <bpmn:incoming>register_rejected</bpmn:incoming>
+        <bpmn:outgoing>Flow_0o3wm7i</bpmn:outgoing>
+      </bpmn:userTask>
+    </bpmn:subProcess>
+    <bpmn:startEvent id="start" name="Start">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="assignee" type="string" defaultValue="admin" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>flow_1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="SequenceFlow_1fp17al" sourceRef="StartEvent_1" targetRef="check-builiding-information" />
-    <bpmn:endEvent id="EndEvent_0x6ir2l">
-      <bpmn:incoming>Flow_1vzcokn</bpmn:incoming>
+    <bpmn:sequenceFlow id="flow_1" sourceRef="start" targetRef="project_registration" />
+    <bpmn:subProcess id="Activity_0ggt2p2">
+      <bpmn:incoming>Flow_0szvikc</bpmn:incoming>
+      <bpmn:outgoing>Flow_0tpao7z</bpmn:outgoing>
+      <bpmn:startEvent id="Event_13c9ep8">
+        <bpmn:outgoing>Flow_0n55pmb</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:userTask id="fill-document-building" name="Fill Document Building" camunda:assignee="${assignee}" camunda:candidateUsers="${assignee}">
+        <bpmn:incoming>Flow_0n55pmb</bpmn:incoming>
+        <bpmn:incoming>document_rejected</bpmn:incoming>
+        <bpmn:outgoing>Flow_1ie8teb</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:userTask id="check-document-building" name="Check Document Building" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_1ie8teb</bpmn:incoming>
+        <bpmn:outgoing>Flow_0ewm67m</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:sequenceFlow id="Flow_1ie8teb" sourceRef="fill-document-building" targetRef="check-document-building" />
+      <bpmn:sequenceFlow id="Flow_0n55pmb" sourceRef="Event_13c9ep8" targetRef="fill-document-building" />
+      <bpmn:exclusiveGateway id="Gateway_1v76zgl">
+        <bpmn:incoming>Flow_0ewm67m</bpmn:incoming>
+        <bpmn:outgoing>document_rejected</bpmn:outgoing>
+        <bpmn:outgoing>document_approved</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="Flow_0ewm67m" sourceRef="check-document-building" targetRef="Gateway_1v76zgl" />
+      <bpmn:sequenceFlow id="document_rejected" name="Rejected" sourceRef="Gateway_1v76zgl" targetRef="fill-document-building">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${document_approved==false}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:endEvent id="Event_1si3czv">
+        <bpmn:incoming>document_approved</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="document_approved" name="Approved" sourceRef="Gateway_1v76zgl" targetRef="Event_1si3czv">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${document_approved==true}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_0szvikc" sourceRef="project_registration" targetRef="Activity_0ggt2p2" />
+    <bpmn:endEvent id="Event_19916hx">
+      <bpmn:incoming>Flow_0tpao7z</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="SequenceFlow_16gzt2m" sourceRef="check-builiding-information" targetRef="Activity_109nv5i" />
-    <bpmn:userTask id="check-builiding-information" name="Check building information" camunda:candidateGroups="camunda-admin">
-      <bpmn:incoming>SequenceFlow_1fp17al</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_16gzt2m</bpmn:outgoing>
-    </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_1vzcokn" sourceRef="Activity_109nv5i" targetRef="EndEvent_0x6ir2l" />
-    <bpmn:userTask id="Activity_109nv5i" name="Verification" camunda:candidateGroups="camunda-admin">
-      <bpmn:incoming>SequenceFlow_16gzt2m</bpmn:incoming>
-      <bpmn:outgoing>Flow_1vzcokn</bpmn:outgoing>
-    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0tpao7z" sourceRef="Activity_0ggt2p2" targetRef="Event_19916hx" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="new-building-process">
-      <bpmndi:BPMNEdge id="SequenceFlow_16gzt2m_di" bpmnElement="SequenceFlow_16gzt2m">
-        <di:waypoint x="370" y="117" />
-        <di:waypoint x="440" y="117" />
+      <bpmndi:BPMNEdge id="Flow_110k9py_di" bpmnElement="flow_1">
+        <di:waypoint x="228" y="180" />
+        <di:waypoint x="280" y="180" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_1fp17al_di" bpmnElement="SequenceFlow_1fp17al">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
+      <bpmndi:BPMNEdge id="Flow_0szvikc_di" bpmnElement="Flow_0szvikc">
+        <di:waypoint x="520" y="280" />
+        <di:waypoint x="520" y="360" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1vzcokn_di" bpmnElement="Flow_1vzcokn">
-        <di:waypoint x="540" y="117" />
-        <di:waypoint x="662" y="117" />
+      <bpmndi:BPMNEdge id="Flow_0tpao7z_di" bpmnElement="Flow_0tpao7z">
+        <di:waypoint x="900" y="460" />
+        <di:waypoint x="962" y="460" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="99" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_16cl7vx_di" bpmnElement="start">
+        <dc:Bounds x="192" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="198" y="205" width="24" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="UserTask_08mft2c_di" bpmnElement="check-builiding-information">
-        <dc:Bounds x="270" y="77" width="100" height="80" />
+      <bpmndi:BPMNShape id="Event_19916hx_di" bpmnElement="Event_19916hx">
+        <dc:Bounds x="962" y="442" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_0x6ir2l_di" bpmnElement="EndEvent_0x6ir2l">
-        <dc:Bounds x="662" y="99" width="36" height="36" />
+      <bpmndi:BPMNShape id="Activity_0dht8wr_di" bpmnElement="project_registration" isExpanded="true">
+        <dc:Bounds x="280" y="80" width="660" height="200" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0uj7bft_di" bpmnElement="Activity_109nv5i">
-        <dc:Bounds x="440" y="77" width="100" height="80" />
+      <bpmndi:BPMNEdge id="Flow_1tgsjac_di" bpmnElement="flow_2">
+        <di:waypoint x="356" y="180" />
+        <di:waypoint x="420" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0duubam_di" bpmnElement="register_rejected">
+        <di:waypoint x="760" y="205" />
+        <di:waypoint x="760" y="250" />
+        <di:waypoint x="470" y="250" />
+        <di:waypoint x="470" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="593" y="232" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12mb1dd_di" bpmnElement="flow_3">
+        <di:waypoint x="680" y="180" />
+        <di:waypoint x="735" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c2a980_di" bpmnElement="register_approved">
+        <di:waypoint x="785" y="180" />
+        <di:waypoint x="852" y="180" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="795" y="162" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0o3wm7i_di" bpmnElement="Flow_0o3wm7i">
+        <di:waypoint x="520" y="180" />
+        <di:waypoint x="580" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_03yglwp_di" bpmnElement="Event_03yglwp">
+        <dc:Bounds x="320" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="331" y="205" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_08mft2c_di" bpmnElement="check-registration-project">
+        <dc:Bounds x="580" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0mw5kyf_di" bpmnElement="approved_check_building" isMarkerVisible="true">
+        <dc:Bounds x="735" y="155" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="719" y="117.5" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0jwd3q7_di" bpmnElement="Event_0jwd3q7">
+        <dc:Bounds x="852" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0i9kd2o_di" bpmnElement="fill-registration-project">
+        <dc:Bounds x="420" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ggt2p2_di" bpmnElement="Activity_0ggt2p2" isExpanded="true">
+        <dc:Bounds x="280" y="360" width="620" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1ie8teb_di" bpmnElement="Flow_1ie8teb">
+        <di:waypoint x="500" y="460" />
+        <di:waypoint x="560" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0n55pmb_di" bpmnElement="Flow_0n55pmb">
+        <di:waypoint x="356" y="460" />
+        <di:waypoint x="400" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ewm67m_di" bpmnElement="Flow_0ewm67m">
+        <di:waypoint x="660" y="460" />
+        <di:waypoint x="725" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1klou4h_di" bpmnElement="document_rejected">
+        <di:waypoint x="750" y="485" />
+        <di:waypoint x="750" y="530" />
+        <di:waypoint x="450" y="530" />
+        <di:waypoint x="450" y="500" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="578" y="512" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gl6z4c_di" bpmnElement="document_approved">
+        <di:waypoint x="775" y="460" />
+        <di:waypoint x="822" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="775" y="442" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_13c9ep8_di" bpmnElement="Event_13c9ep8">
+        <dc:Bounds x="320" y="442" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_065dm8s_di" bpmnElement="fill-document-building">
+        <dc:Bounds x="400" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1g30p50_di" bpmnElement="check-document-building">
+        <dc:Bounds x="560" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1v76zgl_di" bpmnElement="Gateway_1v76zgl" isMarkerVisible="true">
+        <dc:Bounds x="725" y="435" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1si3czv_di" bpmnElement="Event_1si3czv">
+        <dc:Bounds x="822" y="442" width="36" height="36" />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
