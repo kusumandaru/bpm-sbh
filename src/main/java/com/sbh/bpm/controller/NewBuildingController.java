@@ -180,7 +180,13 @@ public class NewBuildingController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
+    Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
     Map<String, Object> variableMap = taskService.getVariables(taskId);
+    variableMap.put("task_id", task.getId());
+    variableMap.put("created_at", task.getCreateTime());
+    variableMap.put("due_date", task.getDueDate());
+    variableMap.put("owner", task.getOwner());
+    variableMap.put("tenant_id", task.getTenantId());
 
     // Get it by blob name
     if (variableMap.get("proof_of_payment") != null) {
