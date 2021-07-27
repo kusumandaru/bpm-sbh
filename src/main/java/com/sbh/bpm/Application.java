@@ -13,6 +13,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 @EnableProcessApplication
 @SpringBootApplication
@@ -40,6 +41,14 @@ public class Application {
       FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
       bean.setOrder(0);
       return bean;
+  }
+
+  @Bean
+  public CommonsMultipartResolver commonsMultipartResolver() {
+      final CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver();
+      commonsMultipartResolver.setMaxUploadSize(-1);
+
+      return commonsMultipartResolver;
   }
 
   @Autowired
