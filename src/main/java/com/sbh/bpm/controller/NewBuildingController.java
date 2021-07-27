@@ -18,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.Province;
@@ -31,6 +32,7 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
@@ -96,19 +98,11 @@ public class NewBuildingController {
     ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
     String activityInstanceId = activityInstance.getId();
 
-    if (fileFdcd.getFileName() != null) {
-      String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
-      String fileName = "invoice__" + activityInstanceId + "." + ext;
-
-      GoogleCloudStorage googleCloudStorage;
-      try {
-        googleCloudStorage = new GoogleCloudStorage();
-      } catch (IOException e) {
-        e.printStackTrace();
-        return Response.status(400, e.getMessage()).build();
-      }
-      googleCloudStorage.SaveObject(fileName, file);
-      runtimeService.setVariable(processInstance.getId(), "proof_of_payment", fileName);
+    try {
+      uploadToGcs(runtimeService, processInstance.getId(), activityInstanceId, file, fileFdcd, "proof_of_payment");
+    } catch (IOException e) {
+      e.printStackTrace();
+      return Response.status(400, e.getMessage()).build();
     }
     
     TaskService taskService = processEngine.getTaskService();
@@ -180,8 +174,15 @@ public class NewBuildingController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    Map<String, Object> variableMap = taskService.getVariables(taskId);
+    Task task;
+    Map<String, Object> variableMap;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      variableMap = taskService.getVariables(taskId);
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
     variableMap.put("task_id", task.getId());
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
@@ -261,6 +262,74 @@ public class NewBuildingController {
     return Response.ok().build();
   }
 
+  @POST
+  @Path(value = "/upload-eligibility-document")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response UploadEligibility(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("building_plan") InputStream buildingPlan, 
+    @FormDataParam("building_plan") FormDataContentDisposition buildingPlanFdcd,
+    @FormDataParam("rt_rw") InputStream rtRw, 
+    @FormDataParam("rt_rw") FormDataContentDisposition rtRwFdcd,
+    @FormDataParam("upl_ukl") InputStream uplUkl, 
+    @FormDataParam("upl_ukl") FormDataContentDisposition uplUklFdcd,
+    @FormDataParam("earthquake_resistance") InputStream earthquakeResistance, 
+    @FormDataParam("earthquake_resistance") FormDataContentDisposition earthquakeResistanceFdcd,
+    @FormDataParam("disability_friendly") InputStream disabilityFriendly, 
+    @FormDataParam("disability_friendly") FormDataContentDisposition disabilityFriendlyFdcd,
+    @FormDataParam("safety_and_fire_requirement") InputStream safetyAndFireRequirement, 
+    @FormDataParam("safety_and_fire_requirement") FormDataContentDisposition safetyAndFireRequirementFdcd,
+    @FormDataParam("study_case_readiness") InputStream studyCaseReadiness, 
+    @FormDataParam("study_case_readiness") FormDataContentDisposition studyCaseReadinessFdcd,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      JSONObject obj = new JSONObject();
+      try {
+        obj.put("message", "task id not found");
+      } catch (JSONException e1) {
+        e1.printStackTrace();
+      }
+      String json = new Gson().toJson(obj);
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    try {
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, buildingPlan, buildingPlanFdcd, "building_plan");
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, rtRw, rtRwFdcd, "rt_rw");
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, uplUkl, uplUklFdcd, "upl_ukl");
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, earthquakeResistance, earthquakeResistanceFdcd, "earthquake_resistance");
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, disabilityFriendly, disabilityFriendlyFdcd, "disability_friendly");
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, safetyAndFireRequirement, safetyAndFireRequirementFdcd,  "safety_and_fire_requirement");
+      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, studyCaseReadiness, studyCaseReadinessFdcd, "study_case_readiness");
+    } catch (IOException e) {
+      e.printStackTrace();
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setAssignee(task.getId(), username);
+    taskService.claim(task.getId(), username);
+    taskService.complete(task.getId());
+
+    task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
+    taskService.setAssignee(task.getId(), "admin");
+    taskService.claim(task.getId(), "admin");
+
+    return Response.ok().build();
+  }
+
 
   @GET
   @Path(value = "/diagram/{processDefinitionId}")
@@ -273,4 +342,28 @@ public class NewBuildingController {
 
     return Response.ok(fileName).build();
   }
+
+  private BlobId uploadToGcs(RuntimeService runtimeService,
+    String processInstanceId,
+    String activityInstanceId,
+    InputStream file, 
+    FormDataContentDisposition fileFdcd, 
+    String alias
+  ) throws IOException {
+    if (fileFdcd.getFileName() != null) {
+      String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
+      String fileName = activityInstanceId + "__" + alias + "." + ext;
+
+      GoogleCloudStorage googleCloudStorage;
+      googleCloudStorage = new GoogleCloudStorage();
+
+      BlobId blobId = googleCloudStorage.SaveObject(fileName, file);
+      runtimeService.setVariable(processInstanceId, alias, fileName);
+
+      return blobId;
+    } else {
+      return null;
+    }
+  }
+
 }
