@@ -198,10 +198,14 @@ public class NewBuildingController {
     return Response.ok(variableMap).build();
   }
 
-  @GET
-  @Path(value = "/accept-register-project/{taskId}")
+  @POST
+  @Path(value = "/accept-register-project")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response AcceptRegisterProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  public Response AcceptRegisterProject(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("task_id") String taskId
+  ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -213,10 +217,15 @@ public class NewBuildingController {
     return Response.ok().build();
   }
 
-  @GET
-  @Path(value = "/reject-register-project/{taskId}")
+  @POST
+  @Path(value = "/reject-register-project")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response RejectRegisterProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  public Response RejectRegisterProject(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("task_id") String taskId,
+    @FormDataParam("rejected_reason") String rejectedReason
+  ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -224,6 +233,7 @@ public class NewBuildingController {
     String processInstanceId = task.getProcessInstanceId();
 
     taskService.setVariable(taskId, "building_approved", false);
+    taskService.setVariable(taskId, "rejected_reason", rejectedReason);
     taskService.claim(taskId, "admin");
     taskService.complete(taskId);
 
