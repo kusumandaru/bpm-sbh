@@ -39,8 +39,6 @@ import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
@@ -115,17 +113,13 @@ public class NewBuildingController {
     task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
     taskService.claim(task.getId(), "admin");
 
-    JSONObject obj = new JSONObject();
-    try {
-      obj.put("process_definition_id", processInstance.getProcessDefinitionId());
-      obj.put("case_instance_id", processInstance.getCaseInstanceId());
-      obj.put("business_key", processInstance.getBusinessKey());
-      obj.put("activity_instance_id", activityInstanceId);
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("process_definition_id", processInstance.getProcessDefinitionId());
+    map.put("case_instance_id", processInstance.getCaseInstanceId());
+    map.put("business_key", processInstance.getBusinessKey());
+    map.put("activity_instance_id", activityInstanceId);
 
-    String json = new Gson().toJson(obj);
+    String json = new Gson().toJson(map);
     return Response.ok(json).build();
   }
 
@@ -188,25 +182,6 @@ public class NewBuildingController {
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("owner", task.getOwner());
     variableMap.put("tenant_id", task.getTenantId());
-
-    // Get it by blob name
-    if (variableMap.get("proof_of_payment") != null) {
-      GoogleCloudStorage googleCloudStorage;
-      try {
-        googleCloudStorage = new GoogleCloudStorage();
-      } catch (IOException e) {
-        e.printStackTrace();
-        return Response.status(400, e.getMessage()).build();
-      }
-      String filename = String.valueOf(variableMap.get("proof_of_payment"));
-      Blob blob = googleCloudStorage.GetBlobByName(filename);
-  
-      if (blob != null) {
-        googleCloudStorage.SetGcsSignUrl(blob);
-        String publicUrl = googleCloudStorage.GetSignedUrl();
-        variableMap.put("proof_of_payment_url", publicUrl);
-      }
-    }
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));
@@ -294,13 +269,10 @@ public class NewBuildingController {
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
     } catch (NullValueException e) {
-      JSONObject obj = new JSONObject();
-      try {
-        obj.put("message", "task id not found");
-      } catch (JSONException e1) {
-        e1.printStackTrace();
-      }
-      String json = new Gson().toJson(obj);
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
@@ -330,7 +302,6 @@ public class NewBuildingController {
     return Response.ok().build();
   }
 
-
   @GET
   @Path(value = "/diagram/{processDefinitionId}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -341,6 +312,39 @@ public class NewBuildingController {
     String fileName = definition.getDiagramResourceName();
 
     return Response.ok(fileName).build();
+  }
+
+  @GET
+  @Path(value = "/url_file/{task_id}/{file_name}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetUrlFile(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("file_name") String fileName
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Task task;
+    Map<String, Object> variableMap;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      variableMap = taskService.getVariables(taskId);
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    String url;
+    try {
+      url = getUrlGcs(variableMap, fileName);
+    } catch (IOException e) {
+      url = null;
+      return Response.status(404).build();
+    }
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("url", url);
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
   }
 
   private BlobId uploadToGcs(RuntimeService runtimeService,
@@ -366,4 +370,22 @@ public class NewBuildingController {
     }
   }
 
+  private String getUrlGcs(Map<String, Object> variableMap, String filename) throws IOException {
+    // Get it by blob name
+    if (variableMap.get(filename) != null) {
+      GoogleCloudStorage googleCloudStorage;
+      googleCloudStorage = new GoogleCloudStorage();
+
+      String path = String.valueOf(variableMap.get(filename));
+      Blob blob = googleCloudStorage.GetBlobByName(path);
+  
+      if (blob != null) {
+        googleCloudStorage.SetGcsSignUrl(blob);
+        String publicUrl = googleCloudStorage.GetSignedUrl();
+        return publicUrl;
+      }
+    }
+
+    return null;
+  }
 }
