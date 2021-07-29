@@ -32,12 +32,11 @@ flyway.properties
 bin/*
 src/main/.DS_Store
 src/main/resources/bpm-sbh.json
-.vscode
 .apt_generated_tests
-/.vscode
 .factorypath
 application-*.yaml
 .idea
 *.iml
 .apt_generated
 .factorypath
+.vscode
