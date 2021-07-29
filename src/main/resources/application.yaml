@@ -18,3 +18,7 @@ camunda.bpm:
     id: admin
     password: admin
   webapp.index-redirect-enabled: false
+
+JWT:
+  secret: 5dr9LiH^*vh$9o
+  expiryDuration: 36000000
