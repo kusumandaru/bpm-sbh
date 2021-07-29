@@ -35,7 +35,9 @@ src/main/resources/bpm-sbh.json
 .vscode
 .apt_generated_tests
 /.vscode
-application-*.yaml
 .factorypath
+application-*.yaml
 .idea
-new-building.iml
+*.iml
+.apt_generated
+.factorypath
