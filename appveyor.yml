@@ -7,10 +7,7 @@ install:
   - mvn --version
 
 build_script:
-  - cp .env.example .env
-  - cp flyway.properties.example flyway.properties
   - mvn clean install -DskipTests
-  - mvn clean flyway:migrate -Dflyway.configFiles=flyway.properties
 
 services:
   - mysql
