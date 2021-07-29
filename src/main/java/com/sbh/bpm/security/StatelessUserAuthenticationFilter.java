@@ -1,29 +1,30 @@
 package com.sbh.bpm.security;
 
-import org.camunda.bpm.BpmPlatform;
-import org.camunda.bpm.engine.ProcessEngine;
-import org.camunda.bpm.engine.ProcessEngines;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
+
+import org.camunda.bpm.BpmPlatform;
+import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngines;
+
 public class StatelessUserAuthenticationFilter implements Filter {
     public static final String AUTHENTICATION_PROVIDER_PARAM = "authentication-provider";
     public static final String JWT_SECRET = "jwt-secret";
-    public static final String JWT_EXPIRY = "jwt-expiry";
     public static final String JWT_VALIDATOR = "jwt-validator";
     private static String jwtSecret;
-    private static int jwtExpiry;
     private static String jwtValidator;
     private static Class<?> jwtValidatorClass;
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatelessUserAuthenticationFilter.class);
     protected AuthenticationProvider authenticationProvider;
 
     @Override
@@ -37,8 +38,6 @@ public class StatelessUserAuthenticationFilter implements Filter {
         if (jwtValidator == null){
             jwtValidator = filterConfig.getInitParameter(JWT_VALIDATOR);
         }
-
-        jwtExpiry = Integer.parseInt(filterConfig.getInitParameter(JWT_EXPIRY));
 
         try {
             Class<?> authenticationProviderClass = Class.forName(authenticationProviderClassName);

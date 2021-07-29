@@ -18,6 +18,7 @@ camunda.bpm:
     id: admin
     password: admin
   webapp.index-redirect-enabled: false
+  authorization.enabled: true
 
 JWT:
   secret: 5dr9LiH^*vh$9o

@@ -1,6 +1,7 @@
 package com.sbh.bpm.security;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,8 +31,10 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         }
 
         if (exception != null) {
+            LOGGER.error("Authentication failed", exception);
             httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
         } else {
+            LOGGER.error("Authentication failed", e);
             httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
     }

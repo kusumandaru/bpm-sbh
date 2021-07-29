@@ -1,5 +1,7 @@
 package com.sbh.bpm.config;
 
+import javax.servlet.Filter;
+
 import com.sbh.bpm.security.JwtValidator;
 import com.sbh.bpm.security.StatelessUserAuthenticationFilter;
 
@@ -24,8 +26,8 @@ public class CamundaConfig {
     }
 
     @Bean
-    public FilterRegistrationBean statelessUserAuthenticationFilter() {
-        FilterRegistrationBean registration = new FilterRegistrationBean();
+    public FilterRegistrationBean<Filter> statelessUserAuthenticationFilter() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<Filter>();
         registration.setName("camunda-jwt-filter");
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         registration.addInitParameter("authentication-provider", "com.sbh.bpm.security.JwtAuthenticationProvider");
