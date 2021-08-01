@@ -1,11 +1,23 @@
 package com.sbh.bpm.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -16,6 +28,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -28,6 +41,9 @@ import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IProvinceService;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
@@ -288,17 +304,39 @@ public class NewBuildingController {
     String processInstanceId = task.getProcessInstanceId();
     String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
 
+    //limit the number of actual threads
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Pair<String, BlobId>>> listOfCallable = Arrays.asList(
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, buildingPlan, buildingPlanFdcd, "building_plan"),
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, rtRw, rtRwFdcd, "rt_rw"),
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, uplUkl, uplUklFdcd, "upl_ukl"),
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, earthquakeResistance, earthquakeResistanceFdcd, "earthquake_resistance"),
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, disabilityFriendly, disabilityFriendlyFdcd, "disability_friendly"),
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, safetyAndFireRequirement, safetyAndFireRequirementFdcd,  "safety_and_fire_requirement"),
+                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, studyCaseReadiness, studyCaseReadinessFdcd, "study_case_readiness")
+                );
     try {
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, buildingPlan, buildingPlanFdcd, "building_plan");
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, rtRw, rtRwFdcd, "rt_rw");
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, uplUkl, uplUklFdcd, "upl_ukl");
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, earthquakeResistance, earthquakeResistanceFdcd, "earthquake_resistance");
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, disabilityFriendly, disabilityFriendlyFdcd, "disability_friendly");
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, safetyAndFireRequirement, safetyAndFireRequirementFdcd,  "safety_and_fire_requirement");
-      uploadToGcs(runtimeService, processInstanceId, activityInstanceId, studyCaseReadiness, studyCaseReadinessFdcd, "study_case_readiness");
-    } catch (IOException e) {
-      e.printStackTrace();
+      List<Future<Pair<String, BlobId>>> futures = executor.invokeAll(listOfCallable);
+
+      Map<String, BlobId> result = new HashMap<String, BlobId>();
+      futures.stream().forEach(f -> {
+          try {
+            Pair<String, BlobId> res = f.get();
+            if (res != null) {
+              result.put(res.getKey(), res.getValue());
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        e.printStackTrace();
       return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
     }
 
     taskService.setAssignee(task.getId(), username);
@@ -311,6 +349,102 @@ public class NewBuildingController {
 
     return Response.ok().build();
   }
+
+  @GET
+  @Path(value = "/archived_files/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ArchivedFile(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      e.printStackTrace();
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Blob>> listOfCallable = Arrays.asList(
+                () -> getBlob(googleCloudStorage, variableMap, "proof_of_payment"),
+                () -> getBlob(googleCloudStorage, variableMap, "building_plan"),
+                () -> getBlob(googleCloudStorage, variableMap, "rt_rw"),
+                () -> getBlob(googleCloudStorage, variableMap, "upl_ukl"),
+                () -> getBlob(googleCloudStorage, variableMap, "earthquake_resistance"),
+                () -> getBlob(googleCloudStorage, variableMap, "disability_friendly"),
+                () -> getBlob(googleCloudStorage, variableMap, "safety_and_fire_requirement"),
+                () -> getBlob(googleCloudStorage, variableMap, "study_case_readiness")
+                );
+
+    FileOutputStream fos;
+    ZipOutputStream zipOut;
+    try {
+      fos = new FileOutputStream(taskId + ".zip");
+      zipOut = new ZipOutputStream(fos);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+      return Response.status(400, e.getMessage()).build();
+    }
+    try {
+      List<Future<Blob>> futures = executor.invokeAll(listOfCallable);
+
+      futures.stream().forEach(f -> {
+          try {
+            Blob blob = f.get();
+            if (blob != null) {
+              ZipEntry zipEntry = new ZipEntry(blob.getName());
+              zipOut.putNextEntry(zipEntry);
+              byte[] byteArray = blob.getContent();
+              zipOut.write(byteArray);
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        e.printStackTrace();
+      return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    try {
+      zipOut.close();
+      fos.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+      return Response.status(400, e.getMessage()).build();
+    }
+  
+
+    File zipFile = new File(taskId + ".zip");
+    StreamingOutput stream = new StreamingOutput() {
+        @Override
+        public void write(OutputStream output) throws IOException {
+            try {
+                output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+        .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
+        .build();
+  }
+
 
   @GET
   @Path(value = "/diagram/{processDefinitionId}")
@@ -334,30 +468,29 @@ public class NewBuildingController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    Task task;
     Map<String, Object> variableMap;
     try {
-      task = taskService.createTaskQuery().taskId(taskId).singleResult();
       variableMap = taskService.getVariables(taskId);
     } catch (NullValueException e) {
       return Response.status(400, "task id not found").build();
     }
 
-    String url;
+    Pair<String, String> result;
     try {
-      url = getUrlGcs(variableMap, fileName);
+      result = getUrlGcs(variableMap, fileName);
     } catch (IOException e) {
-      url = null;
+      result = null;
       return Response.status(404).build();
     }
 
     Map<String, String> map = new HashMap<String, String>();
-    map.put("url", url);
+    map.put("url", result.getValue());
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
   }
 
-  private BlobId uploadToGcs(RuntimeService runtimeService,
+  private Pair<String, BlobId> uploadToGcs(
+    RuntimeService runtimeService,
     String processInstanceId,
     String activityInstanceId,
     InputStream file, 
@@ -374,28 +507,34 @@ public class NewBuildingController {
       BlobId blobId = googleCloudStorage.SaveObject(fileName, file);
       runtimeService.setVariable(processInstanceId, alias, fileName);
 
-      return blobId;
+      Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
+      return variables;
     } else {
       return null;
     }
   }
 
-  private String getUrlGcs(Map<String, Object> variableMap, String filename) throws IOException {
+  private Pair<String, String> getUrlGcs(Map<String, Object> variableMap, String filename) throws IOException {
     // Get it by blob name
     if (variableMap.get(filename) != null) {
       GoogleCloudStorage googleCloudStorage;
       googleCloudStorage = new GoogleCloudStorage();
 
-      String path = String.valueOf(variableMap.get(filename));
-      Blob blob = googleCloudStorage.GetBlobByName(path);
+      Blob blob = getBlob(googleCloudStorage, variableMap, filename);
   
       if (blob != null) {
         googleCloudStorage.SetGcsSignUrl(blob);
         String publicUrl = googleCloudStorage.GetSignedUrl();
-        return publicUrl;
+        Pair<String, String> variables = new ImmutablePair<>(filename, publicUrl);
+        return variables;
       }
     }
 
     return null;
   }
+
+  private Blob getBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String filename) {
+    String path = String.valueOf(variableMap.get(filename));
+    return googleCloudStorage.GetBlobByName(path);
+  } 
 }
