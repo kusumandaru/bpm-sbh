@@ -32,6 +32,7 @@ flyway.properties
 bin/*
 src/main/.DS_Store
 src/main/resources/bpm-sbh.json
+src/main/resources/application.yaml
 .apt_generated_tests
 .factorypath
 application-*.yaml

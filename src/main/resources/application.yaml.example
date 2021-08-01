@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/bpm_sbh?serverTimezone=UTC
+    username: shcode
+    password: 
+  profiles.active: @activatedProperties@
+
+server.port: 8080
+cors.urls: http://localhost:8081
+
+gcs:
+  bucket: bpm_sbh
+  project: bpm_sbh
+  json: bpm_sbh.json
+
+camunda.bpm:
+  admin-user:
+    id: admin
+    password: admin
+  webapp.index-redirect-enabled: false
+  authorization.enabled: true
+
+JWT:
+  secret: 5dr9LiH^*vh$9o
+  expiryDuration: 36000000
