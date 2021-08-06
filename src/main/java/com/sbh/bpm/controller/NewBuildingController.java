@@ -82,6 +82,8 @@ public class NewBuildingController {
     @FormDataParam("city") String city,
     @FormDataParam("province") String province,
     @FormDataParam("telephone") String telephone,
+    @FormDataParam("handphone") String handphone,
+    @FormDataParam("email") String email,
     @FormDataParam("faximile") String faximile,
     @FormDataParam("postal_code") String postalCode,
     @FormDataParam("gross_floor_area") Integer grossFloorArea
@@ -102,6 +104,8 @@ public class NewBuildingController {
     variables.put("province", province);
     variables.put("city", city);
     variables.put("telephone", telephone);
+    variables.put("handphone", handphone);
+    variables.put("email", email);
     variables.put("faximile", faximile);
     variables.put("postal_code", postalCode);
     variables.put("gross_floor_area", grossFloorArea);
