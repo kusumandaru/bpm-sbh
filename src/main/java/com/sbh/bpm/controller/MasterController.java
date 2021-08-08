@@ -15,8 +15,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.Province;
+import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IProvinceService;
 
@@ -31,6 +33,9 @@ public class MasterController {
 
   @Autowired
   private ICityService cityService;
+
+  @Autowired
+  private IBuildingTypeService buildingTypeService;
 
   @GET
   @Path(value = "/provinces")
@@ -152,6 +157,67 @@ public class MasterController {
     city = cityService.save(city);
 
     String json = new Gson().toJson(city);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/building_types")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response allBuildingTypes(@HeaderParam("Authorization") String authorization) {      
+    List<BuildingType> buildingTypes = (List<BuildingType>) buildingTypeService.findAll();
+
+    String json = new Gson().toJson(buildingTypes);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/building_types/{building_type_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getBuildingType(@HeaderParam("Authorization") String authorization, @PathParam("building_type_id") Integer buildingTypeId) {      
+    BuildingType buildingType = (BuildingType) buildingTypeService.findById(buildingTypeId);
+
+    String json = new Gson().toJson(buildingType);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/building_types")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response saveBuildingType(@HeaderParam("Authorization") String authorization,
+                               @FormParam("code") String code,
+                               @FormParam("name_id") String nameId,
+                               @FormParam("name_en") String nameEn) {   
+    BuildingType buildingType = new BuildingType();
+    buildingType.setNameId(nameId);
+    buildingType.setNameEn(nameEn);
+    buildingType.setCode(code);
+    buildingType = buildingTypeService.save(buildingType);
+
+    String json = new Gson().toJson(buildingType);
+    return Response.ok(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/building_types/{building_type_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response updateProvinces(@HeaderParam("Authorization") String authorization,
+                               @PathParam("building_type_id") Integer buildingTypeId, 
+                               @FormParam("code") String code,
+                               @FormParam("name_id") String nameId,
+                               @FormParam("name_en") String nameEn) {   
+    BuildingType buildingType = (BuildingType) buildingTypeService.findById(buildingTypeId);
+    if (buildingType == null) {
+      return Response.status(400, "buildingType not found").build();
+    }
+
+    buildingType.setNameId(nameId);
+    buildingType.setNameEn(nameEn);
+    buildingType.setCode(code);
+    buildingType = buildingTypeService.save(buildingType);
+
+    String json = new Gson().toJson(buildingType);
     return Response.ok(json).build();
   }
 }

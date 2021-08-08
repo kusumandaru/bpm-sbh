@@ -33,15 +33,18 @@ import javax.ws.rs.core.StreamingOutput;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
+import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.SbhTask;
 import com.sbh.bpm.service.GoogleCloudStorage;
+import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IProvinceService;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.BpmPlatform;
@@ -64,6 +67,9 @@ public class NewBuildingController {
 
   @Autowired
   private ICityService cityService;
+
+  @Autowired
+  private IBuildingTypeService buildingTypeService;
 
   @POST
   @Path(value = "/create-project")
@@ -156,6 +162,10 @@ public class NewBuildingController {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
       sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingType(buildingType.getNameId());
+      }
       sbhTasks.add(sbhTask);
     }
     String json = new Gson().toJson(sbhTasks);
