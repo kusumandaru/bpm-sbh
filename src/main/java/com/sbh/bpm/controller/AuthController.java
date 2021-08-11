@@ -1,19 +1,22 @@
 package com.sbh.bpm.controller;
 
-import com.sbh.bpm.payload.ApiResponse;
+import javax.servlet.ServletException;
+import javax.validation.Valid;
+
 import com.sbh.bpm.payload.AuthRequest;
 import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.security.JwtUtil;
+
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.ServletException;
-import javax.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
@@ -27,18 +30,22 @@ public class AuthController {
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<AuthResponse> credentials(@RequestBody AuthRequest loginRequest) {
-        String token = jwtUtil.generateToken(loginRequest.getUsername(), loginRequest.getPassword());
-        return ResponseEntity.ok(new AuthResponse(token, "200", "Sukses"));
+        AuthResponse response = jwtUtil.generateToken(loginRequest.getUsername(), loginRequest.getPassword());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest registerRequest) throws ServletException {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) throws ServletException {
         UserEntity user = new UserEntity();
         user.setEmail(registerRequest.getEmail());
         user.setPassword(registerRequest.getPassword());
         user.setId(registerRequest.getEmail());
         user.setFirstName(registerRequest.getName());
+
         identityService.saveUser(user);
-        return ResponseEntity.ok(new ApiResponse(true, "User successfully registered", HttpStatus.CREATED));
+        identityService.createMembership(user.getId(), "user");
+        
+        AuthResponse response = jwtUtil.generateToken(registerRequest.getEmail(), registerRequest.getPassword());
+        return ResponseEntity.ok(response);
     }
 }

@@ -2,6 +2,11 @@ package com.sbh.bpm.security;
 
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class AuthenticationResult  {
     protected boolean isAuthenticated;
     protected String authenticatedUser;
