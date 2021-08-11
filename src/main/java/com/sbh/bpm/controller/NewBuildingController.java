@@ -192,6 +192,26 @@ public class NewBuildingController {
   }
 
   @GET
+  @Path(value = "/tasks")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response Tasks(@HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    List<Task> tasks = taskService.createTaskQuery().active().orderByTaskCreateTime().desc().list();
+
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      sbhTasks.add(sbhTask);
+    }
+    String json = new Gson().toJson(sbhTasks);
+    return Response.ok(json).build();
+  }
+
+
+  @GET
   @Path(value = "/variables/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response Variable(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
@@ -212,6 +232,7 @@ public class NewBuildingController {
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("owner", task.getOwner());
     variableMap.put("tenant_id", task.getTenantId());
+    variableMap.put("definition_key", task.getTaskDefinitionKey());
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));
