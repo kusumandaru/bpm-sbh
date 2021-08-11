@@ -1,15 +1,21 @@
 package com.sbh.bpm.security;
 
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.sbh.bpm.exception.BadRequestException;
+import com.sbh.bpm.payload.AuthResponse;
+
 import org.camunda.bpm.engine.IdentityService;
+import org.camunda.bpm.engine.identity.Group;
+import org.camunda.bpm.engine.identity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
 
 @Service
 public class JwtUtil {
@@ -23,16 +29,21 @@ public class JwtUtil {
     @Value(value = "${JWT.expiryDuration}")
     private int jwtExpirationInMs;
 
-    public String generateToken(String username, String password) {
+    public AuthResponse generateToken(String username, String password) {
         if(isAuthenticated(username, password)) {
             try {
                 Algorithm algorithm = Algorithm.HMAC256(secret);
                 // TODO: create token with groupIds and tenantIds
-                return JWT.create()
+                String accessToken =  JWT.create()
                         .withClaim("username", username)
                         .withIssuedAt(new Date(System.currentTimeMillis()))
                         .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                         .sign(algorithm);
+                List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
+                List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
+                User user = identityService.createUserQuery().userId(username).singleResult();
+                String name = user.getFirstName() + " " + user.getLastName();
+                return new AuthResponse(accessToken, "", name, username, groupIds);
             } catch (Exception e) {
                 throw new BadRequestException("Error create jwt token");
             }

@@ -78,9 +78,8 @@ public class StatelessUserAuthenticationFilter implements Filter {
             try {
                 String authenticatedUser = authenticationResult.getAuthenticatedUser();
 
-                // @TODO Review if null or empty array should be sent into Groups and Tenants when JWT does not have these claims
-                List<String> groupIds = Arrays.asList();
-                List<String> tenantIds = Arrays.asList();
+                List<String> groupIds = authenticationResult.getGroups() == null ? Arrays.asList() : authenticationResult.getGroups();
+                List<String> tenantIds = authenticationResult.getTenants() == null ? Arrays.asList() : authenticationResult.getTenants();
 
                 setAuthenticatedUser(engine, authenticatedUser, groupIds, tenantIds);
 
