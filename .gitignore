@@ -41,3 +41,5 @@ application-*.yaml
 .apt_generated
 .factorypath
 .vscode
+sendgrid.env
+src/main/resources/application.yaml
