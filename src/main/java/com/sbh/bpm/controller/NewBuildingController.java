@@ -265,7 +265,7 @@ public class NewBuildingController {
     TaskService taskService = processEngine.getTaskService();
 
     // Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    taskService.setVariable(taskId, "building_approved", true);
+    taskService.setVariable(taskId, "approved", true);
     taskService.claim(taskId, "admin");
     taskService.complete(taskId);
 
@@ -287,7 +287,7 @@ public class NewBuildingController {
     Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
     String processInstanceId = task.getProcessInstanceId();
 
-    taskService.setVariable(taskId, "building_approved", false);
+    taskService.setVariable(taskId, "approved", false);
     taskService.setVariable(taskId, "rejected_reason", rejectedReason);
     taskService.claim(taskId, "admin");
     taskService.complete(taskId);
