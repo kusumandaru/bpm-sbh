@@ -40,6 +40,7 @@ import com.sbh.bpm.model.SbhTask;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
+import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IProvinceService;
 
 import org.apache.commons.io.FilenameUtils;
@@ -70,6 +71,9 @@ public class NewBuildingController {
 
   @Autowired
   private IBuildingTypeService buildingTypeService;
+
+  @Autowired
+  private IMailerService mailerService;
 
   @POST
   @Path(value = "/create-project")
@@ -294,6 +298,8 @@ public class NewBuildingController {
     task.setAssignee(assignee);
     task.setTenantId(tenant);
     taskService.claim(task.getId(), assignee);
+
+    mailerService.SendRejectionEmail(rejectedReason);
 
     return Response.ok().build();
   }
