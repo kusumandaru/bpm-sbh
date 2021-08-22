@@ -11,6 +11,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.google.gson.annotations.SerializedName;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,6 +25,7 @@ public class City {
   @Setter
   private Integer id;
 
+  @SerializedName("province_id")
   @Column(name="province_id", length=2, nullable=false)
   @Getter
   @Setter
@@ -32,11 +35,13 @@ public class City {
   @Setter
   private String name;
 
+  @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
   @Setter
   private Date createdAt;
 
+  @SerializedName("updated_at")
   @Column(name="updated_at")
   @Getter
   @Setter

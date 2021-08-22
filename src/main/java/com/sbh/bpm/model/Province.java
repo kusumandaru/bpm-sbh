@@ -9,6 +9,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.google.gson.annotations.SerializedName;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,11 +27,13 @@ public class Province {
   @Setter
   private String name;
 
+  @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
   @Setter
   private Date createdAt;
 
+  @SerializedName("updated_at")
   @Column(name="updated_at")
   @Getter
   @Setter

@@ -8,5 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BuildingTypeRepository extends CrudRepository<BuildingType, Integer> {
+  BuildingType findByCode(String code);
+
 }
 
