@@ -24,6 +24,11 @@ public class BuildingTypeService implements IBuildingTypeService {
   }
 
   @Override
+  public BuildingType findByCode(String code) {
+    return repository.findByCode(code);
+  }
+
+  @Override
   public BuildingType save(BuildingType buildingType) {
     return repository.save(buildingType);
   }

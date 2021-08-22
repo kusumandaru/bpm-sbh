@@ -8,5 +8,6 @@ public interface IBuildingTypeService {
 
   List<BuildingType> findAll();
   BuildingType findById(Integer buildingTypeId);
+  BuildingType findByCode(String code);
   BuildingType save(BuildingType buildingType);
 }
