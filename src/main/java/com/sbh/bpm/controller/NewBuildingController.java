@@ -359,8 +359,12 @@ public class NewBuildingController {
       variableMap.put("city_name", city.getName());
     }
 
-    BuildingType buildingType = buildingTypeService.findByCode(String.valueOf(variableMap.get("building_type")));
-    variableMap.put("building_type_name", buildingType.getNameId());
+    try {
+      BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
+      variableMap.put("building_type_name", buildingType.getNameId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     return Response.ok(variableMap).build();
   }
