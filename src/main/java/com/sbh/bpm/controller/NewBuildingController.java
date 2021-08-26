@@ -7,10 +7,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +45,7 @@ import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
 
 import org.apache.commons.io.FilenameUtils;
@@ -63,6 +67,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
 
+
 @Path(value = "/new-building")
 public class NewBuildingController {
   @Autowired
@@ -77,6 +82,8 @@ public class NewBuildingController {
   @Autowired
   private IMailerService mailerService;
 
+  @Autowired
+  private IPdfGeneratorUtil pdfGeneratorUtil;
   @POST
   @Path(value = "/create-project")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -647,6 +654,49 @@ public class NewBuildingController {
     return Response.status(200).entity(json).build();
   }
 
+  @GET
+  @Path(value = "/eligibility_statement/{taskId}")
+  @Produces({"application/pdf"})
+  public javax.ws.rs.core.Response getEligibilityStatement(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    int style = DateFormat.MEDIUM;
+    //Also try with style = DateFormat.FULL and DateFormat.SHORT
+    Date date = new Date();
+    DateFormat df;
+    Locale localeIndonesia = new Locale("id", "ID");
+    df = DateFormat.getDateInstance(style, localeIndonesia);
+    variableMap.put("printAt",df.format(date));
+
+    if (variableMap.get("province") != null) {
+      String provinceId = String.valueOf(variableMap.get("province"));
+      Province province = provinceService.findById(Integer.parseInt(provinceId));
+      variableMap.put("province_name", province.getName());
+    }
+
+    if (variableMap.get("city") != null) {
+      String cityId = String.valueOf(variableMap.get("city"));
+      City city = cityService.findById(Integer.parseInt(cityId));
+      variableMap.put("city_name", city.getName());
+    }
+
+    byte[] bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
+
+    /* Send the response as downloadable PDF */
+    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+    responseBuilder.type("application/pdf");
+    responseBuilder.header("Content-Disposition", "attachment; filename=eligible-statement.pdf");
+    return responseBuilder.build();
+  }
+  
   private Pair<String, BlobId> uploadToGcs(
     RuntimeService runtimeService,
     String processInstanceId,

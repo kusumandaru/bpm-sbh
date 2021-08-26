@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <title>Eligibility Statement</title>
+    <link th:href="@{css/eligibility-statement.css}" rel="stylesheet" type="text/css" media="all" />
+  </head>
+  <body>
+    <div class=WordSection1></div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image1.png}" style="width: 200.00px; height: 70.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; ; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 240.00px; height: 170.00px;">
+        <img th:src="@{images/image2.png}" style="width: 240.00px; height: 170.00px; margin-left: 450.00px; margin-top: -75.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div style="margin-top: -75px;">
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>Jakarta, <span th:text="${printAt}"></span>
+          <br> No. </span>
+        <span>…./PT.SBH/ELI/…./2021 <br> Perihal : </span>
+        <span lang=IN>Pernyataan <i>Eligible</i> untuk mengikuti proses sertifikasi GREENSHIP </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>Kepada Yth. <br> Bapak/Ibu <span th:text="${person_in_charge}"></span>
+          <br>
+          <span th:text="${building_address}"></span>
+          <br>
+          <span th:text="${city_name}"></span>
+          <br>
+          <span th:text="${province_name}"></span>
+          <br>
+          <span th:text="${postal_code}"></span>
+        </span>
+      </p>
+      <p class=MsoNormal></p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+inter-ideograph'>
+        <span>Dengan hormat, </span>
+      </p>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph;
+line-height:normal'>
+        <span>Bersama ini kami sampaikan bahwa </span>
+        <span lang=IN>kami telah menerima dokumen <i>eligibility</i>
+        </span>
+        <span lang=IN></span>
+        <span lang=IN>dari</span>
+        <span lang=EN-GB>
+          <span th:text="${owner}"></span>( </span>
+        <i>
+          <u>
+            <span lang=EN-US style='font-size:9.0pt'> perusahaan pemilik proyek</span>
+          </u>
+        </i>
+        <span lang=EN-US>) untuk pendaftaran Sertifikasi Greenship <i>New Building</i> Proyek Gedung </span>
+        <span th:text="${building_name}"></span>
+        <span> berupa </span>
+        <span lang=IN>:</span>
+      </p>
+      <ol style='margin-top:0cm' start=1 type=1>
+        <li class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+     inter-ideograph;line-height:normal'>
+          <span>Dokumen gambar denah yang membuktikan luas &gt; 2500m²</span>
+        </li>
+        <li class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+     inter-ideograph;line-height:normal'>
+          <span>Salinan dokumen untuk memenuhi persyaratan kesesuaian RTRW</span>
+        </li>
+        <li class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+     inter-ideograph;line-height:normal'>
+          <span>Salinan dokumen untuk memenuhi persyaratan UPL UKL</span>
+        </li>
+        <li class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+     inter-ideograph;line-height:normal'>
+          <span>Surat pernyataan asli diatas materai bahwa gedung yang dibangun sudah sesuai dengan standar ketahanan gempa, standar keselataman kebakaran dan standar aksesibilitas penyandang cacat</span>
+        </li>
+        <li class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+     inter-ideograph;line-height:normal'>
+          <span>Surat pernyataan asli diatas materai bersedia digunakan sebagai studi kasus GBC Indonesia</span>
+        </li>
+      </ol>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph; line-height:normal'>
+        <span lang=EN-GB>
+          <br>
+        </span>
+        <span lang=IN>Setelah melakukan proses verifikasi</span>
+        <span lang=EN-US>,</span>
+        <span lang=IN> kami menyatakan bahwa</span>
+        <span> Proyek Gedung </span>
+        <span th:text="${building_name}">
+          <span>. </span>
+          <span lang=IN>sudah mencapai status <i>eligible</i> atau memenuhi syarat untuk </span>
+          <span>ikut serta dalam proses Sertifikasi Greenship <i>New Building</i>. Dokumen yang masih dalam pengurusan dan sertifikat laik fungsi harap di lengkapi sebelum sidang final, </span>
+          <span lang=EN-GB> d</span>
+          <span lang=IN>engan status tersebut maka selanjutnya </span>
+          <span lang=EN-US>PT. Sertifikasi Bangunan Hijau</span>
+          <span lang=IN> akan melakukan proses sebagai berikut:</span>
+      </p>
+      <p class=MsoListParagraphCxSpFirst style='text-align:justify;text-justify:inter-ideograph; text-indent:-18.0pt;line-height:normal'>
+        <span lang=IN>1. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+        </span>
+        <span>Penyerahan draft perjanjian kerjasama hingga finalisasi dan penandatanganan oleh PT. Sertifikasi Bangunan Hijau dan Pihak Gedung.</span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify: inter-ideograph;text-indent:-18.0pt;line-height:normal'>
+        <span lang=IN>2. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+        </span>
+        <span lang=EN-US>Melakukan penagihan biaya sertifikasi tahap I. (Skema dan Tata Cara Pembayaran donasi tercantum dalam perjanjian kerjasama) hingga pembayaran dilakukan.</span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin:0cm;text-align:justify; text-justify:inter-ideograph'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin:0cm;text-align:justify; text-justify:inter-ideograph'>
+        <span>Apabila poin 1 dan 2 telah terpenuhi, maka Proyek Gedung </span>
+        <span th:text="${building_name}">
+          <span> akan memperoleh status <i>Registered Project</i>. Demikian kami sampaikan. </span>
+          <span lang=IN>Atas perhatian</span>
+          <span lang=EN-US>nya </span>
+          <span lang=IN>kami </span>
+          <span lang=EN-GB>meng</span>
+          <span lang=IN>ucapkan terima kasih. </span>
+      </p>
+      <p class=MsoListParagraphCxSpLast style='margin:0cm;text-align:justify; text-justify:inter-ideograph'>
+        <span lang=EN-GB>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='line-height:normal'>
+        <span style='font-size:12.0pt'>Salam Hijau Lestari, <br> PT. Sertifikasi Bangunan Hijau <br>
+          <br>
+          <br>
+        </span>
+      </p>
+      <p class=MsoNormal style='line-height:normal'>
+        <span style='font-size:12.0pt'>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='line-height:normal'>
+        <u>
+          <span style='font-size:12.0pt'>………………………….. <br>
+          </span>
+        </u>
+        <span style='font-size:12.0pt'>Manajer</span>
+      </p>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph; line-height:normal'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+    </div>
+    <div class="c12">
+        <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);">
+            <img th:src="@{images/image3.png}" style="width: 700.00px; height: 100.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+        </span>
+      </div>
+  </body>
+</html>

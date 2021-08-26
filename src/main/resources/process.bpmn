@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_0fr9mxs" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <bpmn:collaboration id="Collaboration_08vgz4k">
+    <bpmn:participant id="Participant_06i986h" processRef="new-building-process" />
+  </bpmn:collaboration>
   <bpmn:process id="new-building-process" isExecutable="true" camunda:candidateStarterGroups="camunda-admin">
     <bpmn:subProcess id="project_registration" name="Register Project">
       <bpmn:incoming>flow_1</bpmn:incoming>
@@ -42,10 +45,9 @@
       </bpmn:extensionElements>
       <bpmn:outgoing>flow_1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="flow_1" sourceRef="start" targetRef="project_registration" />
     <bpmn:subProcess id="Activity_0ggt2p2">
       <bpmn:incoming>Flow_0szvikc</bpmn:incoming>
-      <bpmn:outgoing>Flow_0tpao7z</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1pp1401</bpmn:outgoing>
       <bpmn:startEvent id="Event_13c9ep8">
         <bpmn:outgoing>Flow_0n55pmb</bpmn:outgoing>
       </bpmn:startEvent>
@@ -76,17 +78,63 @@
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
     </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_0tpao7z" sourceRef="Activity_0jc7r8d" targetRef="Event_19916hx" />
     <bpmn:sequenceFlow id="Flow_0szvikc" sourceRef="project_registration" targetRef="Activity_0ggt2p2" />
+    <bpmn:sequenceFlow id="flow_1" sourceRef="start" targetRef="project_registration" />
+    <bpmn:subProcess id="Activity_0jc7r8d">
+      <bpmn:incoming>Flow_1pp1401</bpmn:incoming>
+      <bpmn:outgoing>Flow_0tpao7z</bpmn:outgoing>
+      <bpmn:startEvent id="Event_1lehryu">
+        <bpmn:outgoing>Flow_1it7rm1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:userTask id="agreement-and-first-payment" name="Agreement and First Payment" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_1it7rm1</bpmn:incoming>
+        <bpmn:outgoing>Flow_1n522ha</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:sequenceFlow id="Flow_1n522ha" sourceRef="agreement-and-first-payment" targetRef="reistered_project" />
+      <bpmn:sequenceFlow id="Flow_1it7rm1" sourceRef="Event_1lehryu" targetRef="agreement-and-first-payment" />
+      <bpmn:userTask id="reistered_project" name="Registered Project" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_1n522ha</bpmn:incoming>
+        <bpmn:outgoing>Flow_173b15k</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:userTask id="exercise" name="Exercise" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_173b15k</bpmn:incoming>
+        <bpmn:outgoing>Flow_0v37fp5</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:sequenceFlow id="Flow_173b15k" sourceRef="reistered_project" targetRef="exercise" />
+      <bpmn:userTask id="second_payment" name="Second Payment" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_0v37fp5</bpmn:incoming>
+        <bpmn:outgoing>Flow_0bs5fel</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:userTask id="assestment" name="Assestment" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_0bs5fel</bpmn:incoming>
+        <bpmn:outgoing>Flow_16c10ck</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:userTask id="final_payment" name="Final payment" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_16c10ck</bpmn:incoming>
+        <bpmn:outgoing>Flow_1clwhu6</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:endEvent id="Event_00gyz1l">
+        <bpmn:incoming>Flow_1clwhu6</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1clwhu6" sourceRef="final_payment" targetRef="Event_00gyz1l" />
+      <bpmn:sequenceFlow id="Flow_0v37fp5" sourceRef="exercise" targetRef="second_payment" />
+      <bpmn:sequenceFlow id="Flow_0bs5fel" sourceRef="second_payment" targetRef="assestment" />
+      <bpmn:sequenceFlow id="Flow_16c10ck" sourceRef="assestment" targetRef="final_payment" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1pp1401" sourceRef="Activity_0ggt2p2" targetRef="Activity_0jc7r8d" />
     <bpmn:endEvent id="Event_19916hx">
       <bpmn:incoming>Flow_0tpao7z</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0tpao7z" sourceRef="Activity_0ggt2p2" targetRef="Event_19916hx" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="new-building-process">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_08vgz4k">
+      <bpmndi:BPMNShape id="Participant_06i986h_di" bpmnElement="Participant_06i986h" isHorizontal="true">
+        <dc:Bounds x="140" y="60" width="968" height="980" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0tpao7z_di" bpmnElement="Flow_0tpao7z">
-        <di:waypoint x="900" y="460" />
-        <di:waypoint x="962" y="460" />
+        <di:waypoint x="890" y="850" />
+        <di:waypoint x="972" y="850" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0szvikc_di" bpmnElement="Flow_0szvikc">
         <di:waypoint x="520" y="280" />
@@ -96,6 +144,19 @@
         <di:waypoint x="228" y="180" />
         <di:waypoint x="280" y="180" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1pp1401_di" bpmnElement="Flow_1pp1401">
+        <di:waypoint x="580" y="560" />
+        <di:waypoint x="580" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_16cl7vx_di" bpmnElement="start">
+        <dc:Bounds x="192" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="198" y="205" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_19916hx_di" bpmnElement="Event_19916hx">
+        <dc:Bounds x="972" y="832" width="36" height="36" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0dht8wr_di" bpmnElement="project_registration" isExpanded="true">
         <dc:Bounds x="280" y="80" width="660" height="200" />
       </bpmndi:BPMNShape>
@@ -139,7 +200,7 @@
       <bpmndi:BPMNShape id="Gateway_0mw5kyf_di" bpmnElement="approved_check_building" isMarkerVisible="true">
         <dc:Bounds x="735" y="155" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="719" y="117.5" width="82" height="27" />
+          <dc:Bounds x="719" y="118" width="82" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0jwd3q7_di" bpmnElement="Event_0jwd3q7">
@@ -147,12 +208,6 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0i9kd2o_di" bpmnElement="fill-registration-project">
         <dc:Bounds x="420" y="140" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_16cl7vx_di" bpmnElement="start">
-        <dc:Bounds x="192" y="162" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="198" y="205" width="24" height="14" />
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0ggt2p2_di" bpmnElement="Activity_0ggt2p2" isExpanded="true">
         <dc:Bounds x="280" y="360" width="620" height="200" />
@@ -200,8 +255,62 @@
       <bpmndi:BPMNShape id="Event_1si3czv_di" bpmnElement="Event_1si3czv">
         <dc:Bounds x="822" y="442" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_19916hx_di" bpmnElement="Event_19916hx">
-        <dc:Bounds x="962" y="442" width="36" height="36" />
+      <bpmndi:BPMNShape id="Activity_0jc7r8d_di" bpmnElement="Activity_0jc7r8d" isExpanded="true">
+        <dc:Bounds x="270" y="610" width="620" height="390" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1n522ha_di" bpmnElement="Flow_1n522ha">
+        <di:waypoint x="500" y="710" />
+        <di:waypoint x="560" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1it7rm1_di" bpmnElement="Flow_1it7rm1">
+        <di:waypoint x="346" y="710" />
+        <di:waypoint x="400" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_173b15k_di" bpmnElement="Flow_173b15k">
+        <di:waypoint x="660" y="710" />
+        <di:waypoint x="720" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1clwhu6_di" bpmnElement="Flow_1clwhu6">
+        <di:waypoint x="770" y="890" />
+        <di:waypoint x="770" y="942" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0v37fp5_di" bpmnElement="Flow_0v37fp5">
+        <di:waypoint x="770" y="750" />
+        <di:waypoint x="770" y="770" />
+        <di:waypoint x="470" y="770" />
+        <di:waypoint x="470" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bs5fel_di" bpmnElement="Flow_0bs5fel">
+        <di:waypoint x="500" y="850" />
+        <di:waypoint x="560" y="850" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16c10ck_di" bpmnElement="Flow_16c10ck">
+        <di:waypoint x="660" y="850" />
+        <di:waypoint x="720" y="850" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1lehryu_di" bpmnElement="Event_1lehryu">
+        <dc:Bounds x="310" y="692" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10khjz5_di" bpmnElement="agreement-and-first-payment">
+        <dc:Bounds x="400" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1746xhy_di" bpmnElement="reistered_project">
+        <dc:Bounds x="560" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0wxqfxv_di" bpmnElement="exercise">
+        <dc:Bounds x="720" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lhui8d_di" bpmnElement="second_payment">
+        <dc:Bounds x="400" y="810" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0eakux4_di" bpmnElement="assestment">
+        <dc:Bounds x="560" y="810" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0f0dr8y_di" bpmnElement="final_payment">
+        <dc:Bounds x="720" y="810" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_00gyz1l_di" bpmnElement="Event_00gyz1l">
+        <dc:Bounds x="752" y="942" width="36" height="36" />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
