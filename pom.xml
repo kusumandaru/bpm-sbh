@@ -150,7 +150,7 @@
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-multipart</artifactId>
       <!-- <version>3.0.2</version> -->
-  </dependency>
+    </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -182,6 +182,24 @@
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-freemarker</artifactId>
+    </dependency>
+
+    <!-- Thymeleaf html natural templates-->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>       
+
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>kernel</artifactId>
+        <version>7.1.12</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>html2pdf</artifactId>
+        <version>3.0.1</version>
     </dependency>
   </dependencies>
 
