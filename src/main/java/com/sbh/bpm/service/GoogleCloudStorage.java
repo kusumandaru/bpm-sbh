@@ -19,8 +19,12 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GoogleCloudStorage {
+  private static final Logger logger = LogManager.getLogger(GoogleCloudStorage.class);
+
   private Storage storage;
   private Bucket bucket;
   private GCSSignUrl gcsSignUrl;
@@ -32,7 +36,7 @@ public class GoogleCloudStorage {
       URL url = Resources.getResource("bpm-sbh.json");
       initGoogleCloudStorage(url.getPath(), "bpm_sbh");
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   
     // Bucket require globally unique names, so you'll probably need to change this
@@ -62,8 +66,14 @@ public class GoogleCloudStorage {
     try {
       targetArray = ByteStreams.toByteArray(stream);
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
+    Blob blob = bucket.create(blobName, targetArray);
+    return blob.getBlobId();
+  }
+
+  // Save a byte array to a blob
+  public BlobId SaveObject(String blobName, byte[] targetArray) {
     Blob blob = bucket.create(blobName, targetArray);
     return blob.getBlobId();
   }

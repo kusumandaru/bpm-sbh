@@ -17,9 +17,13 @@ import com.sbh.bpm.service.GoogleCloudStorage;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Path(value = "/gcs")
 public class GoogleCloudStorageController {
+  private static final Logger logger = LogManager.getLogger(GoogleCloudStorageController.class);
+
   @POST
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   @Produces(MediaType.APPLICATION_JSON)
@@ -29,7 +33,7 @@ public class GoogleCloudStorageController {
     try {
       googleCloudStorage = new GoogleCloudStorage();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
 
@@ -51,7 +55,7 @@ public class GoogleCloudStorageController {
     try {
       googleCloudStorage = new GoogleCloudStorage();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
 

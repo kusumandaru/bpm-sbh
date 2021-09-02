@@ -7,8 +7,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.text.DateFormat;
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,6 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -40,20 +43,19 @@ import com.google.gson.Gson;
 import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.Province;
-import com.sbh.bpm.model.SbhTask;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
+import com.sbh.bpm.service.ISequenceNumberService;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
@@ -67,9 +69,10 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
 
-
 @Path(value = "/new-building")
-public class NewBuildingController {
+public class NewBuildingController extends GcsUtil{
+  private static final Logger logger = LogManager.getLogger(NewBuildingController.class);
+  
   @Autowired
   private IProvinceService provinceService;
 
@@ -84,253 +87,10 @@ public class NewBuildingController {
 
   @Autowired
   private IPdfGeneratorUtil pdfGeneratorUtil;
-  @POST
-  @Path(value = "/create-project")
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response CreateProject(
-    @HeaderParam("Authorization") String authorization,
-    @FormDataParam("file") InputStream file, 
-    @FormDataParam("file") FormDataContentDisposition fileFdcd,
-    @FormDataParam("certification_type") String certificationType,
-    @FormDataParam("building_type") String buildingType,
-    @FormDataParam("building_name") String buildingName,
-    @FormDataParam("owner") String owner,
-    @FormDataParam("person_in_charge") String personInCharge,
-    @FormDataParam("building_address") String buildingAddress,
-    @FormDataParam("city") String city,
-    @FormDataParam("province") String province,
-    @FormDataParam("telephone") String telephone,
-    @FormDataParam("handphone") String handphone,
-    @FormDataParam("email") String email,
-    @FormDataParam("faximile") String faximile,
-    @FormDataParam("postal_code") String postalCode,
-    @FormDataParam("gross_floor_area") Integer grossFloorArea
-    ) {      
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
 
-    String username = "indofood1";
-    String tenant = "indofood";
-
-    Map<String, Object> variables = new HashMap<String,Object>();
-    variables.put("certification_type", certificationType);
-    variables.put("building_type", buildingType);
-    variables.put("building_name", buildingName);
-    variables.put("owner", owner);
-    variables.put("person_in_charge", personInCharge);
-    variables.put("building_address", buildingAddress);
-    variables.put("province", province);
-    variables.put("city", city);
-    variables.put("telephone", telephone);
-    variables.put("handphone", handphone);
-    variables.put("email", email);
-    variables.put("faximile", faximile);
-    variables.put("postal_code", postalCode);
-    variables.put("gross_floor_area", grossFloorArea);
-    variables.put("assignee", username);
-    variables.put("tenant", tenant);
-    variables.put("approved", null);
-
-    ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
-    ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
-    String activityInstanceId = activityInstance.getId();
-
-    try {
-      uploadToGcs(runtimeService, processInstance.getId(), activityInstanceId, file, fileFdcd, "proof_of_payment");
-    } catch (IOException e) {
-      e.printStackTrace();
-      return Response.status(400, e.getMessage()).build();
-    }
-    
-    TaskService taskService = processEngine.getTaskService();
-    Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
-    task.setTenantId(tenant);
-    taskService.claim(task.getId(), username);
-    taskService.setAssignee(task.getId(), username);
-    taskService.complete(task.getId());
-
-    task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
-    taskService.claim(task.getId(), "admin");
-
-    Map<String, String> map = new HashMap<String, String>();
-    map.put("process_definition_id", processInstance.getProcessDefinitionId());
-    map.put("case_instance_id", processInstance.getCaseInstanceId());
-    map.put("business_key", processInstance.getBusinessKey());
-    map.put("activity_instance_id", activityInstanceId);
-
-    String json = new Gson().toJson(map);
-    return Response.ok(json).build();
-  }
-
-  @PATCH
-  @Path(value = "/edit-project/{taskId}")
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response EditProject(
-    @PathParam("taskId") String taskId,
-    @HeaderParam("Authorization") String authorization,
-    @FormDataParam("file") InputStream file, 
-    @FormDataParam("file") FormDataContentDisposition fileFdcd,
-    @FormDataParam("certification_type") String certificationType,
-    @FormDataParam("building_type") String buildingType,
-    @FormDataParam("building_name") String buildingName,
-    @FormDataParam("owner") String owner,
-    @FormDataParam("person_in_charge") String personInCharge,
-    @FormDataParam("building_address") String buildingAddress,
-    @FormDataParam("city") String city,
-    @FormDataParam("province") String province,
-    @FormDataParam("telephone") String telephone,
-    @FormDataParam("handphone") String handphone,
-    @FormDataParam("email") String email,
-    @FormDataParam("faximile") String faximile,
-    @FormDataParam("postal_code") String postalCode,
-    @FormDataParam("gross_floor_area") Integer grossFloorArea
-    ) {      
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
-    TaskService taskService = processEngine.getTaskService();
-
-    Task task;
-    String processInstanceId;
-    String activityInstanceId;
-
-    try {
-      task = taskService.createTaskQuery().taskId(taskId).singleResult();
-      processInstanceId = task.getProcessInstanceId();
-      activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (NullValueException e) {
-      Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "task id not found");
-      String json = new Gson().toJson(map);
-
-      return Response.status(400).entity(json).build();
-    }
-
-    Map<String, String> variables = new HashMap<String,String>();
-    variables.put("certification_type", certificationType);
-    variables.put("building_type", buildingType);
-    variables.put("building_name", buildingName);
-    variables.put("owner", owner);
-    variables.put("person_in_charge", personInCharge);
-    variables.put("building_address", buildingAddress);
-    variables.put("province", province);
-    variables.put("city", city);
-    variables.put("telephone", telephone);
-    variables.put("handphone", handphone);
-    variables.put("email", email);
-    variables.put("faximile", faximile);
-    variables.put("postal_code", postalCode);
-
-    for (Map.Entry<String, String> variable : variables.entrySet()) {
-      if (!StringUtils.isEmpty(variable.getValue())) {
-        taskService.setVariable(task.getId(), variable.getKey(), variable.getValue());
-      }
-    }
-    if (grossFloorArea > 0) {
-      taskService.setVariable(task.getId(), "gross_floor_area", grossFloorArea);
-    }
-
-    taskService.setVariable(task.getId(), "approved", null);
-
-    try {
-      if (file.available() > 0) {
-        uploadToGcs(runtimeService, processInstanceId, activityInstanceId, file, fileFdcd, "proof_of_payment");
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-      return Response.status(400, e.getMessage()).build();
-    }
-    
-    String username = "indofood1";
-    String tenant = "indofood";
-
-    task.setTenantId(tenant);
-    taskService.claim(task.getId(), username);
-    taskService.setAssignee(task.getId(), username);
-    taskService.complete(task.getId());
-
-    task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
-    taskService.claim(task.getId(), "admin");
-
-    Map<String, String> map = new HashMap<String, String>();
-    map.put("process_instance_id", processInstanceId);
-    map.put("activity_instance_id", activityInstanceId);
-
-    String json = new Gson().toJson(map);
-    return Response.ok(json).build();
-  }
-
-  @GET
-  @Path(value = "/tasks/admin")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response AdminTasks(@HeaderParam("Authorization") String authorization) { 
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    TaskService taskService = processEngine.getTaskService();
-    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
-    List<Task> tasks = taskService.createTaskQuery().taskDefinitionKeyIn("check-registration-project", "check-document-building").active().orderByTaskCreateTime().desc().list();
-
-    for (Task task : tasks) {
-      SbhTask sbhTask = SbhTask.CreateFromTask(task);
-      Map<String, Object> variableMap = taskService.getVariables(task.getId());
-      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
-      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
-        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
-        sbhTask.setBuildingTypeName(buildingType.getNameId());
-      }
-      sbhTasks.add(sbhTask);
-    }
-    String json = new Gson().toJson(sbhTasks);
-    return Response.ok(json).build();
-  }
-
-  @GET
-  @Path(value = "/tasks/client")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response ClientTasks(@HeaderParam("Authorization") String authorization) { 
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    TaskService taskService = processEngine.getTaskService();
-    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
-    List<Task> tasks = taskService.createTaskQuery().taskDefinitionKeyIn("fill-registration-project", "fill-document-building").active().orderByTaskCreateTime().desc().list();
-
-    for (Task task : tasks) {
-      SbhTask sbhTask = SbhTask.CreateFromTask(task);
-      Map<String, Object> variableMap = taskService.getVariables(task.getId());
-      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
-      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
-        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
-        sbhTask.setBuildingTypeName(buildingType.getNameId());
-      }
-      sbhTasks.add(sbhTask);
-    }
-    String json = new Gson().toJson(sbhTasks);
-    return Response.ok(json).build();
-  }
-
-  @GET
-  @Path(value = "/tasks")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response Tasks(@HeaderParam("Authorization") String authorization) { 
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    TaskService taskService = processEngine.getTaskService();
-    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
-    List<Task> tasks = taskService.createTaskQuery().active().orderByTaskCreateTime().desc().list();
-
-    for (Task task : tasks) {
-      SbhTask sbhTask = SbhTask.CreateFromTask(task);
-      Map<String, Object> variableMap = taskService.getVariables(task.getId());
-      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
-      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
-        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
-        sbhTask.setBuildingTypeName(buildingType.getNameId());
-      }
-      sbhTasks.add(sbhTask);
-    }
-    String json = new Gson().toJson(sbhTasks);
-    return Response.ok(json).build();
-  }
-
-
+  @Autowired
+  private ISequenceNumberService sequenceNumberService;
+ 
   @GET
   @Path(value = "/variables/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -370,7 +130,7 @@ public class NewBuildingController {
       BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
       variableMap.put("building_type_name", buildingType.getNameId());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
 
     return Response.ok(variableMap).build();
@@ -471,13 +231,13 @@ public class NewBuildingController {
     //limit the number of actual threads
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Pair<String, BlobId>>> listOfCallable = Arrays.asList(
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, buildingPlan, buildingPlanFdcd, "building_plan"),
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, rtRw, rtRwFdcd, "rt_rw"),
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, uplUkl, uplUklFdcd, "upl_ukl"),
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, earthquakeResistance, earthquakeResistanceFdcd, "earthquake_resistance"),
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, disabilityFriendly, disabilityFriendlyFdcd, "disability_friendly"),
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, safetyAndFireRequirement, safetyAndFireRequirementFdcd,  "safety_and_fire_requirement"),
-                () -> uploadToGcs(runtimeService, processInstanceId, activityInstanceId, studyCaseReadiness, studyCaseReadinessFdcd, "study_case_readiness")
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, buildingPlan, buildingPlanFdcd, "building_plan"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, rtRw, rtRwFdcd, "rt_rw"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, uplUkl, uplUklFdcd, "upl_ukl"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, earthquakeResistance, earthquakeResistanceFdcd, "earthquake_resistance"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, disabilityFriendly, disabilityFriendlyFdcd, "disability_friendly"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, safetyAndFireRequirement, safetyAndFireRequirementFdcd,  "safety_and_fire_requirement"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, studyCaseReadiness, studyCaseReadinessFdcd, "study_case_readiness")
                 );
     try {
       List<Future<Pair<String, BlobId>>> futures = executor.invokeAll(listOfCallable);
@@ -495,8 +255,8 @@ public class NewBuildingController {
       });
 
     } catch (InterruptedException e) {// thread was interrupted
-        e.printStackTrace();
-      return Response.status(400, e.getMessage()).build();
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
 
     } finally {
         // shut down the executor manually
@@ -533,20 +293,20 @@ public class NewBuildingController {
     try {
       googleCloudStorage = new GoogleCloudStorage();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
 
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Blob>> listOfCallable = Arrays.asList(
-                () -> getBlob(googleCloudStorage, variableMap, "proof_of_payment"),
-                () -> getBlob(googleCloudStorage, variableMap, "building_plan"),
-                () -> getBlob(googleCloudStorage, variableMap, "rt_rw"),
-                () -> getBlob(googleCloudStorage, variableMap, "upl_ukl"),
-                () -> getBlob(googleCloudStorage, variableMap, "earthquake_resistance"),
-                () -> getBlob(googleCloudStorage, variableMap, "disability_friendly"),
-                () -> getBlob(googleCloudStorage, variableMap, "safety_and_fire_requirement"),
-                () -> getBlob(googleCloudStorage, variableMap, "study_case_readiness")
+                () -> GetBlob(googleCloudStorage, variableMap, "proof_of_payment"),
+                () -> GetBlob(googleCloudStorage, variableMap, "building_plan"),
+                () -> GetBlob(googleCloudStorage, variableMap, "rt_rw"),
+                () -> GetBlob(googleCloudStorage, variableMap, "upl_ukl"),
+                () -> GetBlob(googleCloudStorage, variableMap, "earthquake_resistance"),
+                () -> GetBlob(googleCloudStorage, variableMap, "disability_friendly"),
+                () -> GetBlob(googleCloudStorage, variableMap, "safety_and_fire_requirement"),
+                () -> GetBlob(googleCloudStorage, variableMap, "study_case_readiness")
                 );
 
     FileOutputStream fos;
@@ -555,7 +315,7 @@ public class NewBuildingController {
       fos = new FileOutputStream(taskId + ".zip");
       zipOut = new ZipOutputStream(fos);
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
     try {
@@ -576,7 +336,7 @@ public class NewBuildingController {
       });
 
     } catch (InterruptedException e) {// thread was interrupted
-        e.printStackTrace();
+        logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
 
     } finally {
@@ -588,7 +348,7 @@ public class NewBuildingController {
       zipOut.close();
       fos.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
   
@@ -600,7 +360,7 @@ public class NewBuildingController {
             try {
                 output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage());
             }
         }
     };
@@ -609,7 +369,6 @@ public class NewBuildingController {
         .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
         .build();
   }
-
 
   @GET
   @Path(value = "/diagram/{processDefinitionId}")
@@ -642,7 +401,7 @@ public class NewBuildingController {
 
     Pair<String, String> result;
     try {
-      result = getUrlGcs(variableMap, fileName);
+      result = GetUrlGcs(variableMap, fileName);
     } catch (IOException e) {
       result = null;
       return Response.status(404).build();
@@ -660,89 +419,75 @@ public class NewBuildingController {
   public javax.ws.rs.core.Response getEligibilityStatement(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
     
+    Task task;
+    String processInstanceId;
+    String activityInstanceId;
     Map<String, Object> variableMap;
     try {
       variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+      activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
     } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
-    int style = DateFormat.MEDIUM;
-    //Also try with style = DateFormat.FULL and DateFormat.SHORT
-    Date date = new Date();
-    DateFormat df;
-    Locale localeIndonesia = new Locale("id", "ID");
-    df = DateFormat.getDateInstance(style, localeIndonesia);
-    variableMap.put("printAt",df.format(date));
-
-    if (variableMap.get("province") != null) {
-      String provinceId = String.valueOf(variableMap.get("province"));
-      Province province = provinceService.findById(Integer.parseInt(provinceId));
-      variableMap.put("province_name", province.getName());
-    }
-
-    if (variableMap.get("city") != null) {
-      String cityId = String.valueOf(variableMap.get("city"));
-      City city = cityService.findById(Integer.parseInt(cityId));
-      variableMap.put("city_name", city.getName());
-    }
-
-    byte[] bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
-
-    /* Send the response as downloadable PDF */
-    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
-    responseBuilder.type("application/pdf");
-    responseBuilder.header("Content-Disposition", "attachment; filename=eligible-statement.pdf");
-    return responseBuilder.build();
-  }
-  
-  private Pair<String, BlobId> uploadToGcs(
-    RuntimeService runtimeService,
-    String processInstanceId,
-    String activityInstanceId,
-    InputStream file, 
-    FormDataContentDisposition fileFdcd, 
-    String alias
-  ) throws IOException {
-    if (fileFdcd.getFileName() != null) {
-      String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
-      String fileName = activityInstanceId + "__" + alias + "." + ext;
-
-      GoogleCloudStorage googleCloudStorage;
-      googleCloudStorage = new GoogleCloudStorage();
-
-      BlobId blobId = googleCloudStorage.SaveObject(fileName, file);
-      runtimeService.setVariable(processInstanceId, alias, fileName);
-
-      Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
-      return variables;
-    } else {
-      return null;
-    }
-  }
-
-  private Pair<String, String> getUrlGcs(Map<String, Object> variableMap, String filename) throws IOException {
-    // Get it by blob name
-    if (variableMap.get(filename) != null) {
-      GoogleCloudStorage googleCloudStorage;
-      googleCloudStorage = new GoogleCloudStorage();
-
-      Blob blob = getBlob(googleCloudStorage, variableMap, filename);
-  
-      if (blob != null) {
-        googleCloudStorage.SetGcsSignUrl(blob);
-        String publicUrl = googleCloudStorage.GetSignedUrl();
-        Pair<String, String> variables = new ImmutablePair<>(filename, publicUrl);
-        return variables;
+    String fileName = "eligibility_statement";
+    Pair<String, String> result;
+    if (variableMap.get(fileName) != null) {
+      try {
+        result = GetUrlGcs(variableMap, fileName);
+      } catch (IOException e) {
+        result = null;
+        return Response.status(404).build();
       }
+
+      URI redirect = UriBuilder.fromUri(result.getValue()).build();
+      return Response.temporaryRedirect(redirect).build();
+
+    } else {
+      int style = DateFormat.LONG;
+      //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
+      Date date = new Date();
+      DateFormat df;
+      Locale localeIndonesia = new Locale("id", "ID");
+      df = DateFormat.getDateInstance(style, localeIndonesia);
+      variableMap.put("printAt",df.format(date));
+  
+      if (variableMap.get("province") != null) {
+        String provinceId = String.valueOf(variableMap.get("province"));
+        Province province = provinceService.findById(Integer.parseInt(provinceId));
+        variableMap.put("province_name", province.getName());
+      }
+  
+      if (variableMap.get("city") != null) {
+        String cityId = String.valueOf(variableMap.get("city"));
+        City city = cityService.findById(Integer.parseInt(cityId));
+        variableMap.put("city_name", city.getName());
+      }
+  
+      variableMap.put("letter_number", sequenceNumberService.getNextNumber("ELI"));
+  
+      byte[] bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
+
+      try {
+        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+      }
+
+      /* Send the response as downloadable PDF */
+      javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+      responseBuilder.type("application/pdf");
+      responseBuilder.header("Content-Disposition", "attachment; filename=eligible-statement.pdf");
+      return responseBuilder.build();
     }
-
-    return null;
   }
-
-  private Blob getBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String filename) {
-    String path = String.valueOf(variableMap.get(filename));
-    return googleCloudStorage.GetBlobByName(path);
-  } 
 }
