@@ -16,11 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import freemarker.template.Configuration;
 
 @Service
 public class MailerService implements IMailerService {
+  private static final Logger logger = LogManager.getLogger(MailerService.class);
+
   @Autowired     
   Configuration fmConfiguration;
 
@@ -63,7 +67,7 @@ public class MailerService implements IMailerService {
     try {
         content.append(FreeMarkerTemplateUtils.processTemplateIntoString(fmConfiguration.getTemplate("email-template.flth"), model));
     } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
     }
     return content.toString();
   }

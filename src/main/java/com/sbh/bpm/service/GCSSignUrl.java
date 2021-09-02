@@ -6,8 +6,12 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GCSSignUrl {
+  private static final Logger logger = LogManager.getLogger(GoogleCloudStorage.class);
+
   // Google Service Account Client ID. Replace with your account.
   static final String CLIENT_ACCOUNT = "bpm-sbh-storage@bpm-sbh.iam.gserviceaccount.com";
  
@@ -57,7 +61,7 @@ public class GCSSignUrl {
       // URL encode the signed string so that we can add this URL
       signedString = URLEncoder.encode(signedString, "UTF-8");
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     
     String signedUrl = getSignedUrl(signedString);

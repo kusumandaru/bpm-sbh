@@ -21,12 +21,15 @@ import com.sbh.bpm.model.Province;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IProvinceService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Path(value = "/master")
 public class MasterController {
+  private static final Logger logger = LogManager.getLogger(MasterController.class);
 
   @Autowired
   private IProvinceService provinceService;

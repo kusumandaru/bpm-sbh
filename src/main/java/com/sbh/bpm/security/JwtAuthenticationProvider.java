@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 public class JwtAuthenticationProvider implements AuthenticationProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationProvider.class);
 
     @Override
     public AuthenticationResult extractAuthenticatedUser(HttpServletRequest request, ProcessEngine engine, Class<?> jwtValidator, String jwtSecret) {
@@ -30,17 +29,17 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
             return AuthenticationResult.unsuccessful();
         } catch(JWTVerificationException e){
             // @TODO Add better Exception handling for JWT Validator class loading
-            LOGGER.error("Could not load Jwt Validator Class: " + e.getLocalizedMessage());
+            logger.error("Could not load Jwt Validator Class: " + e.getLocalizedMessage());
             throw e;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
             return AuthenticationResult.unsuccessful();
         }
     }
 
     @Override
     public void augmentResponseByAuthenticationChallenge(HttpServletResponse response, ProcessEngine engine) {
-            LOGGER.error(engine.getName());
+            logger.error(engine.getName());
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
