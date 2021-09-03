@@ -19,6 +19,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -61,20 +62,20 @@ public class GoogleCloudStorage {
   }
   
   // Save a string to a blob
-  public BlobId SaveObject(String blobName, InputStream stream) {
+  public BlobId SaveObject(String directory, String blobName, InputStream stream) {
     byte[] targetArray = new byte[0];
     try {
       targetArray = ByteStreams.toByteArray(stream);
     } catch (IOException e) {
       logger.error(e.getMessage());
     }
-    Blob blob = bucket.create(blobName, targetArray);
+    Blob blob = bucket.create(directory + "/" + blobName, targetArray);
     return blob.getBlobId();
   }
 
   // Save a byte array to a blob
-  public BlobId SaveObject(String blobName, byte[] targetArray) {
-    Blob blob = bucket.create(blobName, targetArray);
+  public BlobId SaveObject(String directory, String blobName, byte[] targetArray) {
+    Blob blob = bucket.create(directory + "/" + blobName, targetArray);
     return blob.getBlobId();
   }
   

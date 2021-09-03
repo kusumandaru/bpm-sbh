@@ -25,12 +25,12 @@ class GcsUtil {
   ) throws IOException {
     if (fileFdcd.getFileName() != null) {
       String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
-      String fileName = activityInstanceId + "__" + alias + "." + ext;
+      String fileName = alias + "." + ext;
 
       GoogleCloudStorage googleCloudStorage;
       googleCloudStorage = new GoogleCloudStorage();
 
-      BlobId blobId = googleCloudStorage.SaveObject(fileName, file);
+      BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, fileName, file);
       runtimeService.setVariable(processInstanceId, alias, fileName);
 
       Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
@@ -48,12 +48,12 @@ class GcsUtil {
     String alias,
     String ext) throws IOException {
       if (bytes != null  && bytes.length > 0) {
-        String fileName = activityInstanceId + "__" + alias + "." + ext;
+        String fileName = alias + "." + ext;
   
         GoogleCloudStorage googleCloudStorage;
         googleCloudStorage = new GoogleCloudStorage();
   
-        BlobId blobId = googleCloudStorage.SaveObject(fileName, bytes);
+        BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, fileName, bytes);
         runtimeService.setVariable(processInstanceId, alias, fileName);
   
         Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
@@ -63,13 +63,16 @@ class GcsUtil {
       }
 }
   
-  protected Pair<String, String> GetUrlGcs(Map<String, Object> variableMap, String filename) throws IOException {
+  protected Pair<String, String> GetUrlGcs(Map<String, Object> variableMap, String directory, String filename) throws IOException {
     // Get it by blob name
     if (variableMap.get(filename) != null) {
       GoogleCloudStorage googleCloudStorage;
       googleCloudStorage = new GoogleCloudStorage();
 
-      Blob blob = GetBlob(googleCloudStorage, variableMap, filename);
+      Blob blob = GetBlob(googleCloudStorage, variableMap, directory, filename);
+      if (blob == null) {
+        blob = GetBlob(googleCloudStorage, variableMap, filename);
+      }
   
       if (blob != null) {
         googleCloudStorage.SetGcsSignUrl(blob);
@@ -81,6 +84,20 @@ class GcsUtil {
 
     return null;
   }
+
+  protected Blob GetBlobDirect(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String directory, String filename) {
+    Blob blob = GetBlob(googleCloudStorage, variableMap, directory, filename);
+    if (blob == null) {
+      blob = GetBlob(googleCloudStorage, variableMap, filename);
+    }
+
+    return blob;
+  }
+
+  protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String directory, String filename) {
+    String path = String.valueOf(variableMap.get(filename));
+    return googleCloudStorage.GetBlobByName(directory + "/" + path);
+  } 
 
   protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String filename) {
     String path = String.valueOf(variableMap.get(filename));

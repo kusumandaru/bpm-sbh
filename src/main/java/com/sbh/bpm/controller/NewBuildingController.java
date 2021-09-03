@@ -9,8 +9,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.text.DateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,7 +25,6 @@ import java.util.zip.ZipOutputStream;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -52,7 +49,6 @@ import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,8 +58,6 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
-import org.camunda.bpm.engine.runtime.ActivityInstance;
-import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -283,8 +277,12 @@ public class NewBuildingController extends GcsUtil{
     TaskService taskService = processEngine.getTaskService();
     
     Map<String, Object> variableMap;
+    Task task;
+    String processInstanceId;
     try {
       variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
     } catch (NullValueException e) {
       return Response.status(400, "task id not found").build();
     }
@@ -299,14 +297,14 @@ public class NewBuildingController extends GcsUtil{
 
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Blob>> listOfCallable = Arrays.asList(
-                () -> GetBlob(googleCloudStorage, variableMap, "proof_of_payment"),
-                () -> GetBlob(googleCloudStorage, variableMap, "building_plan"),
-                () -> GetBlob(googleCloudStorage, variableMap, "rt_rw"),
-                () -> GetBlob(googleCloudStorage, variableMap, "upl_ukl"),
-                () -> GetBlob(googleCloudStorage, variableMap, "earthquake_resistance"),
-                () -> GetBlob(googleCloudStorage, variableMap, "disability_friendly"),
-                () -> GetBlob(googleCloudStorage, variableMap, "safety_and_fire_requirement"),
-                () -> GetBlob(googleCloudStorage, variableMap, "study_case_readiness")
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "proof_of_payment"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "building_plan"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "rt_rw"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "upl_ukl"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "earthquake_resistance"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "disability_friendly"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "safety_and_fire_requirement"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "study_case_readiness")
                 );
 
     FileOutputStream fos;
@@ -391,17 +389,22 @@ public class NewBuildingController extends GcsUtil{
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
     
+    Task task;
+    String processInstanceId;
     Map<String, Object> variableMap;
     try {
       variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
     } catch (NullValueException e) {
       return Response.status(400, "task id not found").build();
     }
 
     Pair<String, String> result;
     try {
-      result = GetUrlGcs(variableMap, fileName);
+      result = GetUrlGcs(variableMap, processInstanceId, fileName);
     } catch (IOException e) {
       result = null;
       return Response.status(404).build();
@@ -442,7 +445,7 @@ public class NewBuildingController extends GcsUtil{
     Pair<String, String> result;
     if (variableMap.get(fileName) != null) {
       try {
-        result = GetUrlGcs(variableMap, fileName);
+        result = GetUrlGcs(variableMap, processInstanceId, fileName);
       } catch (IOException e) {
         result = null;
         return Response.status(404).build();
