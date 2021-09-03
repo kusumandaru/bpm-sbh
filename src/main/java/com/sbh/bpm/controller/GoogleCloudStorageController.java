@@ -15,10 +15,10 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.sbh.bpm.service.GoogleCloudStorage;
 
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path(value = "/gcs")
 public class GoogleCloudStorageController {
@@ -59,7 +59,7 @@ public class GoogleCloudStorageController {
       return Response.status(400, e.getMessage()).build();
     }
 
-    BlobId blobId = googleCloudStorage.SaveObject(fileFdcd.getFileName(), file);
+    BlobId blobId = googleCloudStorage.SaveObject("general", fileFdcd.getFileName(), file);
     return Response.ok(blobId).build();
 	}
 }
