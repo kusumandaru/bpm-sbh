@@ -1,22 +1,18 @@
 package com.sbh.bpm.service;
 
-import java.time.Year;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.LockModeType;
 
+import com.github.fracpete.romannumerals4j.RomanNumeralFormat;
 import com.sbh.bpm.model.SequenceNumber;
 import com.sbh.bpm.repository.SequenceNumberRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Lock;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
@@ -74,7 +70,8 @@ public class SequenceNumberService implements ISequenceNumberService {
     int year  = localDate.getYear();
     int month = localDate.getMonthValue();
 
-    String formatNumber = firstNumber + "/PT.SBH/" + sequenceNumber.getCode() + "/" + String.valueOf(month) + "/" + String.valueOf(year);
+    RomanNumeralFormat roman = new RomanNumeralFormat();
+    String formatNumber = firstNumber + "/PT.SBH/" + sequenceNumber.getCode() + "/" + roman.format(month) + "/" + String.valueOf(year);
     return formatNumber;
   }
 
