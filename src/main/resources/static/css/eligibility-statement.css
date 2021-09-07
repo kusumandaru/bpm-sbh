@@ -1,16 +1,20 @@
 /* Font Definitions */
-@font-face
-{font-family:Wingdings;
-panose-1:5 0 0 0 0 0 0 0 0 0;}
-@font-face
-{font-family:"Cambria Math";
-panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-{font-family:Calibri;
-panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-{font-family:Tahoma;
-panose-1:2 11 6 4 3 5 4 4 2 4;}
+{
+  font-family:wingding;
+  src:url('../fonts/wingding.ttf');
+}
+{
+  font-family:"Cambria Math";
+  src:url('../fonts/cambria.ttc'); 
+}
+{
+  font-family:Calibri;
+  src:url('../fonts/calibri-regular.ttf'); 
+}
+{
+  font-family:Tahoma;
+  src:url('../fonts/tahoma.ttf'); 
+}
 /* Style Definitions */
 p.MsoNormal, li.MsoNormal, div.MsoNormal
 {margin-top:0cm;

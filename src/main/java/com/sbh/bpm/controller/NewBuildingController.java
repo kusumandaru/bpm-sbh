@@ -44,6 +44,7 @@ import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
@@ -84,6 +85,9 @@ public class NewBuildingController extends GcsUtil{
 
   @Autowired
   private ISequenceNumberService sequenceNumberService;
+
+  @Autowired
+  private IMasterAdminService masterAdminService;
  
   @GET
   @Path(value = "/variables/{taskId}")
@@ -453,7 +457,6 @@ public class NewBuildingController extends GcsUtil{
 
       URI redirect = UriBuilder.fromUri(result.getValue()).build();
       return Response.temporaryRedirect(redirect).build();
-
     } else {
       int style = DateFormat.LONG;
       //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
@@ -476,6 +479,15 @@ public class NewBuildingController extends GcsUtil{
       }
   
       variableMap.put("letter_number", sequenceNumberService.getNextNumber("ELI"));
+      variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
+      try {
+        Map<String, Object> maps = masterAdminService.getVariableMap();
+        result = GetUrlGcs(maps, "admin", "manager_signature");
+        variableMap.put("manager_signature", result.getValue());
+        logger.info(result.getValue());
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+      }
   
       byte[] bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
 
