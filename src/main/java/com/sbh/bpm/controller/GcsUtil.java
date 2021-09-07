@@ -15,7 +15,7 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 class GcsUtil {
-  protected Pair<String, BlobId> UploadToGcs(
+  protected Pair<String, String> UploadToGcs(
     String directory,
     InputStream file, 
     FormDataContentDisposition fileFdcd, 
@@ -28,9 +28,9 @@ class GcsUtil {
       GoogleCloudStorage googleCloudStorage;
       googleCloudStorage = new GoogleCloudStorage();
 
-      BlobId blobId = googleCloudStorage.SaveObject(directory, fileName, file);
+      googleCloudStorage.SaveObject(directory, fileName, file);
 
-      Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
+      Pair<String, String> variables = new ImmutablePair<>(alias, fileName);
       return variables;
     } else {
       return null;

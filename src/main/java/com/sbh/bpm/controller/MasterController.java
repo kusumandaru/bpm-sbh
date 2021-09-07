@@ -1,30 +1,17 @@
 package com.sbh.bpm.controller;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.text.DateFormat;
+import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -37,7 +24,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
@@ -58,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Path(value = "/master")
-public class MasterController  extends GcsUtil{
+public class MasterController extends GcsUtil{
   private static final Logger logger = LogManager.getLogger(MasterController.class);
 
   @Autowired
@@ -261,7 +247,7 @@ public class MasterController  extends GcsUtil{
   @Path(value = "/master_admins")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getMasterAdmin(@HeaderParam("Authorization") String authorization) {      
-    MasterAdmin masterAdmin = masterAdminService.findById(1);
+    MasterAdmin masterAdmin = masterAdminService.findLast();
 
     String json = new Gson().toJson(masterAdmin);
     return Response.ok(json).build();
@@ -286,10 +272,10 @@ public class MasterController  extends GcsUtil{
     @FormDataParam("third_attachment") FormDataContentDisposition thirdAttachmentFdcd
     ) {         
  
-    MasterAdmin masterAdmin = masterAdminService.findById(1);
+    MasterAdmin masterAdmin = masterAdminService.findLast();
 
     ExecutorService executor = Executors.newCachedThreadPool();
-    List<Callable<Pair<String, BlobId>>> listOfCallable = Arrays.asList(
+    List<Callable<Pair<String, String>>> listOfCallable = Arrays.asList(
                 () -> UploadToGcs("admin", managerSignature, managerSignatureFdcd, "manager_signature"),
                 () -> UploadToGcs("admin", registrationLetter, registrationLetterFdcd, "registration_letter"),
                 () -> UploadToGcs("admin", firstAttachment, firstAttachmentFdcd, "first_attachment"),
@@ -297,12 +283,12 @@ public class MasterController  extends GcsUtil{
                 () -> UploadToGcs("admin", thirdAttachment, thirdAttachmentFdcd, "third_attachment")
               );
     
-    Map<String, BlobId> results = new HashMap<String, BlobId>();
+    Map<String, String> results = new HashMap<String, String>();
     try {
-      List<Future<Pair<String, BlobId>>> futures = executor.invokeAll(listOfCallable);
+      List<Future<Pair<String, String>>> futures = executor.invokeAll(listOfCallable);
       futures.stream().forEach(f -> {
           try {
-            Pair<String, BlobId> res = f.get();
+            Pair<String, String> res = f.get();
             if (res != null) {
               results.put(res.getKey(), res.getValue());
              
@@ -320,11 +306,11 @@ public class MasterController  extends GcsUtil{
     }
 
     try {
-      for (Map.Entry<String, BlobId> entry : results.entrySet()) {
+      for (Map.Entry<String, String> entry : results.entrySet()) {
         try {
           String methodName = "set" + CaseUtils.toCamelCase(entry.getKey(), true, '_');
           Method method = masterAdmin.getClass().getMethod(methodName, String.class);
-          method.invoke(masterAdmin, entry.getKey());
+          method.invoke(masterAdmin, entry.getValue());
         } catch (Exception e){
           throw new IllegalStateException(e);
         }
@@ -341,4 +327,27 @@ public class MasterController  extends GcsUtil{
     String json = new Gson().toJson(masterAdmin);
     return Response.ok(json).build();
   }
+
+  @GET
+  @Path(value = "/url_file/{file_name}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetUrlFile(@HeaderParam("Authorization") String authorization, 
+    @PathParam("file_name") String fileName
+  ) {
+    Map<String, Object> variableMap = masterAdminService.getVariableMap();
+    
+    Pair<String, String> result;
+    try {
+      result = GetUrlGcs(variableMap, "admin", fileName);
+    } catch (IOException e) {
+      result = null;
+      return Response.status(404).build();
+    }
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("url", result.getValue());
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
+  }
+
 }

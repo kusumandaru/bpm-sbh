@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MasterAdminRepository extends CrudRepository<MasterAdmin, Integer> {
+  MasterAdmin findTopByOrderByIdDesc();
 }
 
