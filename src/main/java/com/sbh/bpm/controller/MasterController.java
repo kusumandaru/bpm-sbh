@@ -1,7 +1,30 @@
 package com.sbh.bpm.controller;
 
+import java.lang.reflect.Method;
 import java.util.List;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.text.DateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -14,21 +37,28 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
+import com.sbh.bpm.model.MasterAdmin;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
+import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IProvinceService;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.text.CaseUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Path(value = "/master")
-public class MasterController {
+public class MasterController  extends GcsUtil{
   private static final Logger logger = LogManager.getLogger(MasterController.class);
 
   @Autowired
@@ -39,6 +69,9 @@ public class MasterController {
 
   @Autowired
   private IBuildingTypeService buildingTypeService;
+
+  @Autowired
+  private IMasterAdminService masterAdminService;
 
   @GET
   @Path(value = "/provinces")
@@ -221,6 +254,91 @@ public class MasterController {
     buildingType = buildingTypeService.save(buildingType);
 
     String json = new Gson().toJson(buildingType);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/master_admins")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getMasterAdmin(@HeaderParam("Authorization") String authorization) {      
+    MasterAdmin masterAdmin = masterAdminService.findById(1);
+
+    String json = new Gson().toJson(masterAdmin);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/master_admins")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CreateMasterAdmin(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("manager_name") String managerName,
+    @FormDataParam("manager_signature") InputStream managerSignature, 
+    @FormDataParam("manager_signature") FormDataContentDisposition managerSignatureFdcd,
+    @FormDataParam("registration_letter") InputStream registrationLetter, 
+    @FormDataParam("registration_letter") FormDataContentDisposition registrationLetterFdcd,
+    @FormDataParam("first_attachment") InputStream firstAttachment, 
+    @FormDataParam("first_attachment") FormDataContentDisposition firstAttachmentFdcd,
+    @FormDataParam("second_attachment") InputStream secondAttachment, 
+    @FormDataParam("second_attachment") FormDataContentDisposition secondAttachmentFdcd,
+    @FormDataParam("third_attachment") InputStream thirdAttachment, 
+    @FormDataParam("third_attachment") FormDataContentDisposition thirdAttachmentFdcd
+    ) {         
+ 
+    MasterAdmin masterAdmin = masterAdminService.findById(1);
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Pair<String, BlobId>>> listOfCallable = Arrays.asList(
+                () -> UploadToGcs("admin", managerSignature, managerSignatureFdcd, "manager_signature"),
+                () -> UploadToGcs("admin", registrationLetter, registrationLetterFdcd, "registration_letter"),
+                () -> UploadToGcs("admin", firstAttachment, firstAttachmentFdcd, "first_attachment"),
+                () -> UploadToGcs("admin", secondAttachment, secondAttachmentFdcd, "second_attachment"),
+                () -> UploadToGcs("admin", thirdAttachment, thirdAttachmentFdcd, "third_attachment")
+              );
+    
+    Map<String, BlobId> results = new HashMap<String, BlobId>();
+    try {
+      List<Future<Pair<String, BlobId>>> futures = executor.invokeAll(listOfCallable);
+      futures.stream().forEach(f -> {
+          try {
+            Pair<String, BlobId> res = f.get();
+            if (res != null) {
+              results.put(res.getKey(), res.getValue());
+             
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    try {
+      for (Map.Entry<String, BlobId> entry : results.entrySet()) {
+        try {
+          String methodName = "set" + CaseUtils.toCamelCase(entry.getKey(), true, '_');
+          Method method = masterAdmin.getClass().getMethod(methodName, String.class);
+          method.invoke(masterAdmin, entry.getKey());
+        } catch (Exception e){
+          throw new IllegalStateException(e);
+        }
+      };
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    if (managerName != null) {
+      masterAdmin.setManagerName(managerName);
+    }
+    masterAdmin = masterAdminService.save(masterAdmin);
+
+    String json = new Gson().toJson(masterAdmin);
     return Response.ok(json).build();
   }
 }

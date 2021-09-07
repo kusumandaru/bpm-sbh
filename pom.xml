@@ -166,6 +166,12 @@
         <version>3.12.0</version>
     </dependency>
 
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>1.9</version>
+     </dependency>
+
     <!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
     <dependency>
         <groupId>com.sendgrid</groupId>

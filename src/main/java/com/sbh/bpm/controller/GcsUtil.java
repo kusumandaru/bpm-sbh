@@ -16,6 +16,28 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 class GcsUtil {
   protected Pair<String, BlobId> UploadToGcs(
+    String directory,
+    InputStream file, 
+    FormDataContentDisposition fileFdcd, 
+    String alias
+  ) throws IOException {
+    if (fileFdcd != null && fileFdcd.getFileName() != null) {
+      String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
+      String fileName = alias + "." + ext;
+
+      GoogleCloudStorage googleCloudStorage;
+      googleCloudStorage = new GoogleCloudStorage();
+
+      BlobId blobId = googleCloudStorage.SaveObject(directory, fileName, file);
+
+      Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
+      return variables;
+    } else {
+      return null;
+    }
+  }
+
+  protected Pair<String, BlobId> UploadToGcs(
     RuntimeService runtimeService,
     String processInstanceId,
     String activityInstanceId,
