@@ -48,6 +48,8 @@ import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
+import com.sbh.bpm.service.SequenceNumberService;
+import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -478,7 +480,7 @@ public class NewBuildingController extends GcsUtil{
         variableMap.put("city_name", city.getName());
       }
   
-      variableMap.put("letter_number", sequenceNumberService.getNextNumber("ELI"));
+      variableMap.put("letter_number", sequenceNumberService.getNextNumber("ELI", SequenceNumberService.NUMBER_FORMAT.GENERAL));
       variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
       try {
         Map<String, Object> maps = masterAdminService.getVariableMap();
@@ -502,6 +504,95 @@ public class NewBuildingController extends GcsUtil{
       javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
       responseBuilder.type("application/pdf");
       responseBuilder.header("Content-Disposition", "attachment; filename=eligible-statement.pdf");
+      return responseBuilder.build();
+    }
+  }
+
+  @GET
+  @Path(value = "/registered_project/{taskId}")
+  @Produces({"application/pdf"})
+  public javax.ws.rs.core.Response getRegisteredProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    
+    Task task;
+    String processInstanceId;
+    String activityInstanceId;
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+      activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    String fileName = "registered_project";
+    Pair<String, String> result;
+    if (variableMap.get(fileName) != null) {
+      try {
+        result = GetUrlGcs(variableMap, processInstanceId, fileName);
+      } catch (IOException e) {
+        result = null;
+        return Response.status(404).build();
+      }
+
+      URI redirect = UriBuilder.fromUri(result.getValue()).build();
+      return Response.temporaryRedirect(redirect).build();
+    } else {
+      int style = DateFormat.LONG;
+      //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
+      Date date = new Date();
+      DateFormat df;
+      Locale localeIndonesia = new Locale("id", "ID");
+      df = DateFormat.getDateInstance(style, localeIndonesia);
+      variableMap.put("printAt",df.format(date));
+  
+      if (variableMap.get("province") != null) {
+        String provinceId = String.valueOf(variableMap.get("province"));
+        Province province = provinceService.findById(Integer.parseInt(provinceId));
+        variableMap.put("province_name", province.getName());
+      }
+  
+      if (variableMap.get("city") != null) {
+        String cityId = String.valueOf(variableMap.get("city"));
+        City city = cityService.findById(Integer.parseInt(cityId));
+        variableMap.put("city_name", city.getName());
+      }
+  
+      variableMap.put("letter_number", sequenceNumberService.getNextNumber("RPD",  NUMBER_FORMAT.GENERAL));
+      variableMap.put("registered_project_number", sequenceNumberService.getNextNumber("RP/NB", NUMBER_FORMAT.REGISTERED));
+      variableMap.put("agreement_number", "002/Greenship.NB/SBH-02/IX/2021");
+
+      variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
+      try {
+        Map<String, Object> maps = masterAdminService.getVariableMap();
+        result = GetUrlGcs(maps, "admin", "manager_signature");
+        variableMap.put("manager_signature", result.getValue());
+        logger.info(result.getValue());
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+      }
+  
+      byte[] bytes = pdfGeneratorUtil.CreatePdf("registered-project", variableMap);
+
+      try {
+        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+      }
+
+      /* Send the response as downloadable PDF */
+      javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+      responseBuilder.type("application/pdf");
+      responseBuilder.header("Content-Disposition", "attachment; filename=registered-project.pdf");
       return responseBuilder.build();
     }
   }

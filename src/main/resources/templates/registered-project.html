@@ -1,0 +1,491 @@
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <title>Registered Proejct</title>
+    <link th:href="@{css/registered-project.css}" rel="stylesheet" type="text/css" media="all" />
+  </head>
+  <body>
+    <div class=WordSection1>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image1.png}" style="width: 200.00px; height: 70.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; ; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px); width: 240.00px; height: 170.00px;">
+        <img th:src="@{images/image2.png}" style="width: 240.00px; height: 170.00px; margin-left: 450.00px; margin-top: -75.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
+        <span lang=EN-US>Jakarta, <span th:text="${printAt}"></span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
+        <span lang=EN-US>No. <span th:text="${letter_number}"></span> <span style='mso-tab-count:5'></span>
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span lang=EN-US>Perihal <span style='mso-tab-count:1'></span>: </span>
+        <span lang=IN style='mso-ansi-language:
+IN'>Pernyataan Status <b style='mso-bidi-font-weight:normal'>
+            <i style='mso-bidi-font-style:normal'>Registered Project</i>
+          </b> dalam Sertifikasi GREENSHIP </span>
+        <span lang=EN-US>
+          <br> Lamp <span style='mso-tab-count:1'></span>: Panduan <i style='mso-bidi-font-style:
+normal'>Registered Project 
+          </i>
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span lang=EN-US>
+          <br> Kepada Yth. <br>
+          <span style='mso-spacerun:yes'></span>Bapak/Ibu <span th:text="${person_in_charge}"></span>
+          <br>
+          <span th:text="${building_address}"></span>
+          <br>
+          <span th:text="${city_name}"></span>
+          <br>
+          <span th:text="${province_name}"></span>
+          <br>
+          <span th:text="${postal_code}"></span>
+        </span>
+      </p>
+      <p class=MsoNormal>
+        <span lang=EN-US>
+          <br>
+          <span style='mso-tab-count:3'></span>
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+inter-ideograph'>
+        <span lang=EN-US>Dengan hormat, </span>
+      </p>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph;
+line-height:normal'>
+        <span lang=IN style='mso-ansi-language:IN'>Berdasarkan surat perjanjian Greenship nomor : <span th:text="${agreement_number}"></span> untuk proyek </span>
+        <span lang=EN-GB style='mso-ansi-language:EN-GB'>Gedung <span th:text="${building_name}"></span> 
+        <span lang=IN style='mso-ansi-language:IN'>yang telah ditandatangani bersama serta telah ditunaikannya syarat administratif Sertifikasi Greenship</span>
+        </span>
+      </p>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph;
+line-height:normal'>
+        <span lang=IN style='mso-ansi-language:IN'>Dengan ini kami menerangkan: 
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span lang=IN style='mso-ansi-language:IN'>Nama</span>
+        <span lang=EN-GB style='mso-ansi-language:EN-GB'>
+          <span style='mso-tab-count:1'></span>
+        </span>
+        <span lang=IN style='mso-ansi-language:IN'>
+          <span style='mso-tab-count:1'></span>: </span>
+        <span lang=EN-GB style='mso-ansi-language:EN-GB'><span th:text="${person_in_charge}"></span></span>
+        <span lang=IN style='mso-ansi-language:IN'>
+          
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span lang=IN style='mso-ansi-language:IN'>Atas Nama <span style='mso-tab-count:1'></span>: </span>
+        <span lang=EN-GB style='mso-ansi-language:EN-GB'><span th:text="${owner}"></span> ( <span class=GramE>pemilik</span> gedung) </span>
+        <span class=tab>
+          <b style='mso-bidi-font-weight:normal'>
+            <u>
+              <span lang=EN-GB style='font-family:"Bookman Old Style",serif;color:black;mso-ansi-language:EN-GB'>
+                
+              </span>
+            </u>
+          </b>
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpFirst style='margin-left:0cm;mso-add-space:auto;
+text-align:justify;text-justify:inter-ideograph'>
+        <span lang=IN style='mso-ansi-language:IN'>Alamat</span>
+        <span lang=EN-GB style='mso-ansi-language:
+EN-GB'>
+          <span style='mso-tab-count:1'></span>
+          <span style='mso-tab-count:1'></span>
+        </span>
+        <span lang=IN style='mso-ansi-language:IN'>:</span>
+        <span lang=IN></span>
+        <span lang=EN-US><span th:text="${building_address}"></span></span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin-left:0cm;mso-add-space:auto;
+text-align:justify;text-justify:inter-ideograph'>
+        <span lang=IN style='mso-ansi-language:IN'>Status <span style='mso-tab-count:2'></span>: </span>
+        <span lang=IN style='mso-ansi-language:EN-GB'></span>
+        <b style='mso-bidi-font-weight:
+normal'>
+          <span lang=IN style='mso-ansi-language:IN'>GREENSHIP <i style='mso-bidi-font-style:normal'>Registered Project </i>(Terdaftar Sertifikasi GREENSHIP) </span>
+        </b>
+      </p>
+      <p class=MsoListParagraphCxSpLast style='margin-left:70.9pt;mso-add-space:auto;
+text-align:justify;text-justify:inter-ideograph;text-indent:-70.9pt'>
+        <span lang=IN style='mso-ansi-language:IN'>No. Registered: </span>
+        <span th:text="${registered_project_number}"></span>
+        <span lang=EN-GB style='mso-ansi-language:
+EN-GB'>I</span>
+        <span lang=IN style='mso-ansi-language:IN'>II/2021</span>
+        <span lang=EN-GB style='mso-bidi-font-family:Arial;color:black;mso-ansi-language:
+EN-GB'>
+          
+        </span>
+      </p>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph;
+line-height:normal'>
+        <span lang=IN style='mso-ansi-language:IN'>Dengan status tersebut maka selanjutnya PT. Sertifikasi Bangunan Hijau</span>
+        <span lang=IN style='mso-ansi-language:IN'> akan melakukan proses sebagai berikut: 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpFirst style='text-align:justify;text-justify:inter-ideograph;  text-indent:-18.0pt;line-height:normal;mso-list:l5 level1 lfo15'>
+        <![if !supportLists]>
+        <span lang=IN style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;mso-ansi-language:IN'>
+          <span style='mso-list:Ignore'>1. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>Pemasangan plang Greenship</span>
+        <span lang=IN style='mso-ansi-language:IN'> ( <i style='mso-bidi-font-style:normal'>indoor</i></span>
+        <span lang=EN-US> atau </span>
+        <i style='mso-bidi-font-style:normal'>
+          <span lang=IN style='mso-ansi-language:IN'>outdoor</span>
+        </i>
+        <span lang=IN style='mso-ansi-language:IN'>) 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l5 level1 lfo15'>
+        <![if !supportLists]>
+        <span lang=IN style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;mso-ansi-language:IN'>
+          <span style='mso-list:Ignore'>2. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>Penyerahan buku Greenship</span>
+        <span lang=EN-GB style='mso-ansi-language:IN'></span>
+        <i style='mso-bidi-font-style:normal'>
+          <span lang=IN style='mso-ansi-language:IN'>guideline for New Building</span>
+        </i>
+        <span lang=IN style='mso-ansi-language:IN'> sebanyak 2 Eksemplar</span>
+        <span lang=IN style='mso-ansi-language:IN'>
+          
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l5 level1 lfo15'>
+        <![if !supportLists]>
+        <span lang=IN style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;mso-ansi-language:IN'>
+          <span style='mso-list:Ignore'>3. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>Mendampingi</span>
+        <span lang=EN-US style='mso-ansi-language:IN'></span>
+        <i style='mso-bidi-font-style:normal'>
+          <span lang=IN style='mso-ansi-language:IN'>Workshop</span>
+        </i>
+        <span lang=IN style='mso-ansi-language:IN'> &amp; <i style='mso-bidi-font-style:normal'>Exercise Rating</i> sebanyak 1 kali 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify:
+inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l5 level1 lfo15'>
+        <![if !supportLists]>
+        <span lang=IN style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;
+mso-ansi-language:IN'>
+          <span style='mso-list:Ignore'>4. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>Menghadiri rapat koordinasi sebanyak </span>
+        <span lang=EN-US>4</span>
+        <span lang=IN style='mso-ansi-language:IN'> kali, terdiri dari 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin-left:49.65pt;mso-add-space:
+auto;text-align:justify;text-justify:inter-ideograph;text-indent:-15.3pt;
+line-height:normal;mso-list:l7 level1 lfo18'>
+        <![if !supportLists]>
+        <span lang=IN style='font-family:Wingdings;mso-fareast-font-family:Wingdings;
+mso-bidi-font-family:Wingdings;mso-ansi-language:IN'>
+          <span style='mso-list:
+Ignore'>&#9632 <span style='font:7.0pt "Times New Roman"'>&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>1 kali rapat pada saat persiapan 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin-left:49.65pt;mso-add-space:
+auto;text-align:justify;text-justify:inter-ideograph;text-indent:-15.3pt;
+line-height:normal;mso-list:l7 level1 lfo18'>
+        <![if !supportLists]>
+        <span lang=IN style='font-family:Wingdings;mso-fareast-font-family:Wingdings;
+mso-bidi-font-family:Wingdings;mso-ansi-language:IN'>
+          <span style='mso-list:
+Ignore'>&#9632 <span style='font:7.0pt "Times New Roman"'>&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=EN-US>2</span>
+        <span lang=IN style='mso-ansi-language:IN'> kali rapat pada saat penyusunan dokumen 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin-left:49.65pt;mso-add-space:
+auto;text-align:justify;text-justify:inter-ideograph;text-indent:-15.3pt;
+line-height:normal;mso-list:l7 level1 lfo18'>
+        <![if !supportLists]>
+        <span lang=IN style='font-family:Wingdings;mso-fareast-font-family:Wingdings;
+mso-bidi-font-family:Wingdings;mso-ansi-language:IN'>
+          <span style='mso-list:
+Ignore'>&#9632 <span style='font:7.0pt "Times New Roman"'>&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>1 kali rapat pada pengisian form 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify:
+inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l5 level1 lfo15'>
+        <![if !supportLists]>
+        <span lang=IN style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;
+mso-ansi-language:IN'>
+          <span style='mso-list:Ignore'>5. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>Konsultasi teknis via email 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpLast style='text-align:justify;text-justify:inter-ideograph;
+text-indent:-18.0pt;line-height:normal;mso-list:l5 level1 lfo15'>
+        <![if !supportLists]>
+        <span lang=IN style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;
+mso-ansi-language:IN'>
+          <span style='mso-list:Ignore'>6. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=IN style='mso-ansi-language:IN'>Pendampingan presentasi </span>
+        <span lang=EN-US>tahap final</span>
+        <span lang=IN style='mso-ansi-language:IN'> di depan <i style='mso-bidi-font-style:normal'>Board of Director</i> sebanyak 1 kali 
+        </span>
+      </p>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph;
+line-height:normal'>
+        <span lang=IN style='mso-ansi-language:IN'>
+          &nbsp;
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p><source media="(min-width: )" srcset="">
+      
+
+
+      <div class="c12">
+        <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+          <img th:src="@{images/image3.png}" style="width: 700.00px; height: 100.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+        </span>
+      </div>
+      <div style="page-break-before:always">&nbsp;</div> 
+
+
+      <div class="c12">
+        <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+          <img th:src="@{images/image1.png}" style="width: 200.00px; height: 70.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+        </span>
+      </div>
+      <div class="c12">
+        <span style="overflow: hidden; position: relative; ; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px); width: 240.00px; height: 170.00px;">
+          <img th:src="@{images/image2.png}" style="width: 240.00px; height: 170.00px; margin-left: 450.00px; margin-top: -75.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+        </span>
+      </div>
+      <p class=MsoNormal style='text-align:justify;text-justify:inter-ideograph;line-height:normal'>
+        <span lang=EN-US>Status ini secara resmi dapat dipergunakan dalam berbagai promosi dan publikasi sampai dengan selesainya proses sertifikasi Greenship. Berikut kami lampirkan panduan 
+          <i style='mso-bidi-font-style:normal'>Registered Project Declaration</i> yang akan menuntun dalam penggunaannya </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
+        <span lang=EN-US>Sekali lagi kami ucapkan selamat atas partisipasi <span th:text="${owner}"></span> (pemilik gedung) untuk proyek </span>
+        <span lang=EN-GB style='mso-ansi-language:EN-GB'>Gedung <span th:text="${building_name}"></span> </span>
+        <span lang=EN-US>dalam sertifikasi Greenship New Building. Selanjutnya kami akan menunggu:</span>
+      </p>
+      <p class=MsoListParagraphCxSpFirst style='text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l3 level1 lfo19'>
+        <![if !supportLists]>
+        <span lang=EN-US style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;mso-fareast-language:JA'>
+          <span style='mso-list:Ignore'>1. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=EN-US style='mso-fareast-font-family:"Times New Roman";mso-fareast-theme-font:minor-fareast;mso-fareast-language:JA'>Pemilihan Plang 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l3 level1 lfo19'>
+        <![if !supportLists]>
+        <span lang=EN-US style='mso-bidi-font-family:Calibri;mso-bidi-theme-font:minor-latin;mso-fareast-language:JA'>
+          <span style='mso-list:Ignore'>2. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=EN-US style='mso-fareast-font-family:"Times New Roman";mso-fareast-theme-font:minor-fareast;mso-fareast-language:JA'>Undangan workshop <span style='mso-spacerun:yes'></span>dengan agenda 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:auto;text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l1 level1 lfo20'>
+        <![if !supportLists]>
+        <span lang=EN-US style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;mso-fareast-language:JA'>
+          <span style='mso-list:Ignore'>- <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=EN-US style='mso-fareast-font-family:"Times New Roman";mso-fareast-theme-font:minor-fareast;mso-fareast-language:JA'>Interpretasi rating 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:auto;text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l1 level1 lfo20'>
+        <![if !supportLists]>
+        <span lang=EN-US style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;mso-fareast-language:JA'>
+          <span style='mso-list:Ignore'>- <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=EN-US style='mso-fareast-font-family:"Times New Roman";mso-fareast-theme-font:minor-fareast;mso-fareast-language:JA'>Prediksi perolehan poin dengan desain yang sudah ada 
+        </span>
+      </p>
+      <p class=MsoListParagraphCxSpLast style='margin-left:54.0pt;mso-add-space:auto;text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l1 level1 lfo20'>
+        <![if !supportLists]>
+        <span lang=EN-US style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;mso-fareast-language:JA'>
+          <span style='mso-list:Ignore'>- <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>
+          </span>
+        </span>
+        <![endif]>
+        <span lang=EN-US style='mso-fareast-font-family:"Times New Roman";mso-fareast-theme-font:minor-fareast;mso-fareast-language:JA'>Identifikasi potensi penambahan poin 
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
+        <span lang=EN-US>Demikian yang dapat kami sampaikan. Atas perhatiannya kami ucapkan terima kasih dan semoga proyek Gedung 
+          <span style='mso-spacerun:yes'></span><span th:text="${owner}"></span> dapat meraih sertifikasi pada peringkat yang diinginkan. </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
+        <span lang=EN-US>
+          &nbsp;
+        </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
+        <span lang=EN-US>
+          &nbsp;
+        </span>
+      </p>
+      <p class=MsoNormal style='line-height:normal'>
+        <span style='font-size:12.0pt'>Salam Hijau Lestari, <br> PT. Sertifikasi Bangunan Hijau <br>
+        </span>
+      </p>
+      <img alt="Manager Signature" th:src="@{${manager_signature}}" style='max-width:150px;' />
+      <p class=MsoNormal style='line-height:normal'>
+        <u>
+          <span lang=EN-US style='font-size:12.0pt;mso-fareast-language:EN-US;mso-no-proof:yes'><span th:text="${manager_name}"></span> <br>
+          </span>
+        </u>
+        <span lang=EN-US style='font-size:12.0pt;mso-fareast-language:EN-US;mso-no-proof:yes'>Manajer 
+        </span>
+      </p>
+    </div>
+
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image3.png}" style="width: 700.00px; height: 100.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+  </body>
+</html>
