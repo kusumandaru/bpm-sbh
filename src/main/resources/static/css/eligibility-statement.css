@@ -1,91 +1,120 @@
 /* Font Definitions */
 {
-  font-family:wingding;
-  src:url('../fonts/wingding.ttf');
+  font-family: wingding;
+  src: url("../fonts/wingding.ttf");
 }
-{
-  font-family:"Cambria Math";
-  src:url('../fonts/cambria.ttc'); 
+ {
+  font-family: "Cambria Math";
+  src: url("../fonts/cambria.ttc");
 }
-{
-  font-family:Calibri;
-  src:url('../fonts/calibri-regular.ttf'); 
+ {
+  font-family: Calibri;
+  src: url("../fonts/calibri-regular.ttf");
 }
-{
-  font-family:Tahoma;
-  src:url('../fonts/tahoma.ttf'); 
+ {
+  font-family: Tahoma;
+  src: url("../fonts/tahoma.ttf");
 }
 /* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-{margin-top:0cm;
-margin-right:0cm;
-margin-bottom:8.0pt;
-margin-left:0cm;
-line-height:107%;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-p.MsoHeader, li.MsoHeader, div.MsoHeader
-{mso-style-link:"Header Char";
-margin:0cm;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-p.MsoFooter, li.MsoFooter, div.MsoFooter
-{mso-style-link:"Footer Char";
-margin:0cm;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
-{margin-top:0cm;
-margin-right:0cm;
-margin-bottom:10.0pt;
-margin-left:36.0pt;
-line-height:115%;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-p.MsoListParagraphCxSpFirst, li.MsoListParagraphCxSpFirst, div.MsoListParagraphCxSpFirst
-{margin-top:0cm;
-margin-right:0cm;
-margin-bottom:0cm;
-margin-left:36.0pt;
-line-height:115%;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-p.MsoListParagraphCxSpMiddle, li.MsoListParagraphCxSpMiddle, div.MsoListParagraphCxSpMiddle
-{margin-top:0cm;
-margin-right:0cm;
-margin-bottom:0cm;
-margin-left:36.0pt;
-line-height:115%;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-p.MsoListParagraphCxSpLast, li.MsoListParagraphCxSpLast, div.MsoListParagraphCxSpLast
-{margin-top:0cm;
-margin-right:0cm;
-margin-bottom:10.0pt;
-margin-left:36.0pt;
-line-height:115%;
-font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-span.HeaderChar
-{mso-style-name:"Header Char";
-mso-style-link:Header;}
-span.FooterChar
-{mso-style-name:"Footer Char";
-mso-style-link:Footer;}
-.MsoChpDefault
-{font-size:11.0pt;
-font-family:"Calibri",sans-serif;}
-.MsoPapDefault
-{margin-bottom:8.0pt;
-line-height:107%;}
+p.MsoNormal,
+li.MsoNormal,
+div.MsoNormal {
+  margin-top: 0cm;
+  margin-right: 0cm;
+  margin-bottom: 8pt;
+  margin-left: 0cm;
+  line-height: 107%;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+p.MsoHeader,
+li.MsoHeader,
+div.MsoHeader {
+  mso-style-link: "Header Char";
+  margin: 0cm;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+p.MsoFooter,
+li.MsoFooter,
+div.MsoFooter {
+  mso-style-link: "Footer Char";
+  margin: 0cm;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+p.MsoListParagraph,
+li.MsoListParagraph,
+div.MsoListParagraph {
+  margin-top: 0cm;
+  margin-right: 0cm;
+  margin-bottom: 10pt;
+  margin-left: 36pt;
+  line-height: 115%;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+p.MsoListParagraphCxSpFirst,
+li.MsoListParagraphCxSpFirst,
+div.MsoListParagraphCxSpFirst {
+  margin-top: 0cm;
+  margin-right: 0cm;
+  margin-bottom: 0cm;
+  margin-left: 36pt;
+  line-height: 115%;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+p.MsoListParagraphCxSpMiddle,
+li.MsoListParagraphCxSpMiddle,
+div.MsoListParagraphCxSpMiddle {
+  margin-top: 0cm;
+  margin-right: 0cm;
+  margin-bottom: 0cm;
+  margin-left: 36pt;
+  line-height: 115%;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+p.MsoListParagraphCxSpLast,
+li.MsoListParagraphCxSpLast,
+div.MsoListParagraphCxSpLast {
+  margin-top: 0cm;
+  margin-right: 0cm;
+  margin-bottom: 10pt;
+  margin-left: 36pt;
+  line-height: 115%;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+span.HeaderChar {
+  mso-style-name: "Header Char";
+  mso-style-link: Header;
+}
+span.FooterChar {
+  mso-style-name: "Footer Char";
+  mso-style-link: Footer;
+}
+.MsoChpDefault {
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+}
+.MsoPapDefault {
+  margin-bottom: 8pt;
+  line-height: 107%;
+}
 /* Page Definitions */
-@page WordSection1
-{size:595.45pt 841.7pt;
-margin:72.0pt 55.45pt .2pt 72.0pt;}
-div.WordSection1
-{page:WordSection1;}
+@page WordSection1 {
+  size: 595.45pt 841.7pt;
+  margin: 72pt 55.45pt 0.2pt 72pt;
+}
+div.WordSection1 {
+  page: WordSection1;
+}
 /* List Definitions */
-ol
-{margin-bottom:0cm;}
-ul
-{margin-bottom:0cm;}
+ol {
+  margin-bottom: 0cm;
+}
+ul {
+  margin-bottom: 0cm;
+}
