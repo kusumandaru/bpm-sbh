@@ -1,7 +1,12 @@
 package com.sbh.bpm.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +16,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -23,17 +30,21 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
+import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.MasterAdmin;
 import com.sbh.bpm.model.Province;
+import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IProvinceService;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.CaseUtils;
 import org.apache.logging.log4j.LogManager;
@@ -41,7 +52,6 @@ import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
-
 
 @Path(value = "/master")
 public class MasterController extends GcsUtil{
@@ -350,4 +360,84 @@ public class MasterController extends GcsUtil{
     return Response.status(200).entity(json).build();
   }
 
+  @GET
+  @Path(value = "/registered_project_attachment")
+  public Response GetRegisteredProjectAttachment(@HeaderParam("Authorization") String authorization) { 
+    Map<String, Object> variableMap = masterAdminService.getVariableMap();
+
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Blob>> listOfCallable = Arrays.asList(
+                () -> GetBlobDirect(googleCloudStorage, variableMap, "admin", "first_attachment"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, "admin", "second_attachment"),
+                () -> GetBlobDirect(googleCloudStorage, variableMap, "admin", "third_attachment")
+                );
+
+    FileOutputStream fos;
+    ZipOutputStream zipOut;
+    try {
+      fos = new FileOutputStream("registered_project_attachment" + ".zip");
+      zipOut = new ZipOutputStream(fos);
+    } catch (FileNotFoundException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    try {
+      List<Future<Blob>> futures = executor.invokeAll(listOfCallable);
+
+      futures.stream().forEach(f -> {
+          try {
+            Blob blob = f.get();
+            if (blob != null) {
+              ZipEntry zipEntry = new ZipEntry(blob.getName());
+              zipOut.putNextEntry(zipEntry);
+              byte[] byteArray = blob.getContent();
+              zipOut.write(byteArray);
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    try {
+      zipOut.close();
+      fos.close();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+  
+
+    File zipFile = new File("registered_project_attachment" + ".zip");
+    StreamingOutput stream = new StreamingOutput() {
+        @Override
+        public void write(OutputStream output) throws IOException {
+            try {
+                output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+    };
+
+    return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+        .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
+        .build();
+  }
 }
