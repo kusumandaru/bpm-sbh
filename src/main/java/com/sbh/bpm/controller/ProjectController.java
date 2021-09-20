@@ -77,7 +77,8 @@ public class ProjectController extends GcsUtil{
     @FormDataParam("email") String email,
     @FormDataParam("faximile") String faximile,
     @FormDataParam("postal_code") String postalCode,
-    @FormDataParam("gross_floor_area") Integer grossFloorArea
+    @FormDataParam("gross_floor_area") Integer grossFloorArea,
+    @FormDataParam("design_recognition") Boolean designRecognition
     ) {      
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -100,6 +101,7 @@ public class ProjectController extends GcsUtil{
     variables.put("faximile", faximile);
     variables.put("postal_code", postalCode);
     variables.put("gross_floor_area", grossFloorArea);
+    variables.put("design_recognition", designRecognition);
     variables.put("assignee", username);
     variables.put("tenant", tenant);
     variables.put("approved", null);

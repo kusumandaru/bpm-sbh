@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -32,7 +31,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriBuilder;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -110,7 +108,6 @@ public class NewBuildingController extends GcsUtil{
     variableMap.put("task_id", task.getId());
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
-    variableMap.put("owner", task.getOwner());
     variableMap.put("tenant_id", task.getTenantId());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
 
@@ -127,7 +124,7 @@ public class NewBuildingController extends GcsUtil{
     }
 
     try {
-      BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
+      BuildingType buildingType = buildingTypeService.findByCode(String.valueOf(variableMap.get("building_type")));
       variableMap.put("building_type_name", buildingType.getNameId());
     } catch (Exception e) {
       logger.error(e.getMessage());
@@ -447,18 +444,26 @@ public class NewBuildingController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+
     String fileName = "eligibility_statement";
     Pair<String, String> result;
+    byte[] bytes;
+
     if (variableMap.get(fileName) != null) {
       try {
-        result = GetUrlGcs(variableMap, processInstanceId, fileName);
-      } catch (IOException e) {
+        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        bytes = googleCloudStorage.getContent(blob.getBlobId());
+      } catch (Exception e) {
         result = null;
-        return Response.status(404).build();
+        return Response.status(404, e.getMessage()).build();
       }
-
-      URI redirect = UriBuilder.fromUri(result.getValue()).build();
-      return Response.temporaryRedirect(redirect).build();
     } else {
       int style = DateFormat.LONG;
       //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
@@ -491,7 +496,7 @@ public class NewBuildingController extends GcsUtil{
         logger.error(e.getMessage());
       }
   
-      byte[] bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
+      bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
 
       try {
         UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
@@ -499,13 +504,13 @@ public class NewBuildingController extends GcsUtil{
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
       }
-
-      /* Send the response as downloadable PDF */
-      javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
-      responseBuilder.type("application/pdf");
-      responseBuilder.header("Content-Disposition", "attachment; filename=eligible-statement.pdf");
-      return responseBuilder.build();
     }
+
+    /* Send the response as downloadable PDF */
+    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+    responseBuilder.type("application/pdf");
+    responseBuilder.header("Content-Disposition", "attachment; filename=eligible-statement.pdf");
+    return responseBuilder.build();
   }
 
   @GET
@@ -533,18 +538,25 @@ public class NewBuildingController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+
     String fileName = "registered_project";
     Pair<String, String> result;
+    byte[] bytes;
     if (variableMap.get(fileName) != null) {
       try {
-        result = GetUrlGcs(variableMap, processInstanceId, fileName);
-      } catch (IOException e) {
+        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        bytes = googleCloudStorage.getContent(blob.getBlobId());
+      } catch (Exception e) {
         result = null;
-        return Response.status(404).build();
+        return Response.status(404, e.getMessage()).build();
       }
-
-      URI redirect = UriBuilder.fromUri(result.getValue()).build();
-      return Response.temporaryRedirect(redirect).build();
     } else {
       int style = DateFormat.LONG;
       //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
@@ -580,7 +592,7 @@ public class NewBuildingController extends GcsUtil{
         logger.error(e.getMessage());
       }
   
-      byte[] bytes = pdfGeneratorUtil.CreatePdf("registered-project", variableMap);
+      bytes = pdfGeneratorUtil.CreatePdf("registered-project", variableMap);
 
       try {
         UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
@@ -588,12 +600,89 @@ public class NewBuildingController extends GcsUtil{
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
       }
-
-      /* Send the response as downloadable PDF */
-      javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
-      responseBuilder.type("application/pdf");
-      responseBuilder.header("Content-Disposition", "attachment; filename=registered-project.pdf");
-      return responseBuilder.build();
     }
+
+    /* Send the response as downloadable PDF */
+    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+    responseBuilder.type("application/pdf");
+    responseBuilder.header("Content-Disposition", "attachment; filename=registered-project.pdf");
+    return responseBuilder.build();
   }
+
+  @POST
+  @Path(value = "/first_payment")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response FirstPayment(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("agreement_letter_document") InputStream agreementLetterDocument, 
+    @FormDataParam("agreement_letter_document") FormDataContentDisposition agreementLetterDocumentFdcd,
+    @FormDataParam("first_payment_document") InputStream firstPaymentDocument, 
+    @FormDataParam("first_payment_document") FormDataContentDisposition firstPaymentDocumentFdcd,
+    @FormDataParam("agreement_number") String agreementNumber,
+    @FormDataParam("first_payment") Boolean firstPayment,
+    @FormDataParam("design_recognition") Boolean designRecognition,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    //limit the number of actual threads
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Pair<String, BlobId>>> listOfCallable = Arrays.asList(
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, agreementLetterDocument, agreementLetterDocumentFdcd, "agreement_letter_document"),
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, firstPaymentDocument, firstPaymentDocumentFdcd, "first_payment_document")
+                );
+    try {
+      List<Future<Pair<String, BlobId>>> futures = executor.invokeAll(listOfCallable);
+
+      Map<String, BlobId> result = new HashMap<String, BlobId>();
+      futures.stream().forEach(f -> {
+          try {
+            Pair<String, BlobId> res = f.get();
+            if (res != null) {
+              result.put(res.getKey(), res.getValue());
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    taskService.setVariable(task.getId(), "agreement_number", agreementNumber);
+    taskService.setVariable(task.getId(), "first_payment", firstPayment);
+    taskService.setVariable(task.getId(), "design_recognition", designRecognition);
+
+    taskService.setVariable(task.getId(), "approved", true);
+    taskService.claim(taskId, "admin");
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+
 }
