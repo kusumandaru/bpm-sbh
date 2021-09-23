@@ -684,5 +684,4 @@ public class NewBuildingController extends GcsUtil{
     return Response.ok().build();
   }
 
-
 }

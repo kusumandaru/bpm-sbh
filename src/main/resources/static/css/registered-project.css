@@ -473,6 +473,36 @@ span.GramE {
   margin-bottom: 8pt;
   line-height: 107%;
 }
+.ml-5{
+  margin-left:5px;
+}
+.ml-10{
+  margin-left:10px;
+}
+.ml-15{
+  margin-left:15px;
+}
+.ml-20{
+  margin-left:20px;
+}
+table.borderless {
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
+  font-size: 15px;
+}
+td.w6 {
+  width: 6%;
+}
+td.w94{
+  width: 94%;
+}
+td.w10 {
+  width: 15%;
+}
+td.w90{
+  width: 85%;
+}
 /* Page Definitions */
 @page {
   mso-footnote-separator: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
@@ -503,4 +533,10 @@ ol {
 }
 ul {
   margin-bottom: 0cm;
+}
+body {
+  font-size: 11px;
+}
+li {
+  font-size: 15px;
 }
