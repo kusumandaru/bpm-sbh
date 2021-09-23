@@ -118,3 +118,9 @@ ol {
 ul {
   margin-bottom: 0cm;
 }
+body {
+  font-size: 11px;
+}
+li {
+  font-size: 15px;
+}

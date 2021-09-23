@@ -51,15 +51,10 @@
         <span>Bersama ini kami sampaikan bahwa kami telah menerima dokumen <i>eligibility</i>
         </span>
         <span></span>
-        <span>dari</span>
+        <span>dari </span>
         <span>
-          <span th:text="${owner}"></span>( </span>
-        <i>
-          <u>
-            <span style='font-size:9.0pt'> perusahaan pemilik proyek</span>
-          </u>
-        </i>
-        <span>) untuk pendaftaran Sertifikasi Greenship <i>New Building</i> Proyek Gedung </span>
+          <span th:text="${owner}"></span>
+        <span> untuk pendaftaran Sertifikasi Greenship <i>New Building</i> Proyek Gedung </span>
         <span th:text="${building_name}"></span>
         <span> berupa </span>
         <span>:</span>
@@ -90,24 +85,17 @@
         <span> kami menyatakan bahwa</span>
         <span> Proyek Gedung </span>
         <span th:text="${building_name}"></span>
-        <span>. sudah mencapai status <i>eligible</i> atau memenuhi syarat untuk </span>
+        <span> sudah mencapai status <i>eligible</i> atau memenuhi syarat untuk </span>
         <span>ikut serta dalam proses Sertifikasi Greenship <i>New Building</i>. </span>
         <span>Dokumen yang masih dalam pengurusan dan sertifikat laik fungsi harap di lengkapi sebelum sidang final, </span>
         <span> dengan status tersebut maka selanjutnya PT. Sertifikasi Bangunan Hijau akan melakukan proses sebagai berikut:</span>
       </p>
       <p class=MsoListParagraphCxSpFirst style='text-align:justify;text-justify:inter-ideograph; text-indent:-18.0pt;line-height:normal'>
-        <span>1. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
-        </span>
-        <span>Penyerahan draft perjanjian kerjasama hingga finalisasi dan penandatanganan oleh PT. Sertifikasi Bangunan Hijau dan Pihak Gedung.</span>
-      </p>
-      <p class=MsoListParagraphCxSpMiddle style='text-align:justify;text-justify: inter-ideograph;text-indent:-18.0pt;line-height:normal'>
-        <span>2. <span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span>
-        </span>
-        <span>Melakukan penagihan biaya sertifikasi tahap I. (Skema dan Tata Cara Pembayaran donasi tercantum dalam perjanjian kerjasama) hingga pembayaran dilakukan.</span>
-      </p>
-      <p class=MsoListParagraphCxSpMiddle style='margin:0cm;text-align:justify; text-justify:inter-ideograph'>
-        <span>&nbsp;</span>
-      </p>
+        <ol>
+          <li><span>Penyerahan draft perjanjian kerjasama hingga finalisasi dan penandatanganan oleh PT. Sertifikasi Bangunan Hijau dan Pihak Gedung.</span></li>
+          <li><span>Melakukan penagihan biaya sertifikasi tahap I. (Skema dan Tata Cara Pembayaran donasi tercantum dalam perjanjian kerjasama) hingga pembayaran dilakukan.</span></li>
+        </ol>
+      </p>  
       <p class=MsoListParagraphCxSpMiddle style='margin:0cm;text-align:justify; text-justify:inter-ideograph'>
         <span>Apabila poin 1 dan 2 telah terpenuhi, maka Proyek Gedung </span>
         <span th:text="${building_name}"></span>
@@ -118,18 +106,18 @@
         <span>&nbsp;</span>
       </p>
       <p class=MsoNormal style='line-height:normal'>
-        <span style='font-size:12.0pt'>Salam Hijau Lestari, <br> PT. Sertifikasi Bangunan Hijau <br>
+        <span >Salam Hijau Lestari, <br> PT. Sertifikasi Bangunan Hijau <br>
         </span>
       </p>
       <img alt="Manager Signature" th:src="@{${manager_signature}}" style='max-width:150px;' />
       <p class=MsoNormal style='line-height:normal'>
         <u>
-          <span style='font-size:12.0pt'>
+          <span >
             <span th:text="${manager_name}"></span>
             <br>
           </span>
         </u>
-        <span style='font-size:12.0pt'>Manajer</span>
+        <span >Manajer</span>
       </p>
     </div>
     <div class="c12">
