@@ -1,0 +1,156 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <title>Design Recognition Statement</title>
+    <link th:href="@{css/design-recognition-statement.css}" rel="stylesheet" type="text/css" media="all" />
+  </head>
+  <body>
+    <div class=WordSection1></div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image1.png}" style="width: 200.00px; height: 70.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; ; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px); width: 240px; height: 150px;">
+        <img th:src="@{images/image2.png}" style="width: 240px; height: 140px; margin-left: 450.00px; margin-top: -75.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div style="margin-top: -50px;">
+
+      <div class=WordSection1></div>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>Jakarta, <span th:text="${printAt}"></span>
+          <br> No. </span>
+        <span>
+          <span th:text="${dr_statement_letter_number}"></span>
+          <br> Perihal : </span>
+        <span>Pernyataan Pengakuan Desain   </span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>Kepada Yth.</span>
+        <br>
+          <span th:text="${company_name}"></span>
+          <br>
+          <span th:text="${building_address}"></span>
+          <br>
+          <span th:text="${city_name}"></span>
+          <br>
+          <span th:text="${province_name}"></span>
+          <br>
+          <span th:text="${postal_code}"></span>
+        </span>
+      </p>
+      <p class=MsoNormal></p>
+      
+    <p><span>Dengan hormat,</span></p>
+
+    <p><span>Menindaklanjuti
+    berita acara yang dikeluarkan pada tanggal <span th:text="${evaluation_assesment_date}"></span> perihal hasil <i style='mso-bidi-font-style:normal'>Evaluation Assesment Board</i>, 
+    dan telah diadakan pemeriksaan dokumen banding, pembahasan dan penilaian tentang Pengakuan Desain Gedung <span th:text="${building_name}"></span>. 
+    Adapun hasil keputusan yang diambil, sebagai berikut :</p>
+
+    <p>
+      <ol style='list-style-position:outside;'>
+        <li>Gedung <span th:text="${building_name}"></span> dinyatakan
+          telah memenuhi syarat untuk kategori Pengakuan Desain dengan peringkat <b><span th:text="${building_rank}"></span></b></li>
+        <li>Untuk dapat dinyatakan memenuhi syarat untuk kategori Bangunan Baru (Sertifikat Final), 
+          ada hal-hal yang perlu diperhatikan/dilengkapi :</li>
+      </ol>
+      <ol type="a" style="padding-left:70px; list-style-position:outside;">
+        <li>
+          Kredit yang di klaim pada Sertifikat Final adalah keseluruhan kredit
+        </li>
+        <li>
+          Sertifikat Final menggunakan formulir yang sama dengan formulir untuk Pengakuan Desain
+        </li>
+        <li>
+          Proses penilaian dan verifikasi di lapangan baru dilakukan, jika salinan Sertifikat Laik Fungsi (SLF) / Ijin Penggunaan Bangunan (IPB) diserahkan.
+        </li>
+      </ol>
+
+    <p><span>Kami mengucapkan
+    selamat atas prestasi luar biasa yang dicapai oleh tim proyek. Kami berharap
+    prestasi ini dapat dipertahankan pada tahap proses sertifikasi final. Demikian
+    kami sampaikan, atas perhatian yang Bapak/Ibu berikan kami mengucapkan terima
+    kasih.</span></p>
+
+    <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+    inter-ideograph'><span lang=EN-US><br>
+    Salam Hijau Lestari </span></p>
+
+    <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:
+    inter-ideograph'><span lang=EN-US>PT. Sertifikasi Bangunan Hijau</span></p>
+
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+
+    <p class=MsoNormal style='margin-bottom:0cm'>
+    <table class="borderless">
+      <tbody>
+        <tr>  
+          <td class="w50" ><span>Direktur</span></td>
+          <td class="w50"><span>Ketua</span></td>
+        </tr>
+        <tr>  
+          <td class="w50" ><span><img alt="Director Signature" th:src="@{${director_signature}}" style='max-width:150px;' /></span></td>
+          <td class="w50"><span><img alt="Reviewer Signature" th:src="@{${reviewer_signature}}" style='max-width:150px;' /></span></td>
+        </tr>
+        <tr>
+          <td class="w50"><b><u><span><span th:text="${director_name}"></span></span></u></b></td>
+          <td class="w50"><b><u><span><span th:text="${reviewer_name}"></span></span></u></b></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image3.png}" style="width: 800.00px; height: 182.00px; margin-left: -50px; margin-top: -100.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+  </body>
+</html>

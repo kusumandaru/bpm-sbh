@@ -1,0 +1,145 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <title>Design Recognition Result</title>
+    <link th:href="@{css/design-recognition-result.css}" rel="stylesheet" type="text/css" media="all" />
+  </head>
+  <body>
+    <div class=WordSection1></div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image1.png}" style="width: 200.00px; height: 70.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; ; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px); width: 240px; height: 150px;">
+        <img th:src="@{images/image2.png}" style="width: 240px; height: 140px; margin-left: 450.00px; margin-top: -75.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+    <div style="margin-top: -50px;">
+      <div class=WordSection1></div>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>Jakarta, <span th:text="${printAt}"></span>
+          <br> No. </span>
+        <span>
+          <span th:text="${dr_result_letter_number}"></span>
+          <br> Perihal : </span>
+        <span>Hasil Penilaian Pengakuan Desain</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>Kepada Yth.</span>
+        <br>
+          <span th:text="${company_name}"></span>
+          <br>
+          <span th:text="${building_address}"></span>
+          <br>
+          <span th:text="${city_name}"></span>
+          <br>
+          <span th:text="${province_name}"></span>
+          <br>
+          <span th:text="${postal_code}"></span>
+        </span>
+      </p>
+      <p class=MsoNormal></p>
+
+      <p class=MsoNormal><span>Bersama ini kami menyatakan bahwa :</span></span></p>
+      <table class="borderless">
+        <tbody>
+          <tr>  
+            <td class="w15" ><span>Nama</span></td>
+            <td class="w85"> : <span th:text="${building_name}"></span></td>
+          </tr>
+          <tr>
+            <td class="w15"><span>Alamat</span></td>
+            <td class="w85"> : <span th:text="${building_address}"></span></td>
+          </tr>
+          <tr>
+            <td class="w15"><span>No. Form</span></td>
+            <td class="w85"> : <span th:text="${dr_certification_number}"></span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal><span>Telah berhasil<b> LULUS</b> proses penilaian tahap <b>Pengakuan Desain <span th:text="${project_type}"></span></b>
+      dengan pencapaian</span></p>
+
+      <table border=1 cellspacing=0 cellpadding=0
+      style='margin-left:21.0pt;border-collapse:collapse;border:none;mso-border-alt:solid black .5pt;mso-border-themecolor:text1;mso-yfti-tbllook:1184;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>
+        <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;height:13.15pt'>
+          <th>
+            <p><span>No.</span></p>
+          </td>
+          <th>
+            <p><span>Kategori</span></p>
+          </th>
+          <th>
+            <p><span></span>Poin</span></p>
+          </th>
+        </tr>
+        <tr th:each="dr_result, iterator : ${dr_results}">
+          <td class='ta-center' th:text="${iterator.index + 1}"></td>
+          <td th:text=" ${dr_result.key}"></td>
+          <td class='ta-center' th:text="${dr_result.value}"></td>
+        </tr>
+        
+        <tr>
+          <td width=372 colspan=2>
+            <p class='MsoNormal ta-center' style='margin-top:0cm;'><b><span>Total</span></b></p>
+          </td>
+          <td width=115>
+            <p class='MsoNormal ta-center' style='margin-top:0cm;'><b><span th:text="${dr_total_score}"></span></b></p>
+          </td>
+        </tr>
+      </table>
+
+      <p class=MsoNormal><br>dan diharapkan akan lulus Sertifikasi <span th:text="${project_type}"></span> dengan peringkat <b>GOLD</span></b>.</p>
+
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+      <p class=MsoNormal style='margin-bottom:0cm'>
+        <span>&nbsp;</span>
+      </p>
+
+      <p class=MsoNormal style='line-height:normal'>
+        <span >Salam Hijau Lestari, <br> PT. Sertifikasi Bangunan Hijau <br>
+        </span>
+      </p>
+      <img alt="Director Signature" th:src="@{${director_signature}}" style='max-width:150px;' />
+      <p class=MsoNormal style='line-height:normal'>
+        <u>
+          <span >
+            <span th:text="${director_name}"></span>
+            <br>
+          </span>
+        </u>
+        <span >Direktur</span>
+      </p>
+    </div>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm'>
+      <span>&nbsp;</span>
+    </p>
+    <div class="c12">
+      <span style="overflow: hidden; position: relative; border: 0.00px solid #000000; -webkit-transform: rotate(0.00rad) translateZ(0px);">
+        <img th:src="@{images/image3.png}" style="width: 800.00px; height: 182.00px; margin-left: -50px; margin-top: -100.00px; -webkit-transform: rotate(0.00rad) translateZ(0px);" title="">
+      </span>
+    </div>
+  </body>
+</html>

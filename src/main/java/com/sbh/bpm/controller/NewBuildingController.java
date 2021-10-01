@@ -485,7 +485,9 @@ public class NewBuildingController extends GcsUtil{
         variableMap.put("city_name", city.getName());
       }
   
-      variableMap.put("letter_number", sequenceNumberService.getNextNumber("ELI", SequenceNumberService.NUMBER_FORMAT.GENERAL));
+      variableMap.put("eli_letter_number", sequenceNumberService.getNextNumber("ELI", SequenceNumberService.NUMBER_FORMAT.GENERAL));
+      taskService.setVariable(task.getId(), "eli_letter_number", variableMap.get("eli_letter_number"));
+
       variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
       try {
         Map<String, Object> maps = masterAdminService.getVariableMap();
@@ -516,7 +518,7 @@ public class NewBuildingController extends GcsUtil{
   @GET
   @Path(value = "/registered_project/{taskId}")
   @Produces({"application/pdf"})
-  public javax.ws.rs.core.Response getRegisteredProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+  public javax.ws.rs.core.Response getRegisteredProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {   
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -578,9 +580,12 @@ public class NewBuildingController extends GcsUtil{
         variableMap.put("city_name", city.getName());
       }
   
-      variableMap.put("letter_number", sequenceNumberService.getNextNumber("RPD",  NUMBER_FORMAT.GENERAL));
+      variableMap.put("rpd_letter_number", sequenceNumberService.getNextNumber("RPD",  NUMBER_FORMAT.GENERAL));
       variableMap.put("registered_project_number", sequenceNumberService.getNextNumber("RP/NB", NUMBER_FORMAT.REGISTERED));
       variableMap.put("agreement_number", "002/Greenship.NB/SBH-02/IX/2021");
+
+      taskService.setVariable(task.getId(), "rpd_letter_number", variableMap.get("rpd_letter_number"));
+      taskService.setVariable(task.getId(), "registered_project_number", variableMap.get("registered_project_number"));
 
       variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
       try {
@@ -606,6 +611,225 @@ public class NewBuildingController extends GcsUtil{
     javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
     responseBuilder.type("application/pdf");
     responseBuilder.header("Content-Disposition", "attachment; filename=registered-project.pdf");
+    return responseBuilder.build();
+  }
+
+  @GET
+  @Path(value = "/design_recognition_statement/{taskId}")
+  @Produces({"application/pdf"})
+  public javax.ws.rs.core.Response geDesignRecognitionStatement(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    
+    Task task;
+    String processInstanceId;
+    String activityInstanceId;
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+      activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    String fileName = "design_recognition_statement";
+    Pair<String, String> result;
+    byte[] bytes;
+    if (variableMap.get(fileName) != null) {
+      try {
+        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        bytes = googleCloudStorage.getContent(blob.getBlobId());
+      } catch (Exception e) {
+        result = null;
+        return Response.status(404, e.getMessage()).build();
+      }
+    } else {
+      int style = DateFormat.LONG;
+      //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
+      Date date = new Date();
+      DateFormat df;
+      Locale localeIndonesia = new Locale("id", "ID");
+      df = DateFormat.getDateInstance(style, localeIndonesia);
+      variableMap.put("printAt",df.format(date));
+  
+      if (variableMap.get("province") != null) {
+        String provinceId = String.valueOf(variableMap.get("province"));
+        Province province = provinceService.findById(Integer.parseInt(provinceId));
+        variableMap.put("province_name", province.getName());
+      }
+  
+      if (variableMap.get("city") != null) {
+        String cityId = String.valueOf(variableMap.get("city"));
+        City city = cityService.findById(Integer.parseInt(cityId));
+        variableMap.put("city_name", city.getName());
+      }
+  
+      variableMap.put("dr_statement_letter_number", sequenceNumberService.getNextNumber("DR",  NUMBER_FORMAT.GENERAL));
+      taskService.setVariable(task.getId(), "dr_statement_letter_number", variableMap.get("dr_statement_letter_number"));
+
+      // TODO change to variable
+      variableMap.put("evaluation_assesment_date",df.format(date));
+      variableMap.put("company_name", "PT Sejahtera Sentosa");
+      variableMap.put("building_rank", "GOLD");
+      variableMap.put("reviewer_name", "Anggia Murni");
+      variableMap.put("director_name", "Lucia Karina");
+
+      variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
+      try {
+        Map<String, Object> maps = masterAdminService.getVariableMap();
+        result = GetUrlGcs(maps, "admin", "manager_signature");
+
+        //TODO change to proper signature
+        variableMap.put("director_signature", result.getValue());
+        variableMap.put("reviewer_signature", result.getValue());
+        logger.info(result.getValue());
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+      }
+  
+      bytes = pdfGeneratorUtil.CreatePdf("design-recognition-statement", variableMap);
+
+      try {
+        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+      }
+    }
+
+    /* Send the response as downloadable PDF */
+    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+    responseBuilder.type("application/pdf");
+    responseBuilder.header("Content-Disposition", "attachment; filename=design-recognition-statement.pdf");
+    return responseBuilder.build();
+  }
+
+  @GET
+  @Path(value = "/design_recognition_result/{taskId}")
+  @Produces({"application/pdf"})
+  public javax.ws.rs.core.Response geDesignRecognitionResult(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    
+    Task task;
+    String processInstanceId;
+    String activityInstanceId;
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+      activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    String fileName = "design_recognition_result";
+    Pair<String, String> result;
+    byte[] bytes;
+    if (variableMap.get(fileName) != null) {
+      try {
+        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        bytes = googleCloudStorage.getContent(blob.getBlobId());
+      } catch (Exception e) {
+        result = null;
+        return Response.status(404, e.getMessage()).build();
+      }
+    } else {
+      int style = DateFormat.LONG;
+      //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
+      Date date = new Date();
+      DateFormat df;
+      Locale localeIndonesia = new Locale("id", "ID");
+      df = DateFormat.getDateInstance(style, localeIndonesia);
+      variableMap.put("printAt",df.format(date));
+  
+      if (variableMap.get("province") != null) {
+        String provinceId = String.valueOf(variableMap.get("province"));
+        Province province = provinceService.findById(Integer.parseInt(provinceId));
+        variableMap.put("province_name", province.getName());
+      }
+  
+      if (variableMap.get("city") != null) {
+        String cityId = String.valueOf(variableMap.get("city"));
+        City city = cityService.findById(Integer.parseInt(cityId));
+        variableMap.put("city_name", city.getName());
+      }
+  
+      variableMap.put("dr_result_letter_number", sequenceNumberService.getNextNumber("DR",  NUMBER_FORMAT.GENERAL));
+      taskService.setVariable(task.getId(), "dr_result_letter_number", variableMap.get("dr_result_letter_number"));
+
+      // TODO change to variable
+      variableMap.put("evaluation_assesment_date",df.format(date));
+      variableMap.put("company_name", "PT Sejahtera Sentosa");
+      variableMap.put("building_rank", "GOLD");
+      variableMap.put("director_name", "Lucia Karina");
+      variableMap.put("dr_certification_number", "RP/NB/Cer/086/III/2020");
+      variableMap.put("project_type", "Greenship NB 1.2");
+      variableMap.put("dr_total_score", 49);
+      Map<String, Integer> drResults = new HashMap<String, Integer>();
+      drResults.put("ASD (Appropiate Site Development)", 11);
+      drResults.put("EEC (Energy Efficiency and Conservation)", 10);
+      drResults.put("WAC (Water Conservation)", 19);
+      drResults.put("MRC (Material Recource and Cycle)", 2);
+      drResults.put("IHC (Indoor Healt and Comfort)", 4);
+      drResults.put("BEM (Building Environment Management)", 3);
+      variableMap.put("dr_results", drResults);
+
+      variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
+      try {
+        Map<String, Object> maps = masterAdminService.getVariableMap();
+        result = GetUrlGcs(maps, "admin", "manager_signature");
+
+        //TODO change to proper signature
+        variableMap.put("director_signature", result.getValue());
+        logger.info(result.getValue());
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+      }
+  
+      bytes = pdfGeneratorUtil.CreatePdf("design-recognition-result", variableMap);
+
+      try {
+        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+      }
+    }
+
+    /* Send the response as downloadable PDF */
+    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
+    responseBuilder.type("application/pdf");
+    responseBuilder.header("Content-Disposition", "attachment; filename=design-recognition-result.pdf");
     return responseBuilder.build();
   }
 
