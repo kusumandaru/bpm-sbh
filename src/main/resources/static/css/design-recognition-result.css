@@ -1,44 +1,21 @@
 /* Font Definitions */
 {
-  font-family: Wingdings;
-  panose-1: 5 0 0 0 0 0 0 0 0 0;
-  mso-font-charset: 77;
-  mso-generic-font-family: decorative;
-  mso-font-pitch: variable;
-  mso-font-signature: 3 268435456 0 0 -2147483647 0;
+  font-family: wingding;
+  src: url("../fonts/wingding.ttf");
 }
  {
   font-family: "Cambria Math";
-  panose-1: 2 4 5 3 5 4 6 3 2 4;
-  mso-font-charset: 0;
-  mso-generic-font-family: roman;
-  mso-font-pitch: variable;
-  mso-font-signature: -536870145 1107305727 0 0 415 0;
+  src: url("../fonts/cambria.ttc");
 }
  {
   font-family: Calibri;
-  panose-1: 2 15 5 2 2 2 4 3 2 4;
-  mso-font-charset: 0;
-  mso-generic-font-family: swiss;
-  mso-font-pitch: variable;
-  mso-font-signature: -536859905 -1073697537 9 0 511 0;
-}
- {
-  font-family: "Bookman Old Style";
-  panose-1: 2 5 6 4 5 5 5 2 2 4;
-  mso-font-charset: 0;
-  mso-generic-font-family: roman;
-  mso-font-pitch: variable;
-  mso-font-signature: 647 0 0 0 159 0;
+  src: url("../fonts/calibri-regular.ttf");
 }
  {
   font-family: Tahoma;
-  panose-1: 2 11 6 4 3 5 4 4 2 4;
-  mso-font-charset: 0;
-  mso-generic-font-family: swiss;
-  mso-font-pitch: variable;
-  mso-font-signature: -520081665 -1073717157 41 0 66047 0;
+  src: url("../fonts/tahoma.ttf");
 }
+
 /* Style Definitions */
 p.MsoNormal,
 li.MsoNormal,
@@ -88,7 +65,6 @@ h1 {
 p.MsoHeader,
 li.MsoHeader,
 div.MsoHeader {
-  mso-style-noshow: yes;
   mso-style-priority: 99;
   mso-style-link: "Header Char";
   margin: 0cm;
@@ -110,7 +86,6 @@ div.MsoHeader {
 p.MsoFooter,
 li.MsoFooter,
 div.MsoFooter {
-  mso-style-noshow: yes;
   mso-style-priority: 99;
   mso-style-link: "Footer Char";
   margin: 0cm;
@@ -129,13 +104,6 @@ div.MsoFooter {
   mso-ansi-language: EN-US;
   mso-fareast-language: JA;
 }
-span.MsoCommentReference {
-  mso-style-noshow: yes;
-  mso-style-priority: 99;
-  mso-style-parent: "";
-  mso-ansi-font-size: 8pt;
-  mso-bidi-font-size: 8pt;
-}
 p.MsoBodyText,
 li.MsoBodyText,
 div.MsoBodyText {
@@ -149,6 +117,7 @@ div.MsoBodyText {
   font-size: 12pt;
   font-family: "Tahoma", sans-serif;
   mso-fareast-font-family: "Times New Roman";
+  mso-bidi-font-family: Tahoma;
   mso-ansi-language: IN;
   font-weight: bold;
 }
@@ -170,7 +139,6 @@ span.MsoHyperlinkFollowed {
   text-underline: single;
 }
 p {
-  mso-style-noshow: yes;
   mso-style-priority: 99;
   mso-margin-top-alt: auto;
   margin-right: 0cm;
@@ -206,6 +174,7 @@ div.MsoAcetate {
   font-family: "Tahoma", sans-serif;
   mso-fareast-font-family: "Times New Roman";
   mso-fareast-theme-font: minor-fareast;
+  mso-bidi-font-family: Tahoma;
   mso-ansi-language: EN-US;
   mso-fareast-language: JA;
 }
@@ -335,7 +304,6 @@ div.MsoListParagraphCxSpLast {
 }
 span.HeaderChar {
   mso-style-name: "Header Char";
-  mso-style-noshow: yes;
   mso-style-priority: 99;
   mso-style-unhide: no;
   mso-style-locked: yes;
@@ -343,7 +311,6 @@ span.HeaderChar {
 }
 span.FooterChar {
   mso-style-name: "Footer Char";
-  mso-style-noshow: yes;
   mso-style-priority: 99;
   mso-style-unhide: no;
   mso-style-locked: yes;
@@ -446,6 +413,21 @@ span.HTMLPreformattedChar {
   mso-bidi-font-family: "Courier New";
   mso-fareast-language: EN-US;
 }
+p.v1msonormal,
+li.v1msonormal,
+div.v1msonormal {
+  mso-style-name: v1msonormal;
+  mso-style-unhide: no;
+  mso-margin-top-alt: auto;
+  margin-right: 0cm;
+  mso-margin-bottom-alt: auto;
+  margin-left: 0cm;
+  mso-pagination: widow-orphan;
+  font-size: 12pt;
+  font-family: "Times New Roman", serif;
+  mso-fareast-font-family: "Times New Roman";
+  mso-ansi-language: EN-US;
+}
 span.GramE {
   mso-style-name: "";
   mso-gram-e: yes;
@@ -473,17 +455,98 @@ span.GramE {
   margin-bottom: 8pt;
   line-height: 107%;
 }
-.ml-5{
-  margin-left:5px;
+.ta-center {
+  text-align:center
 }
-.ml-10{
-  margin-left:10px;
+/* Page Definitions */
+@page {
+  mso-footnote-separator: url("hasil%20DR%20\(kirim%20pak%20dau\).fld/header.html")
+    fs;
+  mso-footnote-continuation-separator: url("hasil%20DR%20\(kirim%20pak%20dau\).fld/header.html")
+    fcs;
+  mso-endnote-separator: url("hasil%20DR%20\(kirim%20pak%20dau\).fld/header.html")
+    es;
+  mso-endnote-continuation-separator: url("hasil%20DR%20\(kirim%20pak%20dau\).fld/header.html")
+    ecs;
+  mso-facing-pages: yes;
 }
-.ml-15{
-  margin-left:15px;
+@page WordSection1 {
+  size: 595.45pt 841.7pt;
+  margin: 72pt 55.45pt 0.2pt 72pt;
+  mso-header-margin: 36pt;
+  mso-footer-margin: 36pt;
+  mso-header: url("hasil%20DR%20\(kirim%20pak%20dau\).fld/header.html") h1;
+  mso-footer: url("hasil%20DR%20\(kirim%20pak%20dau\).fld/header.html") f1;
+  mso-paper-source: 0;
 }
-.ml-20{
-  margin-left:20px;
+div.WordSection1 {
+  page: WordSection1;
+}
+/* List Definitions */
+ol {
+  margin-bottom: 0cm;
+}
+ul {
+  margin-bottom: 0cm;
+}
+-->
+</style>
+<!--[if gte mso 10]>
+<style>
+/* Style Definitions */
+table.MsoNormalTable {
+  mso-style-name: "Table Normal";
+  mso-tstyle-rowband-size: 0;
+  mso-tstyle-colband-size: 0;
+  mso-style-noshow: yes;
+  mso-style-priority: 99;
+  mso-style-parent: "";
+  mso-padding-alt: 0cm 5.4pt 0cm 5.4pt;
+  mso-para-margin-top: 0cm;
+  mso-para-margin-right: 0cm;
+  mso-para-margin-bottom: 8pt;
+  mso-para-margin-left: 0cm;
+  line-height: 107%;
+  mso-pagination: widow-orphan;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+  mso-ascii-font-family: Calibri;
+  mso-ascii-theme-font: minor-latin;
+  mso-hansi-font-family: Calibri;
+  mso-hansi-theme-font: minor-latin;
+  mso-bidi-font-family: "Times New Roman";
+  mso-bidi-theme-font: minor-bidi;
+  mso-ansi-language: EN-US;
+  mso-fareast-language: JA;
+}
+table.MsoTableGrid {
+  mso-style-name: "Table Grid";
+  mso-tstyle-rowband-size: 0;
+  mso-tstyle-colband-size: 0;
+  mso-style-priority: 39;
+  mso-style-unhide: no;
+  border: solid black 1pt;
+  mso-border-themecolor: text1;
+  mso-border-alt: solid black 0.5pt;
+  mso-border-themecolor: text1;
+  mso-padding-alt: 0cm 5.4pt 0cm 5.4pt;
+  mso-border-insideh: 0.5pt solid black;
+  mso-border-insideh-themecolor: text1;
+  mso-border-insidev: 0.5pt solid black;
+  mso-border-insidev-themecolor: text1;
+  mso-para-margin: 0cm;
+  mso-pagination: widow-orphan;
+  font-size: 11pt;
+  font-family: "Calibri", sans-serif;
+  mso-ascii-font-family: Calibri;
+  mso-ascii-theme-font: minor-latin;
+  mso-fareast-font-family: Calibri;
+  mso-fareast-theme-font: minor-latin;
+  mso-hansi-font-family: Calibri;
+  mso-hansi-theme-font: minor-latin;
+  mso-bidi-font-family: "Times New Roman";
+  mso-bidi-theme-font: minor-bidi;
+  mso-ansi-language: EN-US;
 }
 table.borderless {
   width: 100%;
@@ -503,40 +566,13 @@ td.w15 {
 td.w85{
   width: 85%;
 }
-/* Page Definitions */
-@page {
-  mso-footnote-separator: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
-    fs;
-  mso-footnote-continuation-separator: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
-    fcs;
-  mso-endnote-separator: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
-    es;
-  mso-endnote-continuation-separator: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
-    ecs;
-}
-@page WordSection1 {
-  size: 595.45pt 841.7pt;
-  margin: 72pt 55.45pt 0.2pt 72pt;
-  mso-header-margin: 36pt;
-  mso-footer-margin: 36pt;
-  mso-header: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
-    h1;
-  mso-footer: url("draft%20surat%20pernyataan%20registered%20project.fld/header.html")
-    f1;
-  mso-paper-source: 0;
-}
-div.WordSection1 {
-  page: WordSection1;
-}
-ol {
-  margin-bottom: 0cm;
-}
-ul {
-  margin-bottom: 0cm;
-}
 body {
   font-size: 11px;
+  font-family:"Calibri",sans-serif;
 }
 li {
+  font-size: 15px;
+}
+td {
   font-size: 15px;
 }
