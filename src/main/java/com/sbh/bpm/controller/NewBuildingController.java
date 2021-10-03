@@ -124,7 +124,7 @@ public class NewBuildingController extends GcsUtil{
     }
 
     try {
-      BuildingType buildingType = buildingTypeService.findByCode(String.valueOf(variableMap.get("building_type")));
+      BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
       variableMap.put("building_type_name", buildingType.getNameId());
     } catch (Exception e) {
       logger.error(e.getMessage());

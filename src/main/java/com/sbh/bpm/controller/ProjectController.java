@@ -159,7 +159,9 @@ public class ProjectController extends GcsUtil{
     @FormDataParam("email") String email,
     @FormDataParam("faximile") String faximile,
     @FormDataParam("postal_code") String postalCode,
-    @FormDataParam("gross_floor_area") Integer grossFloorArea
+    @FormDataParam("gross_floor_area") Integer grossFloorArea,
+    @FormDataParam("design_recognition") Boolean designRecognition
+
     ) {      
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -204,7 +206,7 @@ public class ProjectController extends GcsUtil{
     if (grossFloorArea > 0) {
       taskService.setVariable(task.getId(), "gross_floor_area", grossFloorArea);
     }
-
+    taskService.setVariable(task.getId(), "design_recognition", designRecognition);
     taskService.setVariable(task.getId(), "approved", null);
 
     try {
