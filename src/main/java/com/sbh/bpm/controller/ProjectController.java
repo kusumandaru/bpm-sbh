@@ -236,5 +236,4 @@ public class ProjectController extends GcsUtil{
     String json = new Gson().toJson(map);
     return Response.ok(json).build();
   }
-
 }
