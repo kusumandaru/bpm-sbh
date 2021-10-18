@@ -5,6 +5,7 @@ import javax.ws.rs.ApplicationPath;
 import com.sbh.bpm.controller.FileController;
 import com.sbh.bpm.controller.GoogleCloudStorageController;
 import com.sbh.bpm.controller.MasterController;
+import com.sbh.bpm.controller.MasterProjectController;
 import com.sbh.bpm.controller.NewBuildingController;
 import com.sbh.bpm.controller.ProjectController;
 import com.sbh.bpm.controller.TaskController;
@@ -20,6 +21,7 @@ public class JerseyConfig extends CamundaJerseyResourceConfig {
   protected void registerAdditionalResources() {   
     register(MultiPartFeature.class);
     register(MasterController.class);
+    register(MasterProjectController.class);
     register(GoogleCloudStorageController.class);
     register(FileController.class);
     register(NewBuildingController.class);

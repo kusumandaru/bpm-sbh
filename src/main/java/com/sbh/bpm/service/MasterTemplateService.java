@@ -1,0 +1,35 @@
+package com.sbh.bpm.service;
+
+import java.util.List;
+
+import com.sbh.bpm.model.MasterTemplate;
+import com.sbh.bpm.repository.MasterTemplateRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class MasterTemplateService implements IMasterTemplateService {
+  @Autowired
+  private MasterTemplateRepository repository;
+
+  @Override
+  public List<MasterTemplate> findAll() {
+    return (List<MasterTemplate>) repository.findAll();
+  }
+  
+  @Override
+  public MasterTemplate findById(Integer masterTemplateId) {
+    return repository.findById(masterTemplateId).get();
+  }
+
+  @Override
+  public MasterTemplate save(MasterTemplate masterTemplate) {
+    return repository.save(masterTemplate);
+  }
+
+  @Override
+  public List<MasterTemplate> findByMasterVendorID(Integer vendorId) {
+    return (List<MasterTemplate>) repository.findByMasterVendorID(vendorId);
+  }
+}
