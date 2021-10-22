@@ -7,8 +7,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.google.gson.annotations.SerializedName;
@@ -17,8 +15,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "master_criteria_blockers")
-public class MasterCriteriaBlocker {
+@Table(name = "master_documents")
+public class MasterDocument {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter
@@ -31,11 +29,11 @@ public class MasterCriteriaBlocker {
   @Setter
   private Integer masterCriteriaID;
 
-  @SerializedName("blocker_id")
-  @Column(name="blocker_id")
+  @SerializedName("name")
+  @Column(name="name")
   @Getter
   @Setter
-  private Integer blockerID;
+  private String name;
 
   @SerializedName("created_at")
   @Column(name="created_at")
@@ -56,20 +54,14 @@ public class MasterCriteriaBlocker {
   private String createdBy;
 
   // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterCriteriaBlocker> criterias = new ArrayList<>();
-
-  @ManyToOne(targetEntity = MasterCriteria.class)
-  @JoinColumn(name="master_criteria_id",referencedColumnName="id",insertable=false,updatable=false)
-  @Getter
-  @Setter
-  private MasterCriteria criteria;
+  // private List<MasterDocument> documents = new ArrayList<>();
     
-  public MasterCriteriaBlocker() {
+  public MasterDocument() {
   }
 
-  public MasterCriteriaBlocker(Integer id, Integer masterCriteriaID, Integer blockerID) {
+  public MasterDocument(Integer id, Integer masterCriteriaID, String name) {
     this.id = id;
     this.masterCriteriaID = masterCriteriaID;
-    this.blockerID = blockerID;
+    this.name = name;
   }
 }
