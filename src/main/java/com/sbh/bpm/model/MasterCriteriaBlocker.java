@@ -59,10 +59,10 @@ public class MasterCriteriaBlocker {
   // private List<MasterCriteriaBlocker> criterias = new ArrayList<>();
 
   @ManyToOne(targetEntity = MasterCriteria.class)
-  @JoinColumn(name="master_criteria_id",referencedColumnName="id",insertable=false,updatable=false)
+  @JoinColumn(name="blocker_id",referencedColumnName="id",insertable=false,updatable=false)
   @Getter
   @Setter
-  private MasterCriteria criteria;
+  private MasterCriteria blocker;
     
   public MasterCriteriaBlocker() {
   }

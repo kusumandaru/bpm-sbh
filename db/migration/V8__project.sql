@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `master_criterias` (
   `exercise_type` varchar(255),
   `score` float COMMENT 'nullable',
   `additional_notes` text,
-  `without_document` bool,
+  `not_available` bool,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `created_by` VARCHAR(255)
@@ -179,7 +179,7 @@ VALUES
 
 INSERT INTO `master_exercises`
 VALUES
-(1, 1, 'preliminary','ASD P','Basic Green Area',null,NOW(),NOW(),'system'),
+(1, 1, 'prequisite','ASD P','Basic Green Area',null,NOW(),NOW(),'system'),
 (2, 1, 'score','ASD 1','Site Selection',2,NOW(),NOW(),'system'),
 (3, 1, 'score','ASD 2','Community Accessibility',2,NOW(),NOW(),'system'),
 (4, 1, 'score','ASD 3','Public Transportation',2,NOW(),NOW(),'system'),
@@ -187,28 +187,28 @@ VALUES
 (6, 1, 'score','ASD 5','Site Landscaping',3,NOW(),NOW(),'system'),
 (7, 1, 'score','ASD 6','Micro Climate',3,NOW(),NOW(),'system'),
 (8, 1, 'score','ASD 7','Storm Water Management',3,NOW(),NOW(),'system'),
-(9, 2, 'preliminary','EEC P1','Electrical Sub Metering',null,NOW(),NOW(),'system'),
-(10, 2, 'preliminary','EEC P2','OTTV Calculation',null,NOW(),NOW(),'system'),
+(9, 2, 'prequisite','EEC P1','Electrical Sub Metering',null,NOW(),NOW(),'system'),
+(10, 2, 'prequisite','EEC P2','OTTV Calculation',null,NOW(),NOW(),'system'),
 (11, 2, 'score','EEC 1','Energy Efficiency Measure',20,NOW(),NOW(),'system'),
 (12, 2, 'score','EEC 2','Natural Lighting',4,NOW(),NOW(),'system'),
 (13, 2, 'score','EEC 3','Ventilation ',1,NOW(),NOW(),'system'),
 (14, 2, 'score','EEC 4','Climate Change Impact',1,NOW(),NOW(),'system'),
 (15, 2, 'score','EEC 5','On Site Renewable Energy',5,NOW(),NOW(),'system'),
-(16, 3, 'preliminary','WAC P','Water Metering',null,NOW(),NOW(),'system'),
+(16, 3, 'prequisite','WAC P','Water Metering',null,NOW(),NOW(),'system'),
 (17, 3, 'score','WAC 1','Water Use Reduction',8,NOW(),NOW(),'system'),
 (18, 3, 'score','WAC 2','Water Fixtures',3,NOW(),NOW(),'system'),
 (19, 3, 'score','WAC 3','Water Recycling',3,NOW(),NOW(),'system'),
 (20, 3, 'score','WAC 4','Alternative Water Resource',2,NOW(),NOW(),'system'),
 (21, 3, 'score','WAC 5','Rainwater Harvesting',3,NOW(),NOW(),'system'),
 (22, 3, 'score','WAC 6','Water Efficiency Landscaping',2,NOW(),NOW(),'system'),
-(23, 4, 'preliminary','MRC P','Fundamental Refrigerant',null,NOW(),NOW(),'system'),
+(23, 4, 'prequisite','MRC P','Fundamental Refrigerant',null,NOW(),NOW(),'system'),
 (24, 4, 'score','MRC 1','Building and Material Reuse',0,NOW(),NOW(),'system'),
 (25, 4, 'score','MRC 2','Environmentally Processed Product',0,NOW(),NOW(),'system'),
 (26, 4, 'score','MRC 3','Non ODS Usage',2,NOW(),NOW(),'system'),
 (27, 4, 'score','MRC 4','Certified Wood',0,NOW(),NOW(),'system'),
 (28, 4, 'score','MRC 5','Prefab Material',0,NOW(),NOW(),'system'),
 (29, 4, 'score','MRC 6','Regional Material',0,NOW(),NOW(),'system'),
-(30, 5, 'preliminary','IHC P','Outdoor Air Introduction',null,NOW(),NOW(),'system'),
+(30, 5, 'prequisite','IHC P','Outdoor Air Introduction',null,NOW(),NOW(),'system'),
 (31, 5, 'score','IHC 1','CO2 Monitoring',1,NOW(),NOW(),'system'),
 (32, 5, 'score','IHC 2','Environmental Tobacco Smoke Control',2,NOW(),NOW(),'system'),
 (33, 5, 'score','IHC 3','Chemical Pollutants',0,NOW(),NOW(),'system'),
@@ -216,7 +216,7 @@ VALUES
 (35, 5, 'score','IHC 5','Visual Comfort',0,NOW(),NOW(),'system'),
 (36, 5, 'score','IHC 6','Thermal Comfort',1,NOW(),NOW(),'system'),
 (37, 5, 'score','IHC 7','Acoustic Level',0,NOW(),NOW(),'system'),
-(38, 6, 'preliminary','BEM P','Basic Waste Management',null,NOW(),NOW(),'system'),
+(38, 6, 'prequisite','BEM P','Basic Waste Management',null,NOW(),NOW(),'system'),
 (39, 6, 'score','BEM 1','GP as a Member of The Project Team',1,NOW(),NOW(),'system'),
 (40, 6, 'score','BEM 2','Pollution of Construction Activity',0,NOW(),NOW(),'system'),
 (41, 6, 'score','BEM 3','Advanced Waste Management',2,NOW(),NOW(),'system'),
@@ -228,11 +228,11 @@ VALUES
 INSERT INTO `master_criterias`
 VALUES
 (1, 1, 'ASD P1','Adanya area lansekap berupa vegetasi (softscape) yang bebas dari struktur bangunan dan struktur sederhana bangunan taman (hardscape) di atas permukaan tanah atau di bawah tanah.                                                            
-o Untuk konstruksi baru, luas areanya adalah minimal 10% dari luas total lahan.                                                                                                                                                                             o Untuk  major renovation, luas areanya adalah minimal 50% dari ruang terbuka yang bebas basement dalam tapak.','preliminary',null,'Basement: Ada /Tdk
+o Untuk konstruksi baru, luas areanya adalah minimal 10% dari luas total lahan.                                                                                                                                                                             o Untuk  major renovation, luas areanya adalah minimal 50% dari ruang terbuka yang bebas basement dalam tapak.','prequisite',null,'Basement: Ada /Tdk
 Luas Area : ………………
 Luas RTH Bebas basement : …………………
 Luas RTH Total : ……………',false,NOW(),NOW(),'system'),
-(2, 1, 'ASD P2','Area ini memiliki vegetasi mengikuti Permendagri No 1 tahun 2007 Pasal 13 (2a) dengan komposisi 50% lahan tertutupi luasan pohon ukuran kecil, ukuran sedang, ukuran besar, perdu setengah pohon, perdu, semak dalam ukuran dewasa dengan jenis tanaman sesuai dengan Permen PU No. 5/PRT/M/2008 mengenai Ruang Terbuka Hijau (RTH) Pasal  2.3.1  tentang Kriteria Vegetasi untuk Pekarangan.','preliminary',null,'Luas Semak :……………..
+(2, 1, 'ASD P2','Area ini memiliki vegetasi mengikuti Permendagri No 1 tahun 2007 Pasal 13 (2a) dengan komposisi 50% lahan tertutupi luasan pohon ukuran kecil, ukuran sedang, ukuran besar, perdu setengah pohon, perdu, semak dalam ukuran dewasa dengan jenis tanaman sesuai dengan Permen PU No. 5/PRT/M/2008 mengenai Ruang Terbuka Hijau (RTH) Pasal  2.3.1  tentang Kriteria Vegetasi untuk Pekarangan.','prequisite',null,'Luas Semak :……………..
 Luas Tajuk perdu + semak : ………….
 Luas Tajuk Pohon : ………………..',false,NOW(),NOW(),'system'),
 (3, 2, 'ASD 1-1A','Memilih daerah pembangunan yang dilengkapi minimal delapan dari 12 prasarana sarana kota.
@@ -372,7 +372,7 @@ Kapasitas total : …………………',false,NOW(),NOW(),'system'),
 (26, 8, 'ASD 7 - 3','Menggunakan teknologi-teknologi yang dapat mengurangi debit limpasan air hujan','score',1,'Teknologi yang digunakan:
 1. ………….
 2……………',false,NOW(),NOW(),'system'),
-(27, 9, 'EEC P1 - 1','Memasang  kWh meter untuk mengukur konsumsi listrik pada setiap kelompok beban dan sistem peralatan, yang meliputi: ','preliminary',null,'BAS : Ya/Tidak
+(27, 9, 'EEC P1 - 1','Memasang  kWh meter untuk mengukur konsumsi listrik pada setiap kelompok beban dan sistem peralatan, yang meliputi: ','prequisite',null,'BAS : Ya/Tidak
 A. Bila menggunakan BAS: Dapat membaca konsumsi energi sistemnyang diminta secara terpisah/ Spesifikasi tidak untuk membaca konsumsi energi yang diminta
 B. Bila tidak terbaca :
 Letak Submeter : ……………..(deskripsi)
@@ -382,7 +382,7 @@ Jenis ruangan di gedung :
 2 .……………
 3 .…………...
 Sub Meter Exclude (bila perlu): ………………',false,NOW(),NOW(),'system'),
-(28, 10, 'EEC P2 - 1','Menghitung dengan cara perhitungan OTTV berdasarkan SNI 03-6389-2011 atau SNI edisi terbaru tentang  Konservasi Energi Selubung Bangunan pada Bangunan Gedung.','preliminary',null,'Nilai OTTV : …………….
+(28, 10, 'EEC P2 - 1','Menghitung dengan cara perhitungan OTTV berdasarkan SNI 03-6389-2011 atau SNI edisi terbaru tentang  Konservasi Energi Selubung Bangunan pada Bangunan Gedung.','prequisite',null,'Nilai OTTV : …………….
  Orientasi  : ……………….
 Hadapan Luar fasade terbesar : …………..(orientasi)
 WWR : ………….
@@ -450,11 +450,11 @@ Letak Exhaust : …….',false,NOW(),NOW(),'system'),
  Opsi 1 (Simulasi)/Opsi 2 (Worksheet)',false,NOW(),NOW(),'system'),
 (44, 15, 'ECC 5','Menggunakan sumber energi baru dan terbarukan. Setiap 0,5% daya listrik yang dibutuhkan gedung yang dapat dipenuhi oleh sumber energi terbarukan mendapatkan 1 poin (sampai maksimal 5 poin).','max_score',5,'Generator Renewable : …………..
 KWP total : …………..',false,NOW(),NOW(),'system'),
-(45, 16, 'WAC P','Pemasangan alat meteran air (volume meter) yang ditempatkan di lokasi-lokasi tertentu pada sistem distribusi air, sebagai berikut:','preliminary',null,'Sumber Air Primer : ………………
+(45, 16, 'WAC P','Pemasangan alat meteran air (volume meter) yang ditempatkan di lokasi-lokasi tertentu pada sistem distribusi air, sebagai berikut:','prequisite',null,'Sumber Air Primer : ………………
 Ada Fasilitas Recycling dari Grey Water  : ada/tdk
 Ada Sumber Air Primer Alternatif :
 ada/tdk',false,NOW(),NOW(),'system'),
-(46, 16, 'WAC P2','Mengisi worksheet  air standar GBC Indonesia yang telah disediakan','preliminary',null,'Ada perhitungan dengan Water Calculator : ada / tdk',false,NOW(),NOW(),'system'),
+(46, 16, 'WAC P2','Mengisi worksheet  air standar GBC Indonesia yang telah disediakan','prequisite',null,'Ada perhitungan dengan Water Calculator : ada / tdk',false,NOW(),NOW(),'system'),
 (47, 17, 'WAC 1-1','Konsumsi air bersih dengan jumlah tertinggi 80% dari sumber primer tanpa mengurangi jumlah kebutuhan per orang sesuai dengan SNI 03-7065-2005 seperti pada tabel terlampir.','score',1,'Jumlah Okupan : …………….
 Kebutuhan air :………………
 Persentase : ………………..',false,NOW(),NOW(),'system'),
@@ -486,7 +486,7 @@ Persentase penyimpanan : ………….',false,NOW(),NOW(),'system'),
 (61, 22, 'WAC 6-2','Menerapkan teknologi yang inovatif untuk irigasi yang dapat mengontrol kebutuhan air untuk lansekap yang tepat, sesuai dengan kebutuhan tanaman.','score',1,'Teknologi yang digunakan:
 1. ………….
 2……………',false,NOW(),NOW(),'system'),
-(62, 23, 'MRC P','Tidak menggunakan chloro fluoro carbon (CFC) sebagai refrigeran dan halon sebagai bahan pemadam kebakaran','preliminary',null,'Jenis Refrigeran :………………….
+(62, 23, 'MRC P','Tidak menggunakan chloro fluoro carbon (CFC) sebagai refrigeran dan halon sebagai bahan pemadam kebakaran','prequisite',null,'Jenis Refrigeran :………………….
 Jenis bahan Fire Fighting: ……………',false,NOW(),NOW(),'system'),
 (63, 24, 'MRC 1-1A','Menggunakan kembali semua material bekas, baik dari bangunan lama maupun tempat lain, berupa bahan struktur utama, fasad, plafon, lantai, partisi, kusen, dan dinding, setara minimal 10% dari total biaya material.','score',1,'',true,NOW(),NOW(),'system'),
 (64, 24, 'MRC 1-1B','Menggunakan kembali semua material bekas, baik dari bangunan lama maupun tempat lain, berupa bahan struktur utama, fasad, plafon, lantai, partisi, kusen, dan dinding, setara minimal 20% dari total biaya material.','score',2,'',true,NOW(),NOW(),'system'),
@@ -499,7 +499,7 @@ Jenis bahan Fire Fighting: ……………',false,NOW(),NOW(),'system'),
 (71, 28, 'MRC 5','Desain yang menggunakan material modular atau prafabrikasi (tidak termasuk equipment) sebesar 30% dari total biaya material','score',3,'',true,NOW(),NOW(),'system'),
 (72, 29, 'MRC 6-1','Menggunakan material yang lokasi asal bahan baku utama dan pabrikasinya berada di dalam radius 1.000 km dari lokasi proyek minimal bernilai 50% dari total biaya material. ','score',1,'',true,NOW(),NOW(),'system'),
 (73, 29, 'MRC 6-2','Menggunakan material yang lokasi asal bahan baku utama dan pabrikasinya berada dalam wilayah Republik Indonesia bernilai minimal 80% dari total biaya material. ','score',1,'',true,NOW(),NOW(),'system'),
-(74, 30, 'IHC P','Desain ruangan yang menunjukkan adanya potensi introduksi udara luar minimal sesuai dengan Standar ASHRAE 62.1-2007 atau Standar ASHRAE edisi terbaru.','preliminary',null,'Perhitungan : ada/tidak
+(74, 30, 'IHC P','Desain ruangan yang menunjukkan adanya potensi introduksi udara luar minimal sesuai dengan Standar ASHRAE 62.1-2007 atau Standar ASHRAE edisi terbaru.','prequisite',null,'Perhitungan : ada/tidak
 Standar acuan yg digunakan : …………………..',false,NOW(),NOW(),'system'),
 (75, 31, 'IHC 1','Ruangan dengan kepadatan tinggi, yaitu < 2.3m2 per orang dilengkapi dengan instalasi sensor gas karbon dioksida (CO2) yang memiliki mekanisme untuk mengatur jumlah ventilasi udara luar sehingga konsentrasi C02 di dalam ruangan tidak lebih dari 1.000 ppm, sensor diletakkan 1,5 m di atas lantai dekat return air gril atau return air duct.','score',1,'Ruangan yang dipasang CO2 monitor: 
 1. ………………
@@ -516,7 +516,7 @@ Persentase NLA : ………………',false,NOW(),NOW(),'system'),
 Jenis AC:
 (bila bukan central) Mekanisme: ………………………………………………',false,NOW(),NOW(),'system'),
 (83, 37, 'IHC 7','Tingkat kebisingan pada 90% dari nett lettable area (NLA) tidak lebih dari atau sesuai dengan SNI 03-6386-2000,  tentang Spesifikasi Tingkat Bunyi dan waktu Dengung dalam Bangunan Gedung dan Perumahan (kriteria desain yang direkomendasikan).','score',1,'',true,NOW(),NOW(),'system'),
-(84, 38, 'BEM P','Adanya instalasi atau fasilitas untuk memilah dan mengumpulkan sampah sejenis sampah rumah tangga (UU No. 18 Tahun 2008) berdasarkan jenis organik, anorganik dan B3','preliminary',null,'Jenis Fasilitas : …………….
+(84, 38, 'BEM P','Adanya instalasi atau fasilitas untuk memilah dan mengumpulkan sampah sejenis sampah rumah tangga (UU No. 18 Tahun 2008) berdasarkan jenis organik, anorganik dan B3','prequisite',null,'Jenis Fasilitas : …………….
 Di luar / dlm gedung
 Di luar / dlm area
 Mandiri / pihak ke-tiga',false,NOW(),NOW(),'system'),
@@ -689,34 +689,33 @@ INSERT INTO `master_criteria_blockers`
 VALUES
 (1, 3, 4 , NOW(), NOW(),'system'),
 (2, 4, 3 , NOW(), NOW(),'system'),
-(3, 4, 3 , NOW(), NOW(),'system'),
-(4, 10, 11 , NOW(), NOW(),'system'),
-(5, 11, 10 , NOW(), NOW(),'system'),
-(6, 18, 19 , NOW(), NOW(),'system'),
-(7, 19, 18 , NOW(), NOW(),'system'),
-(8, 21, 22 , NOW(), NOW(),'system'),
-(9, 22, 21 , NOW(), NOW(),'system'),
-(10, 23, 24 , NOW(), NOW(),'system'),
-(11, 24, 23 , NOW(), NOW(),'system'),
-(12, 49, 50 , NOW(), NOW(),'system'),
-(13, 49, 51 , NOW(), NOW(),'system'),
-(14, 50, 49 , NOW(), NOW(),'system'),
-(15, 50, 51 , NOW(), NOW(),'system'),
-(16, 51, 49 , NOW(), NOW(),'system'),
-(17, 51, 50 , NOW(), NOW(),'system'),
-(18, 52, 53 , NOW(), NOW(),'system'),
-(19, 53, 52 , NOW(), NOW(),'system'),
-(20, 54, 55 , NOW(), NOW(),'system'),
-(21, 54, 56 , NOW(), NOW(),'system'),
-(22, 55, 54 , NOW(), NOW(),'system'),
-(23, 55, 56 , NOW(), NOW(),'system'),
-(24, 56, 54 , NOW(), NOW(),'system'),
-(25, 56, 55 , NOW(), NOW(),'system'),
-(26, 57, 58 , NOW(), NOW(),'system'),
-(27, 57, 59 , NOW(), NOW(),'system'),
-(28, 58, 57 , NOW(), NOW(),'system'),
-(29, 58, 59 , NOW(), NOW(),'system'),
-(30, 59, 57 , NOW(), NOW(),'system'),
-(31, 59, 58 , NOW(), NOW(),'system'),
-(32, 63, 64 , NOW(), NOW(),'system'),
-(33, 64, 63 , NOW(), NOW(),'system');
+(3, 10, 11 , NOW(), NOW(),'system'),
+(4, 11, 10 , NOW(), NOW(),'system'),
+(5, 18, 19 , NOW(), NOW(),'system'),
+(6, 19, 18 , NOW(), NOW(),'system'),
+(7, 21, 22 , NOW(), NOW(),'system'),
+(8, 22, 21 , NOW(), NOW(),'system'),
+(9, 23, 24 , NOW(), NOW(),'system'),
+(10, 24, 23 , NOW(), NOW(),'system'),
+(11, 49, 50 , NOW(), NOW(),'system'),
+(12, 49, 51 , NOW(), NOW(),'system'),
+(13, 50, 49 , NOW(), NOW(),'system'),
+(14, 50, 51 , NOW(), NOW(),'system'),
+(15, 51, 49 , NOW(), NOW(),'system'),
+(16, 51, 50 , NOW(), NOW(),'system'),
+(17, 52, 53 , NOW(), NOW(),'system'),
+(18, 53, 52 , NOW(), NOW(),'system'),
+(19, 54, 55 , NOW(), NOW(),'system'),
+(20, 54, 56 , NOW(), NOW(),'system'),
+(21, 55, 54 , NOW(), NOW(),'system'),
+(22, 55, 56 , NOW(), NOW(),'system'),
+(23, 56, 54 , NOW(), NOW(),'system'),
+(24, 56, 55 , NOW(), NOW(),'system'),
+(25, 57, 58 , NOW(), NOW(),'system'),
+(26, 57, 59 , NOW(), NOW(),'system'),
+(27, 58, 57 , NOW(), NOW(),'system'),
+(28, 58, 59 , NOW(), NOW(),'system'),
+(29, 59, 57 , NOW(), NOW(),'system'),
+(30, 59, 58 , NOW(), NOW(),'system'),
+(31, 63, 64 , NOW(), NOW(),'system'),
+(32, 64, 63 , NOW(), NOW(),'system');
