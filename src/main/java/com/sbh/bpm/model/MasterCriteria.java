@@ -59,11 +59,11 @@ public class MasterCriteria {
   @Setter
   private String additionalNotes;
 
-  @SerializedName("without_document")
-  @Column(name="without_document")
+  @SerializedName("not_available")
+  @Column(name="not_available")
   @Getter
   @Setter
-  private Boolean withoutDocument;
+  private Boolean notAvailable;
 
   @SerializedName("created_at")
   @Column(name="created_at")
