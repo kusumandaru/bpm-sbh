@@ -11,5 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MasterCriteriaRepository extends CrudRepository<MasterCriteria, Integer> {
   List<MasterCriteria> findByMasterExerciseID(Integer exerciseId);
+  List<MasterCriteria> findByMasterExerciseIDAndIdNot(Integer exerciseId, Integer blockerId);
 }
 

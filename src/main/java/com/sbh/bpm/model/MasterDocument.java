@@ -16,7 +16,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "master_documents")
-public class MasterDocument {
+public class  MasterDocument {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter

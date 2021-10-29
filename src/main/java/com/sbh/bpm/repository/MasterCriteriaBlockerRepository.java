@@ -11,5 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MasterCriteriaBlockerRepository extends CrudRepository<MasterCriteriaBlocker, Integer> {
   List<MasterCriteriaBlocker> findBymasterCriteriaID(Integer criteriaId);
+  void deleteBymasterCriteriaID(Integer criteriaId);
 }
 
