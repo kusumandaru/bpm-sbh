@@ -33,4 +33,10 @@ public class MasterCriteriaService implements IMasterCriteriaService {
     return (List<MasterCriteria>) repository.findByMasterExerciseID(exerciseId);
 
   }
+
+  @Override
+  public List<MasterCriteria> withoutSelfSameExercise(Integer criteriaId) {
+    MasterCriteria criteria = findById(criteriaId);
+    return (List<MasterCriteria>) repository.findByMasterExerciseIDAndIdNot(criteria.getMasterExerciseID(), criteria.getId());
+  }
 }

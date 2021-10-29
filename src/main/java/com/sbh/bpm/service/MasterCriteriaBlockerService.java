@@ -7,8 +7,10 @@ import com.sbh.bpm.repository.MasterCriteriaBlockerRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class MasterCriteriaBlockerService implements IMasterCriteriaBlockerService {
   @Autowired
   private MasterCriteriaBlockerRepository repository;
@@ -31,5 +33,10 @@ public class MasterCriteriaBlockerService implements IMasterCriteriaBlockerServi
   @Override
   public List<MasterCriteriaBlocker> findBymasterCriteriaID(Integer criteriaId) {
     return (List<MasterCriteriaBlocker>) repository.findBymasterCriteriaID(criteriaId);
+  }
+
+  @Override
+  public void deleteBymasterCriteriaID(Integer criteriaId) {
+    repository.deleteBymasterCriteriaID(criteriaId);
   }
 }

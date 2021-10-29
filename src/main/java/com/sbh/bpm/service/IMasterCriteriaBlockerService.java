@@ -10,4 +10,5 @@ public interface IMasterCriteriaBlockerService {
   List<MasterCriteriaBlocker> findBymasterCriteriaID(Integer criteriaId);
   MasterCriteriaBlocker findById(Integer masterCriteriaBlockerId);
   MasterCriteriaBlocker save(MasterCriteriaBlocker masterCriteriaBlocker);
+  void deleteBymasterCriteriaID(Integer criteriaId);
 }
