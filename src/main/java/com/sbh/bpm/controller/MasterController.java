@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PATCH;
@@ -92,11 +92,10 @@ public class MasterController extends GcsUtil{
   @POST
   @Path(value = "/provinces")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Consumes(MediaType.APPLICATION_JSON)
   public Response saveProvinces(@HeaderParam("Authorization") String authorization,
-                               @FormParam("name") String name) {   
-    Province province = new Province();
-    province.setName(name);
+                               Province province) {   
+    province.setCreatedAt(new Date());
     province = provinceService.save(province);
 
     String json = new Gson().toJson(province);
@@ -106,20 +105,20 @@ public class MasterController extends GcsUtil{
   @PATCH
   @Path(value = "/provinces/{province_id}")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Consumes(MediaType.APPLICATION_JSON)
   public Response updateProvinces(@HeaderParam("Authorization") String authorization,
                                @PathParam("province_id") Integer provinceId, 
-                               @FormParam("name") String name) {   
+                               Province province) {   
     
-    Province province = (Province) provinceService.findById(provinceId);
-    if (province == null) {
+    Province prov = (Province) provinceService.findById(provinceId);
+    if (prov == null) {
       return Response.status(400, "province not found").build();
     }
 
-    province.setName(name);
-    province = provinceService.save(province);
+    prov.setName(province.getName());
+    prov = provinceService.save(prov);
 
-    String json = new Gson().toJson(province);
+    String json = new Gson().toJson(prov);
     return Response.ok(json).build();
   }
 
@@ -156,14 +155,10 @@ public class MasterController extends GcsUtil{
   @POST
   @Path(value = "/cities")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Consumes(MediaType.APPLICATION_JSON)
   public Response saveCities(@HeaderParam("Authorization") String authorization,
-                               @FormParam("name") String name,
-                               @FormParam("province_id") Integer provinceId) {   
-    City city = new City();
-    city.setName(name);
-    city.setProvinceId(provinceId);
-
+                            City city) {   
+    city.setCreatedAt(new Date());
     city = cityService.save(city);
 
     String json = new Gson().toJson(city);
@@ -173,22 +168,21 @@ public class MasterController extends GcsUtil{
   @PATCH
   @Path(value = "/cities/{city_id}")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Consumes(MediaType.APPLICATION_JSON)
   public Response updateCities(@HeaderParam("Authorization") String authorization,
-                                  @FormParam("name") String name,
-                                  @FormParam("province_id") Integer provinceId,
-                                  @PathParam("city_id") Integer cityId) {   
+                                  @PathParam("city_id") Integer cityId, 
+                                  City city) {   
 
-    City city = (City) cityService.findById(cityId);
-    if (city == null) {
+    City ct = (City) cityService.findById(cityId);
+    if (ct == null) {
       return Response.status(400, "city not found").build();
     }
     
-    city.setName(name);
-    city.setProvinceId(provinceId);
-    city = cityService.save(city);
+    ct.setName(city.getName());
+    ct.setProvinceId(city.getProvinceId());
+    ct = cityService.save(ct);
 
-    String json = new Gson().toJson(city);
+    String json = new Gson().toJson(ct);
     return Response.ok(json).build();
   }
 
@@ -215,15 +209,10 @@ public class MasterController extends GcsUtil{
   @POST
   @Path(value = "/building_types")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Consumes(MediaType.APPLICATION_JSON)
   public Response saveBuildingType(@HeaderParam("Authorization") String authorization,
-                               @FormParam("code") String code,
-                               @FormParam("name_id") String nameId,
-                               @FormParam("name_en") String nameEn) {   
-    BuildingType buildingType = new BuildingType();
-    buildingType.setNameId(nameId);
-    buildingType.setNameEn(nameEn);
-    buildingType.setCode(code);
+                              BuildingType buildingType) {
+    buildingType.setCreatedAt(new Date());
     buildingType = buildingTypeService.save(buildingType);
 
     String json = new Gson().toJson(buildingType);
@@ -233,23 +222,21 @@ public class MasterController extends GcsUtil{
   @PATCH
   @Path(value = "/building_types/{building_type_id}")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Consumes(MediaType.APPLICATION_JSON)
   public Response updateProvinces(@HeaderParam("Authorization") String authorization,
                                @PathParam("building_type_id") Integer buildingTypeId, 
-                               @FormParam("code") String code,
-                               @FormParam("name_id") String nameId,
-                               @FormParam("name_en") String nameEn) {   
-    BuildingType buildingType = (BuildingType) buildingTypeService.findById(buildingTypeId);
+                               BuildingType buildingType) {   
+    BuildingType bt = (BuildingType) buildingTypeService.findById(buildingTypeId);
     if (buildingType == null) {
       return Response.status(400, "buildingType not found").build();
     }
 
-    buildingType.setNameId(nameId);
-    buildingType.setNameEn(nameEn);
-    buildingType.setCode(code);
-    buildingType = buildingTypeService.save(buildingType);
+    bt.setNameId(buildingType.getNameId());
+    bt.setNameEn(buildingType.getNameEn());
+    bt.setCode(buildingType.getCode());
+    bt = buildingTypeService.save(bt);
 
-    String json = new Gson().toJson(buildingType);
+    String json = new Gson().toJson(bt);
     return Response.ok(json).build();
   }
 
