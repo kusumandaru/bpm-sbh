@@ -1,5 +1,6 @@
 package com.sbh.bpm.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -12,8 +13,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import com.google.gson.Gson;
 import com.sbh.bpm.model.MasterCriteria;
@@ -123,8 +126,14 @@ public class MasterProjectController extends GcsUtil{
   @GET
   @Path(value = "/templates")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response allMasterTemplate(@HeaderParam("Authorization") String authorization) {      
-    List<MasterTemplate> templates = (List<MasterTemplate>) masterTemplateService.findAll();
+  public Response allMasterTemplate(@HeaderParam("Authorization") String authorization, @Context UriInfo info) {
+    String projectType = info.getQueryParameters().getFirst("project_type");
+    List<MasterTemplate> templates = new ArrayList<>();
+    if (projectType != null && !projectType.isEmpty()) {
+      templates = (List<MasterTemplate>) masterTemplateService.findByProjectType(projectType);
+    } else {
+      templates = (List<MasterTemplate>) masterTemplateService.findAll();
+    }
 
     String json = new Gson().toJson(templates);
     return Response.ok(json).build();

@@ -8,6 +8,7 @@ public interface IMasterTemplateService {
 
   List<MasterTemplate> findAll();
   List<MasterTemplate> findByMasterVendorID(Integer vendorId);
+  List<MasterTemplate> findByProjectType(String projectType);
   MasterTemplate findById(Integer masterTemplateId);
   MasterTemplate save(MasterTemplate masterTemplate);
 }
