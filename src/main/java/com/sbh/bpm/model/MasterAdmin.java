@@ -59,6 +59,18 @@ public class MasterAdmin {
   @Setter
   private String thirdAttachment;
 
+  @SerializedName("dr_template_id")
+  @Column(name="dr_template_id")
+  @Getter
+  @Setter
+  private Integer drTemplateID;
+
+  @SerializedName("fa_template_id")
+  @Column(name="fa_template_id")
+  @Getter
+  @Setter
+  private Integer faTemplateID;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
@@ -74,7 +86,9 @@ public class MasterAdmin {
   public MasterAdmin() {
   }
 
-  public MasterAdmin(Integer id, String managerName, String managerSignature, String registrationLetter, String firstAttachment, String secondAttachment, String thirdAttachment) {
+  public MasterAdmin(Integer id, String managerName, String managerSignature, 
+        String registrationLetter, String firstAttachment, String secondAttachment, 
+        String thirdAttachment, Integer drTemplateID, Integer faTemplateID) {
     this.id = id;
     this.managerName = managerName;
     this.managerSignature = managerSignature;
@@ -82,6 +96,7 @@ public class MasterAdmin {
     this.firstAttachment = firstAttachment;
     this.secondAttachment = secondAttachment;
     this.thirdAttachment = thirdAttachment;
-
+    this.drTemplateID = drTemplateID;
+    this.faTemplateID = faTemplateID;
   }
 }

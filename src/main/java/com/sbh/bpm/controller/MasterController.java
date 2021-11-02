@@ -257,6 +257,8 @@ public class MasterController extends GcsUtil{
   public Response CreateMasterAdmin(
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("manager_name") String managerName,
+    @FormDataParam("fa_template_id") Integer faTemplateID,
+    @FormDataParam("dr_template_id") Integer drTemplateID,
     @FormDataParam("manager_signature") InputStream managerSignature, 
     @FormDataParam("manager_signature") FormDataContentDisposition managerSignatureFdcd,
     @FormDataParam("registration_letter") InputStream registrationLetter, 
@@ -318,6 +320,12 @@ public class MasterController extends GcsUtil{
     }
     if (managerName != null) {
       masterAdmin.setManagerName(managerName);
+    }
+    if (faTemplateID != null) {
+      masterAdmin.setFaTemplateID(faTemplateID);
+    }
+    if (drTemplateID != null) {
+      masterAdmin.setDrTemplateID(drTemplateID);
     }
     masterAdmin = masterAdminService.save(masterAdmin);
 

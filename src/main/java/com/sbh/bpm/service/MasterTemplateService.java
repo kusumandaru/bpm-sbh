@@ -32,4 +32,9 @@ public class MasterTemplateService implements IMasterTemplateService {
   public List<MasterTemplate> findByMasterVendorID(Integer vendorId) {
     return (List<MasterTemplate>) repository.findByMasterVendorID(vendorId);
   }
+
+  @Override
+  public List<MasterTemplate> findByProjectType(String projectType) {
+    return (List<MasterTemplate>) repository.findByProjectType(projectType);
+  }
 }
