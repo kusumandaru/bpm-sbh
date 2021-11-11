@@ -12,6 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.RuntimeService;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 class GcsUtil {
@@ -57,6 +58,25 @@ class GcsUtil {
 
       Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
       return variables;
+    } else {
+      return null;
+    }
+  }
+
+  protected BlobId UploadToGcs(
+    String activityInstanceId,
+    InputStream file, 
+    ContentDisposition fileFdcd
+  ) throws IOException {
+    if (fileFdcd.getFileName() != null) {
+      String fileName = fileFdcd.getFileName();
+
+      GoogleCloudStorage googleCloudStorage;
+      googleCloudStorage = new GoogleCloudStorage();
+
+      BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, fileName, file);
+
+      return blobId;
     } else {
       return null;
     }

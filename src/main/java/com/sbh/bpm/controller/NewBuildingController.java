@@ -58,7 +58,7 @@ public class NewBuildingController extends GcsUtil{
 
   @Autowired
   private IMailerService mailerService;
- 
+
   @GET
   @Path(value = "/variables/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)

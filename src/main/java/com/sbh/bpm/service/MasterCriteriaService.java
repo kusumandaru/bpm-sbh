@@ -31,12 +31,16 @@ public class MasterCriteriaService implements IMasterCriteriaService {
   @Override
   public List<MasterCriteria> findByMasterExerciseID(Integer exerciseId) {
     return (List<MasterCriteria>) repository.findByMasterExerciseID(exerciseId);
-
   }
 
   @Override
   public List<MasterCriteria> withoutSelfSameExercise(Integer criteriaId) {
     MasterCriteria criteria = findById(criteriaId);
     return (List<MasterCriteria>) repository.findByMasterExerciseIDAndIdNot(criteria.getMasterExerciseID(), criteria.getId());
+  }
+
+  @Override
+  public List<MasterCriteria> findByMasterExerciseIDIn(List<Integer> exerciseIds) {
+    return (List<MasterCriteria>) repository.findByMasterExerciseIDIn(exerciseIds);
   }
 }

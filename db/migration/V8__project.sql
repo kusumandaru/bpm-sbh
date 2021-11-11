@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `master_criteria_blockers` (
 );
 
 DROP TABLE IF EXISTS `master_levels`;
-CREATE TABLE IF NOT EXISTS `master_criteria_blockers` (
+CREATE TABLE IF NOT EXISTS `master_levels` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
   `minimum_score` float,
