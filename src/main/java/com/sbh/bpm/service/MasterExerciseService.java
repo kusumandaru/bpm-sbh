@@ -31,6 +31,10 @@ public class MasterExerciseService implements IMasterExerciseService {
   @Override
   public List<MasterExercise> findByMasterEvaluationID(Integer evaluationId) {
     return (List<MasterExercise>) repository.findByMasterEvaluationID(evaluationId);
-    
+  }
+
+  @Override
+  public List<MasterExercise> findByMasterEvaluationIDIn(List<Integer> evaluationIds) {
+    return (List<MasterExercise>) repository.findByMasterEvaluationIDIn(evaluationIds);
   }
 }

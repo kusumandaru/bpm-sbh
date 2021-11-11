@@ -8,6 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -17,31 +19,25 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "master_evaluations")
-public class MasterEvaluation {
+@Table(name = "document_files")
+public class DocumentFile {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter
   @Setter
   private Integer id;
 
-  @SerializedName("master_template_id")
-  @Column(name="master_template_id")
+  @SerializedName("master_document_id")
+  @Column(name="master_document_id")
   @Getter
   @Setter
-  private Integer masterTemplateID;
+  private Integer masterDocumentID;
 
-  @SerializedName("code")
-  @Column(name="code")
+  @SerializedName("criteria_scoring_id")
+  @Column(name="criteria_scoring_id")
   @Getter
   @Setter
-  private String code;
-
-  @SerializedName("name")
-  @Column(name="name")
-  @Getter
-  @Setter
-  private String name;
+  private Integer criteriaScoringID;
 
   @SerializedName("created_at")
   @Column(name="created_at")
@@ -52,7 +48,7 @@ public class MasterEvaluation {
   @SerializedName("updated_at")
   @Column(name="updated_at")
   @Getter
-  @Setter 
+  @Setter
   private Date updatedAt;
 
   @SerializedName("created_by")
@@ -61,21 +57,23 @@ public class MasterEvaluation {
   @Setter
   private String createdBy;
 
+  @ManyToOne(targetEntity = MasterDocument.class)
+  @JoinColumn(name="master_document_id",referencedColumnName="id",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private MasterDocument document;
+
   @Transient
   @Getter
   @Setter
-  private List<ExerciseAssessment> exercises;
+  private List<Attachment> attachments;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterTemplate> templates = new ArrayList<>();
-    
-  public MasterEvaluation() {
+  public DocumentFile() {
   }
 
-  public MasterEvaluation(Integer id, String code, String name, Integer masterTemplateID) {
+  public DocumentFile(Integer id, Integer masterDocumentID, Integer criteriaScoringID) {
     this.id = id;
-    this.code = code;
-    this.name = name;
-    this.masterTemplateID = masterTemplateID;
+    this.masterDocumentID = masterDocumentID;
+    this.criteriaScoringID = criteriaScoringID;
   }
 }

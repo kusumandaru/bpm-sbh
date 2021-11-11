@@ -32,4 +32,15 @@ public class MasterEvaluationService implements IMasterEvaluationService {
   public List<MasterEvaluation> findByMasterTemplateID(Integer templateId) {
     return (List<MasterEvaluation>) repository.findByMasterTemplateID(templateId);
   }
+
+  @Override
+  public List<Integer> getAllIdsByTemplateId(Integer templateId) {
+    return (List<Integer>) repository.getAllIdsByTemplateId(templateId);
+  }
+
+  @Override
+  public List<MasterEvaluation> findByMasterTemplateIDIn(List<Integer> masterTemplateIds) {
+    return (List<MasterEvaluation>) repository.findByMasterTemplateIDIn(masterTemplateIds);
+
+  }
 }

@@ -8,6 +8,8 @@ public interface IMasterEvaluationService {
 
   List<MasterEvaluation> findAll();
   List<MasterEvaluation> findByMasterTemplateID(Integer templateId);
+  List<Integer> getAllIdsByTemplateId(Integer templateId);
   MasterEvaluation findById(Integer masterEvaluationId);
   MasterEvaluation save(MasterEvaluation masterEvaluation);
+  List<MasterEvaluation> findByMasterTemplateIDIn(List<Integer> masterTemplateIds);
 }

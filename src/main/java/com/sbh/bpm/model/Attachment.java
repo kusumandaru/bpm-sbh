@@ -1,7 +1,6 @@
 package com.sbh.bpm.model;
 
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,7 +8,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -17,31 +15,43 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "master_evaluations")
-public class MasterEvaluation {
+@Table(name = "attachments")
+public class Attachment {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter
   @Setter
   private Integer id;
 
-  @SerializedName("master_template_id")
-  @Column(name="master_template_id")
+  @SerializedName("document_file_id")
+  @Column(name="document_file_id")
   @Getter
   @Setter
-  private Integer masterTemplateID;
+  private Integer documentFileID;
 
-  @SerializedName("code")
-  @Column(name="code")
+  @SerializedName("filename")
+  @Column(name="filename")
   @Getter
   @Setter
-  private String code;
+  private String filename;
 
-  @SerializedName("name")
-  @Column(name="name")
+  @SerializedName("link")
+  @Column(name="link")
   @Getter
   @Setter
-  private String name;
+  private String link;
+
+  @SerializedName("uploader_id")
+  @Column(name="uploader_id")
+  @Getter
+  @Setter
+  private String uploaderID;
+
+  @SerializedName("role")
+  @Column(name="role")
+  @Getter
+  @Setter
+  private String role;
 
   @SerializedName("created_at")
   @Column(name="created_at")
@@ -52,7 +62,7 @@ public class MasterEvaluation {
   @SerializedName("updated_at")
   @Column(name="updated_at")
   @Getter
-  @Setter 
+  @Setter
   private Date updatedAt;
 
   @SerializedName("created_by")
@@ -61,21 +71,11 @@ public class MasterEvaluation {
   @Setter
   private String createdBy;
 
-  @Transient
-  @Getter
-  @Setter
-  private List<ExerciseAssessment> exercises;
-
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterTemplate> templates = new ArrayList<>();
-    
-  public MasterEvaluation() {
+  public Attachment() {
   }
 
-  public MasterEvaluation(Integer id, String code, String name, Integer masterTemplateID) {
+  public Attachment(Integer id, Integer documentFileID) {
     this.id = id;
-    this.code = code;
-    this.name = name;
-    this.masterTemplateID = masterTemplateID;
+    this.documentFileID = documentFileID;
   }
 }
