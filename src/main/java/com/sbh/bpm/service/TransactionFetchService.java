@@ -112,7 +112,7 @@ public class TransactionFetchService  implements ITransactionFetchService {
       return new TransactionFetchResponse(false, map, projectAssessments);
     }
 
-    try {
+    // try {
       projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceID);
       for (ProjectAssessment pa : projectAssessments) {
         List<MasterEvaluation> masterEvaluations = masterEvaluationService.findByMasterTemplateID(pa.getMasterTemplateID());
@@ -163,14 +163,14 @@ public class TransactionFetchService  implements ITransactionFetchService {
         pa.setMasterEvaluations(masterEvaluations);
       }
 
-    } catch(Exception ex) {
-      transactionManager.rollback(transactionStatus);
+    // } catch(Exception ex) {
+    //   transactionManager.rollback(transactionStatus);
 
-      Map<String, String> map = new HashMap<String, String>();
-      map.put("message", ex.getMessage());
+    //   Map<String, String> map = new HashMap<String, String>();
+    //   map.put("message", ex.getMessage());
 
-      return new TransactionFetchResponse(false, map, projectAssessments);
-  }
+    //   return new TransactionFetchResponse(false, map, projectAssessments);
+    // }
 
     Map<String, String> resultMap = new HashMap<String, String>();
     resultMap.put("message", "DR transaction has been loaded");
