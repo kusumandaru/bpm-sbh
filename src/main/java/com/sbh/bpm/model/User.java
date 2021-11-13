@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "`ACT_ID_USER`")
+@Table(name = "\"ACT_ID_USER\"")
 public class User {
   @Id
   @Column(name="ID_")
