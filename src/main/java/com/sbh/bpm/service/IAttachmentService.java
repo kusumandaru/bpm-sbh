@@ -12,4 +12,5 @@ public interface IAttachmentService {
   Iterable<Attachment> saveAll(List<Attachment> attachments);
   List<Attachment> findByDocumentFileID(Integer documentFileId);
   List<Attachment> findByDocumentFileIDIn(List<Integer> documentFileIds);
+  boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId);
 }

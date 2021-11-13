@@ -1,5 +1,6 @@
 package com.sbh.bpm.controller;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -28,6 +30,7 @@ import com.sbh.bpm.model.ExerciseAssessment;
 import com.sbh.bpm.model.MasterEvaluation;
 import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.ProjectAssessment;
+import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICommentService;
 import com.sbh.bpm.service.ICriteriaScoringService;
@@ -147,15 +150,25 @@ public class DesignRecognitionController extends GcsUtil {
   }
 
   @POST
-  @Path(value = "/design_recognition/{exerciseId}/project_assessment")
+  @Path(value = "/design_recognition/{criteriaScoringId}/take_score")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response editExercises(@HeaderParam("Authorization") String authorization,
-                                MasterExercise exercise, @PathParam("exerciseId") Integer exerciseId) {
-    CriteriaScoring criteriaScoring = criteriaScoringService.findById(exerciseId);
+                                MasterExercise exercise, @PathParam("criteriaScoringId") Integer criteriaScoringId) {
+    CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     criteriaScoring.setApprovalStatus(2);
-
+    criteriaScoring.setSelected(true);
+    criteriaScoring.setPotentialScore(criteriaScoring.getCriteria().getScore());
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
+    
+    Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
+    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
+    Float potentialScore = allScorings.stream().map(CriteriaScoring::getPotentialScore).reduce(0.0f, Float::sum);
+    Float score = allScorings.stream().map(CriteriaScoring::getScore).reduce(0.0f, Float::sum);
+
+    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    projectAssessment.setTemporaryScore(score);
+    projectAssessment.setPotentialScore(potentialScore);
 
     String json = new Gson().toJson(criteriaScoring);
     return Response.ok(json).build();
@@ -258,12 +271,11 @@ public class DesignRecognitionController extends GcsUtil {
   }
 
   @POST
-  @Path(value = "/criteria_scoring/{criteriaScoringId}/attachments")
+  @Path(value = "/design_recognition/attachments")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   public Response DesignRecognitionAttachmentCreation(
     @HeaderParam("Authorization") String authorization,
-    @PathParam("criteriaScoringId") Integer criteriaScoringId,
     @FormDataParam("files") FormDataBodyPart files,
     @FormDataParam("task_id") String taskId,
     @FormDataParam("document_id") Integer documentId
@@ -319,6 +331,26 @@ public class DesignRecognitionController extends GcsUtil {
     
     String json = new Gson().toJson(attachs);
     return Response.status(200).entity(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/design_recognition/attachments/{attachmentId}")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DesignRecognitionAttachmentCreation(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("attachmentId") Integer attachmentId
+
+  ) {
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    boolean status = attachmentService.deleteById(googleCloudStorage, attachmentId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @GET
