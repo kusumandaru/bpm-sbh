@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.google.gson.annotations.SerializedName;
@@ -70,6 +72,12 @@ public class Attachment {
   @Getter
   @Setter
   private String createdBy;
+
+  @ManyToOne(targetEntity = User.class)
+  @JoinColumn(name="uploader_id",referencedColumnName="ID_",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private User user;
 
   public Attachment() {
   }

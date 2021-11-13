@@ -144,5 +144,9 @@ class GcsUtil {
   protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String filename) {
     String path = String.valueOf(variableMap.get(filename));
     return googleCloudStorage.GetBlobByName(path);
-  } 
+  }
+
+  protected boolean DeleteBlob(GoogleCloudStorage googleCloudStorage, Blob blob) {
+    return googleCloudStorage.DeleteBlob(blob);
+  }
 }
