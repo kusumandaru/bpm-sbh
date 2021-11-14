@@ -303,14 +303,19 @@ public class DesignRecognitionController extends GcsUtil {
     List<Attachment> attachments = new ArrayList<Attachment>();
 
     try{
+      List<String> filenames = new ArrayList<String>();
       for(BodyPart part : files.getParent().getBodyParts()){
         InputStream is = part.getEntityAs(InputStream.class);
         ContentDisposition meta = part.getContentDisposition();
 
-        BlobId blobId = UploadToGcs(activityInstanceId, is, meta);
-        if(meta.getFileName() == null){
+        if (meta.getFileName() == null){
           continue;
          }
+         if (filenames.contains(meta.getFileName())){
+          continue;
+         }
+
+        BlobId blobId = UploadToGcs(activityInstanceId, is, meta);
 
         Attachment attachment = new Attachment();
         attachment.setCreatedAt(new Date());
@@ -322,6 +327,7 @@ public class DesignRecognitionController extends GcsUtil {
         attachment.setDocumentFileID(documentId);
 
         attachments.add(attachment);
+        filenames.add(attachment.getFilename());
       }
     } catch (Exception e) {
       return Response.status(400, e.getMessage()).build();
