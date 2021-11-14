@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface AttachmentRepository extends CrudRepository<Attachment, Integer> {
   List<Attachment> findByDocumentFileID(Integer documentFileId);
   List<Attachment> findByDocumentFileIDIn(List<Integer> documentFileIds);
+  boolean existsAttachmentByFilenameAndDocumentFileID(String filename, Integer documentFileID);
 
   @Transactional
   @Modifying

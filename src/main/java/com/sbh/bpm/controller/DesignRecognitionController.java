@@ -311,12 +311,14 @@ public class DesignRecognitionController extends GcsUtil {
         if (meta.getFileName() == null){
           continue;
          }
-         if (filenames.contains(meta.getFileName())){
-          continue;
-         }
 
         BlobId blobId = UploadToGcs(activityInstanceId, is, meta);
 
+        boolean exist = attachmentService.existsAttachmentByFilenameAndDocumentFileID(meta.getFileName(), documentId);
+        if (exist) {
+          continue;
+        }
+        
         Attachment attachment = new Attachment();
         attachment.setCreatedAt(new Date());
         //change later

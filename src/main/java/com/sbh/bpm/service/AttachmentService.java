@@ -61,4 +61,9 @@ public class AttachmentService implements IAttachmentService {
     repository.deleteById(attachmentId);
     return !repository.existsById(attachmentId);
   }
+
+  @Override
+  public boolean existsAttachmentByFilenameAndDocumentFileID(String fileName, Integer documentId) {
+    return repository.existsAttachmentByFilenameAndDocumentFileID(fileName, documentId);
+  }
 }
