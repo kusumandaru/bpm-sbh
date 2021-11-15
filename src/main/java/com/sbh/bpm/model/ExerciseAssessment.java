@@ -45,6 +45,18 @@ public class ExerciseAssessment {
   @Setter
   private Boolean selected;
 
+  @SerializedName("approved_score")
+  @Column(name="approved_score")
+  @Getter
+  @Setter
+  private Float approvedScore;
+
+  @SerializedName("submitted_score")
+  @Column(name="submitted_score")
+  @Getter
+  @Setter
+  private Float submittedScore;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

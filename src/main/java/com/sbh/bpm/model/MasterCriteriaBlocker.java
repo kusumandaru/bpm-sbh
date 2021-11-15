@@ -63,6 +63,12 @@ public class MasterCriteriaBlocker {
   @Getter
   @Setter
   private MasterCriteria blocker;
+
+  @ManyToOne(targetEntity = MasterCriteria.class)
+  @JoinColumn(name="master_criteria_id",referencedColumnName="id",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private MasterCriteria criteria;
     
   public MasterCriteriaBlocker() {
   }

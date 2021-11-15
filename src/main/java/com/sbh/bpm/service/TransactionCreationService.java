@@ -110,9 +110,9 @@ public class TransactionCreationService  implements ITransactionCreationService 
       projectAssessment.setMasterTemplateID(masterTemplate.getId());
       projectAssessment.setProcessInstanceID(processInstanceID);
       projectAssessment.setProjectName(masterTemplate.getProjectVersion());
-      projectAssessment.setPossibleScore(0.0f);
-      projectAssessment.setTemporaryScore(0.0f);
       projectAssessment.setPotentialScore(0.0f);
+      projectAssessment.setApprovedScore(0.0f);
+      projectAssessment.setSubmittedScore(0.0f);
       projectAssessment.setCreatedAt(newDate);
       // change it later
       projectAssessment.setProposedLevelID(1);
@@ -129,6 +129,8 @@ public class TransactionCreationService  implements ITransactionCreationService 
         assessment.setMasterExerciseID(exercise.getId());
         assessment.setProjectAssessmentID(projectAssessment.getId());
         assessment.setSelected(false);
+        assessment.setApprovedScore(0.0f);
+        assessment.setSubmittedScore(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 
@@ -136,6 +138,7 @@ public class TransactionCreationService  implements ITransactionCreationService 
       }
 
       exerciseAssessmentService.saveAll(assessments);
+      assessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessment.getId());
 
       List<Integer> exerciseIds = masterExerciseList.stream().map(MasterExercise::getId).collect(Collectors.toList());
 
@@ -143,12 +146,18 @@ public class TransactionCreationService  implements ITransactionCreationService 
 
       List<CriteriaScoring> scorings = new ArrayList<CriteriaScoring>();
       for (MasterCriteria criteria : masterCriteriaList) {
+
+        ExerciseAssessment assmnt = assessments.stream().filter(assessment -> 
+        assessment.getMasterExerciseID() == criteria.getMasterExerciseID())
+                  .findFirst()
+                  .get();
         CriteriaScoring scoring = new CriteriaScoring();
+        scoring.setExerciseAssessmentID(assmnt.getId());
         scoring.setMasterCriteriaID(criteria.getId());
         scoring.setProjectAssessmentID(projectAssessment.getId());
         scoring.setSelected(false);
-        scoring.setScore(0.0f);
-        scoring.setPotentialScore(0.0f);
+        scoring.setApprovedScore(0.0f);
+        scoring.setSubmittedScore(0.0f);
         scoring.setApprovalStatus(1); // idle
         scoring.setCreatedBy("system");
         scoring.setCreatedAt(newDate);

@@ -27,6 +27,7 @@ import com.sbh.bpm.model.Comment;
 import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
+import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterEvaluation;
 import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.ProjectAssessment;
@@ -36,6 +37,8 @@ import com.sbh.bpm.service.ICommentService;
 import com.sbh.bpm.service.ICriteriaScoringService;
 import com.sbh.bpm.service.IDocumentFileService;
 import com.sbh.bpm.service.IExerciseAssessmentService;
+import com.sbh.bpm.service.IMasterCriteriaBlockerService;
+import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterEvaluationService;
 import com.sbh.bpm.service.IProjectAssessmentService;
 import com.sbh.bpm.service.ITransactionCreationService;
@@ -55,6 +58,7 @@ import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
@@ -81,6 +85,12 @@ public class DesignRecognitionController extends GcsUtil {
 
   @Autowired
   private IMasterEvaluationService masterEvaluationService;
+
+  @Autowired
+  private IMasterCriteriaService masterCriteriaService;
+
+  @Autowired
+  private IMasterCriteriaBlockerService masterCriteriaBlockerService;
 
   @Autowired
   private ICommentService commentService;
@@ -156,21 +166,67 @@ public class DesignRecognitionController extends GcsUtil {
   public Response editExercises(@HeaderParam("Authorization") String authorization,
                                 MasterExercise exercise, @PathParam("criteriaScoringId") Integer criteriaScoringId) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
+    
+    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
+    List<Integer> criteriaIds = scoringSelecteds.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
+      
+    List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
+    Integer criteriaId = criteriaScoring.getCriteria().getId();
+    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID() == criteriaId).collect(Collectors.toList());
+    if (blockerFounds.size() > 0) {
+      JSONObject json = new JSONObject();
+      try {
+        json.put("message", "Cannot take this criteria since already taken other score " + blockerFounds.get(0).getCriteria().getCode());
+      } catch (Exception e) {
+        e.getMessage();
+      }
+      return Response.status(400).entity(json.toString()).build();
+    }
+
     criteriaScoring.setApprovalStatus(2);
     criteriaScoring.setSelected(true);
-    criteriaScoring.setPotentialScore(criteriaScoring.getCriteria().getScore());
+    if (criteriaScoring.getCriteria().getScore() != null) {
+      criteriaScoring.setSubmittedScore(criteriaScoring.getCriteria().getScore());
+    }
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
     
     Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
     List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
-    Float potentialScore = allScorings.stream().map(CriteriaScoring::getPotentialScore).reduce(0.0f, Float::sum);
-    Float score = allScorings.stream().map(CriteriaScoring::getScore).reduce(0.0f, Float::sum);
 
+    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    for(ExerciseAssessment assessment : allAssessments) {
+      if(assessment.getExercise().getMaxScore() == null){
+        continue;
+       }
+      Integer assessmentID = assessment.getId();
+      Float approvedScore = allScorings.stream()
+                                       .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
+      Float submittedScore = allScorings.stream()
+                                        .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
+      if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
+        approvedScore = (float) assessment.getExercise().getMaxScore();
+      }
+      if (submittedScore > (float) assessment.getExercise().getMaxScore()) {
+        submittedScore = (float) assessment.getExercise().getMaxScore();
+      }
+      assessment.setApprovedScore(approvedScore);
+      assessment.setSubmittedScore(submittedScore);
+      assessment = exerciseAssessmentService.save(assessment);
+    }
+
+    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    Float approvedScore = allAssessments.stream()
+                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
+    Float submittedScore = allAssessments.stream()
+                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
     ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
-    projectAssessment.setTemporaryScore(score);
-    projectAssessment.setPotentialScore(potentialScore);
+    projectAssessment.setSubmittedScore(submittedScore);
+    projectAssessment.setApprovedScore(approvedScore);
+    projectAssessment = projectAssessmentService.save(projectAssessment);
 
-    String json = new Gson().toJson(criteriaScoring);
+    String json = new Gson().toJson(projectAssessment);
     return Response.ok(json).build();
   }
 
@@ -270,6 +326,29 @@ public class DesignRecognitionController extends GcsUtil {
     return Response.status(200).entity(json).build();
   }
 
+  @GET
+  @Path(value = "/design_recognition/attachments/{attachmentId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetUrlFile(@HeaderParam("Authorization") String authorization, 
+    @PathParam("attachmentId") Integer attachmentId
+  ) {
+    Attachment attachment = attachmentService.findById(attachmentId);
+    String attachmentLink = attachment.getLink();
+
+    String result;
+    try {
+      result = GetUrlGcs(attachmentLink);
+    } catch (IOException e) {
+      result = null;
+      return Response.status(404).build();
+    }
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("url", result);
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
+  }
+
   @POST
   @Path(value = "/design_recognition/attachments")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -310,11 +389,12 @@ public class DesignRecognitionController extends GcsUtil {
 
         if (meta.getFileName() == null){
           continue;
-         }
+        }
+        String filename = meta.getFileName().replaceAll(" ", "_").toLowerCase();
 
-        BlobId blobId = UploadToGcs(activityInstanceId, is, meta);
+        BlobId blobId = UploadToGcs(activityInstanceId, is, filename);
 
-        boolean exist = attachmentService.existsAttachmentByFilenameAndDocumentFileID(meta.getFileName(), documentId);
+        boolean exist = attachmentService.existsAttachmentByFilenameAndDocumentFileID(filename, documentId);
         if (exist) {
           continue;
         }
@@ -324,7 +404,7 @@ public class DesignRecognitionController extends GcsUtil {
         //change later
         attachment.setRole("client");
         attachment.setUploaderID("indofood1");
-        attachment.setFilename(meta.getFileName());
+        attachment.setFilename(filename);
         attachment.setLink(blobId.getName());
         attachment.setDocumentFileID(documentId);
 
