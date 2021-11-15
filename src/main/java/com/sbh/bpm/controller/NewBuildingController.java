@@ -29,6 +29,8 @@ import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IProvinceService;
+import com.sbh.bpm.service.ITransactionCreationService;
+import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -58,6 +60,9 @@ public class NewBuildingController extends GcsUtil{
 
   @Autowired
   private IMailerService mailerService;
+
+  @Autowired
+  private ITransactionCreationService transactionCreationService;
 
   @GET
   @Path(value = "/variables/{taskId}")
@@ -379,6 +384,10 @@ public class NewBuildingController extends GcsUtil{
 
     taskService.setVariable(task.getId(), "second_payment", secondPayment);
     taskService.setVariable(task.getId(), "design_recognition", designRecognition);
+
+    if (designRecognition) {
+      TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+    }
 
     taskService.setVariable(task.getId(), "approved", true);
     taskService.claim(taskId, "admin");
