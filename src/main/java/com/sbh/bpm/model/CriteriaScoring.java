@@ -39,23 +39,29 @@ public class CriteriaScoring {
   @Setter
   private Integer projectAssessmentID;
 
+  @SerializedName("exercise_assessment_id")
+  @Column(name="exercise_assessment_id")
+  @Getter
+  @Setter
+  private Integer exerciseAssessmentID;
+
   @SerializedName("selected")
   @Column(name="selected")
   @Getter
   @Setter
   private Boolean selected;
 
-  @SerializedName("score")
-  @Column(name="score")
+  @SerializedName("approved_score")
+  @Column(name="approved_score")
   @Getter
   @Setter
-  private Float score;
+  private Float approvedScore;
 
-  @SerializedName("potential_score")
-  @Column(name="potential_score")
+  @SerializedName("submitted_score")
+  @Column(name="submitted_score")
   @Getter
   @Setter
-  private Float potentialScore;
+  private Float submittedScore;
 
   @SerializedName("approval_status")
   @Column(name="approval_status")

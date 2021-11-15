@@ -479,7 +479,7 @@ Type WF hemat:
 (57, 21, 'WAC 5-1A','Menyediakan instalasi tangki  penampungan air hujan kapasitas  50% dari jumlah air hujan yang jatuh di atas atap bangunan yang dihitung menggunakan nilai intensitas curah hujan harian rata-rata 10 tahunan setempat.','score',1,'Kapasitas Tangki : ………………….
 Persentase penyimpanan : ………….',false,NOW(),NOW(),'system'),
 (58, 21, 'WAC 5-1B','Menyediakan Instalasi tangki  penampungan air hujan kapasitas 75%  dari perhitungan di atas.','score',2,'',false,NOW(),NOW(),'system'),
-(59, 22, 'WAC 5-1C','Menyediakan Instalasi tangki penyimpanan penampungan air hujan kapasitas 100 % dari perhitungan di atas.','score',3,'',false,NOW(),NOW(),'system'),
+(59, 21, 'WAC 5-1C','Menyediakan Instalasi tangki penyimpanan penampungan air hujan kapasitas 100 % dari perhitungan di atas.','score',3,'',false,NOW(),NOW(),'system'),
 (60, 22, 'WAC 6-1','Seluruh air yang digunakan untuk irigasi gedung tidak berasal dari sumber air tanah dan/atau PDAM. ','score',1,'Sumber air irigasi :
 1……………….
 2……………….',false,NOW(),NOW(),'system'),

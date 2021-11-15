@@ -45,17 +45,17 @@ public class ProjectAssessment {
   @Setter
   private String projectName;
 
-  @SerializedName("possible_score")
-  @Column(name="possible_score")
+  @SerializedName("submitted_score")
+  @Column(name="submitted_score")
   @Getter
   @Setter
-  private Float possibleScore;
+  private Float submittedScore;
 
-  @SerializedName("temporary_score")
-  @Column(name="temporary_score")
+  @SerializedName("approved_score")
+  @Column(name="approved_score")
   @Getter
   @Setter
-  private Float temporaryScore;
+  private Float approvedScore;
 
   @SerializedName("potential_score")
   @Column(name="potential_score")

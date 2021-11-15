@@ -36,6 +36,11 @@ public class MasterCriteriaBlockerService implements IMasterCriteriaBlockerServi
   }
 
   @Override
+  public List<MasterCriteriaBlocker> findBymasterCriteriaIDIn(List<Integer> criteriaIds) {
+    return (List<MasterCriteriaBlocker>) repository.findBymasterCriteriaIDIn(criteriaIds);
+  }
+
+  @Override
   public void deleteBymasterCriteriaID(Integer criteriaId) {
     repository.deleteBymasterCriteriaID(criteriaId);
   }

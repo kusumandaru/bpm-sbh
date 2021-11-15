@@ -11,4 +11,5 @@ public interface ICriteriaScoringService {
   CriteriaScoring save(CriteriaScoring criteriaScoring);
   Iterable<CriteriaScoring> saveAll(List<CriteriaScoring> criteriaScorings);
   List<CriteriaScoring> findByProjectAssessmentID(Integer projectAsessmentId);
+  List<CriteriaScoring> findBySelected(boolean selected);
 }

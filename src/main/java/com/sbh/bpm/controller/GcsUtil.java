@@ -12,7 +12,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.RuntimeService;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 class GcsUtil {
@@ -66,15 +65,13 @@ class GcsUtil {
   protected BlobId UploadToGcs(
     String activityInstanceId,
     InputStream file, 
-    ContentDisposition fileFdcd
+    String filename
   ) throws IOException {
-    if (fileFdcd.getFileName() != null) {
-      String fileName = fileFdcd.getFileName();
-
+    if (filename != null) {
       GoogleCloudStorage googleCloudStorage;
       googleCloudStorage = new GoogleCloudStorage();
 
-      BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, fileName, file);
+      BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, filename, file);
 
       return blobId;
     } else {
@@ -127,6 +124,22 @@ class GcsUtil {
     return null;
   }
 
+  protected String GetUrlGcs (String pathname) throws IOException {
+    // Get it by blob name
+    GoogleCloudStorage googleCloudStorage;
+    googleCloudStorage = new GoogleCloudStorage();
+
+    Blob blob = GetBlob(googleCloudStorage, pathname);
+
+    if (blob != null) {
+      googleCloudStorage.SetGcsSignUrl(blob);
+      String publicUrl = googleCloudStorage.GetSignedUrl();
+      return publicUrl;
+    }
+  
+    return null;
+  }
+
   protected Blob GetBlobDirect(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String directory, String filename) {
     Blob blob = GetBlob(googleCloudStorage, variableMap, directory, filename);
     if (blob == null) {
@@ -144,6 +157,10 @@ class GcsUtil {
   protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String filename) {
     String path = String.valueOf(variableMap.get(filename));
     return googleCloudStorage.GetBlobByName(path);
+  }
+
+  protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, String pathname) {
+    return googleCloudStorage.GetBlobByName(pathname);
   }
 
   protected boolean DeleteBlob(GoogleCloudStorage googleCloudStorage, Blob blob) {
