@@ -397,6 +397,74 @@ public class NewBuildingController extends GcsUtil{
   }
 
   @POST
+  @Path(value = "/third_payment")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ThirdPayment(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("third_payment_document") InputStream thirdPaymentDocument, 
+    @FormDataParam("third_payment_document") FormDataContentDisposition thirdPaymentDocumentFdcd,
+    @FormDataParam("third_payment") Boolean thirdPayment,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    //limit the number of actual threads
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Pair<String, BlobId>>> listOfCallable = Arrays.asList(
+                () -> UploadToGcs(runtimeService, processInstanceId, activityInstanceId, thirdPaymentDocument, thirdPaymentDocumentFdcd, "third_payment_document")
+                );
+    try {
+      List<Future<Pair<String, BlobId>>> futures = executor.invokeAll(listOfCallable);
+
+      Map<String, BlobId> result = new HashMap<String, BlobId>();
+      futures.stream().forEach(f -> {
+          try {
+            Pair<String, BlobId> res = f.get();
+            if (res != null) {
+              result.put(res.getKey(), res.getValue());
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    taskService.setVariable(task.getId(), "third_payment", thirdPayment);
+
+    taskService.setVariable(task.getId(), "approved", true);
+    taskService.claim(taskId, "admin");
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @POST
   @Path(value = "/workshop")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)

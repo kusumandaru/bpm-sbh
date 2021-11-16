@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -29,7 +30,6 @@ import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterEvaluation;
-import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.ProjectAssessment;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
@@ -164,7 +164,7 @@ public class DesignRecognitionController extends GcsUtil {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response editExercises(@HeaderParam("Authorization") String authorization,
-                                MasterExercise exercise, @PathParam("criteriaScoringId") Integer criteriaScoringId) {
+                                @PathParam("criteriaScoringId") Integer criteriaScoringId) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     
     List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
@@ -187,6 +187,87 @@ public class DesignRecognitionController extends GcsUtil {
     criteriaScoring.setSelected(true);
     if (criteriaScoring.getCriteria().getScore() != null) {
       criteriaScoring.setSubmittedScore(criteriaScoring.getCriteria().getScore());
+    }
+    criteriaScoring = criteriaScoringService.save(criteriaScoring);
+    
+    Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
+    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
+
+    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    for(ExerciseAssessment assessment : allAssessments) {
+      if(assessment.getExercise().getMaxScore() == null){
+        continue;
+       }
+      Integer assessmentID = assessment.getId();
+      Float approvedScore = allScorings.stream()
+                                       .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
+      Float submittedScore = allScorings.stream()
+                                        .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
+      if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
+        approvedScore = (float) assessment.getExercise().getMaxScore();
+      }
+      if (submittedScore > (float) assessment.getExercise().getMaxScore()) {
+        submittedScore = (float) assessment.getExercise().getMaxScore();
+      }
+      assessment.setApprovedScore(approvedScore);
+      assessment.setSubmittedScore(submittedScore);
+      assessment = exerciseAssessmentService.save(assessment);
+    }
+
+    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    Float approvedScore = allAssessments.stream()
+                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
+    Float submittedScore = allAssessments.stream()
+                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
+    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    projectAssessment.setSubmittedScore(submittedScore);
+    projectAssessment.setApprovedScore(approvedScore);
+    projectAssessment = projectAssessmentService.save(projectAssessment);
+
+    String json = new Gson().toJson(projectAssessment);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/design_recognition/{criteriaScoringId}/review")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  public Response reviewExercises(@HeaderParam("Authorization") String authorization,
+                                @PathParam("criteriaScoringId") Integer criteriaScoringId,
+                                @FormDataParam("approval_status") Integer approvalStatus) {
+    CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
+    
+    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
+    List<Integer> criteriaIds = scoringSelecteds.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
+      
+    List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
+    Integer criteriaId = criteriaScoring.getCriteria().getId();
+    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID() == criteriaId).collect(Collectors.toList());
+    if (blockerFounds.size() > 0) {
+      JSONObject json = new JSONObject();
+      try {
+        json.put("message", "Cannot take this criteria since already taken other score " + blockerFounds.get(0).getCriteria().getCode());
+      } catch (Exception e) {
+        e.getMessage();
+      }
+      return Response.status(400).entity(json.toString()).build();
+    }
+
+    criteriaScoring.setApprovalStatus(approvalStatus);
+    criteriaScoring.setSelected(true);
+    if (criteriaScoring.getCriteria().getScore() != null) {
+      //rejected
+      if (approvalStatus == 3) {
+        criteriaScoring.setApprovedScore(0.0f);
+        criteriaScoring.setSubmittedScore(0.0f);
+      }
+      //approved
+      if (approvalStatus == 4) {
+        criteriaScoring.setApprovedScore(criteriaScoring.getCriteria().getScore());
+        criteriaScoring.setSubmittedScore(0.0f);
+      }
     }
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
     
