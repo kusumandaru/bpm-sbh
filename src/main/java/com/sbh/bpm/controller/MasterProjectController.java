@@ -24,6 +24,7 @@ import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterDocument;
 import com.sbh.bpm.model.MasterEvaluation;
 import com.sbh.bpm.model.MasterExercise;
+import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.MasterVendor;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
@@ -31,6 +32,7 @@ import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterDocumentService;
 import com.sbh.bpm.service.IMasterEvaluationService;
 import com.sbh.bpm.service.IMasterExerciseService;
+import com.sbh.bpm.service.IMasterLevelService;
 import com.sbh.bpm.service.IMasterTemplateService;
 import com.sbh.bpm.service.IMasterVendorService;
 
@@ -62,6 +64,19 @@ public class MasterProjectController extends GcsUtil{
 
   @Autowired
   private IMasterExerciseService masterExerciseService;
+
+  @Autowired
+  private IMasterLevelService masterLevelService;
+
+  @GET
+  @Path(value = "/levels")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response allMasterLevel(@HeaderParam("Authorization") String authorization) {      
+    List<MasterLevel> level = (List<MasterLevel>) masterLevelService.findAll();
+
+    String json = new Gson().toJson(level);
+    return Response.ok(json).build();
+  }
 
   @GET
   @Path(value = "/vendors")
