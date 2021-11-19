@@ -75,6 +75,12 @@ public class ProjectAssessment {
   @Setter
   private Integer proposedLevelID;
 
+  @SerializedName("assessment_attachment")
+  @Column(name="assessment_attachment")
+  @Getter
+  @Setter
+  private String assessmentAttachment;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
