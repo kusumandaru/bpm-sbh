@@ -77,15 +77,15 @@ public class TransactionFetchService  implements ITransactionFetchService {
   public class TransactionFetchResponse {
     @Getter
     @Setter
-    public final Boolean success;
+    public Boolean success;
     
     @Getter
     @Setter
-    public final Map<String, String> messages;
+    public Map<String, String> messages;
 
     @Getter
     @Setter
-    public final List<ProjectAssessment> projectAssessments;
+    public List<ProjectAssessment> projectAssessments;
   
     public TransactionFetchResponse(Boolean success, Map<String, String> messages, List<ProjectAssessment> projectAssessments) {
       this.success = success;
@@ -112,7 +112,7 @@ public class TransactionFetchService  implements ITransactionFetchService {
       return new TransactionFetchResponse(false, map, projectAssessments);
     }
 
-    // try {
+    try {
       projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceID);
       for (ProjectAssessment pa : projectAssessments) {
         List<MasterEvaluation> masterEvaluations = masterEvaluationService.findByMasterTemplateID(pa.getMasterTemplateID());
@@ -126,23 +126,15 @@ public class TransactionFetchService  implements ITransactionFetchService {
         List<Attachment> attachments = attachmentService.findByDocumentFileIDIn(documentFileIds);
 
         for (CriteriaScoring criteriaScoring : criteriaScorings) {
-          List<DocumentFile> docs = documentFiles.stream().filter(documentFile -> documentFile.getCriteriaScoringID() == criteriaScoring.getId()).collect(Collectors.toList());
+          List<DocumentFile> docs = documentFiles.stream().filter(documentFile -> documentFile.getCriteriaScoringID().equals(criteriaScoring.getId())).collect(Collectors.toList());
           for(DocumentFile doc : docs) {
-            List<Attachment> attchs = attachments.stream().filter(attachment -> attachment.getDocumentFileID() == doc.getId()).collect(Collectors.toList());
+            List<Attachment> attchs = attachments.stream().filter(attachment -> attachment.getDocumentFileID().equals(doc.getId())).collect(Collectors.toList());
             doc.setAttachments(attchs);
           }
           criteriaScoring.setDocuments(docs);
 
-          List<Comment> coms = comments.stream().filter(comment -> comment.getCriteriaScoringID() == criteriaScoring.getId()).collect(Collectors.toList());
+          List<Comment> coms = comments.stream().filter(comment -> comment.getCriteriaScoringID().equals(criteriaScoring.getId())).collect(Collectors.toList());
           criteriaScoring.setComments(coms);
-        }
-
-        for (ExerciseAssessment exerciseAsessment : exerciseAssessments) {
-          List<MasterCriteria> masterCriterias = masterCriteriaService.findByMasterExerciseID(exerciseAsessment.getMasterExerciseID());
-          List<Integer> masterCriteriaIds = masterCriterias.stream().map(MasterCriteria::getId).collect(Collectors.toList());
-
-          List<CriteriaScoring> crts = criteriaScorings.stream().filter(exercise -> masterCriteriaIds.contains(exercise.getMasterCriteriaID())).collect(Collectors.toList());
-          exerciseAsessment.setCriterias(crts);
         }
 
         for (ExerciseAssessment exerciseAsessment : exerciseAssessments) {
@@ -163,14 +155,14 @@ public class TransactionFetchService  implements ITransactionFetchService {
         pa.setMasterEvaluations(masterEvaluations);
       }
 
-    // } catch(Exception ex) {
-    //   transactionManager.rollback(transactionStatus);
+    } catch(Exception ex) {
+      transactionManager.rollback(transactionStatus);
 
-    //   Map<String, String> map = new HashMap<String, String>();
-    //   map.put("message", ex.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", ex.getMessage());
 
-    //   return new TransactionFetchResponse(false, map, projectAssessments);
-    // }
+      return new TransactionFetchResponse(false, map, projectAssessments);
+    }
 
     Map<String, String> resultMap = new HashMap<String, String>();
     resultMap.put("message", "DR transaction has been loaded");

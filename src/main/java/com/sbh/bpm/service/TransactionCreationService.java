@@ -72,11 +72,11 @@ public class TransactionCreationService  implements ITransactionCreationService 
   public class TransactionCreationResponse {
     @Getter
     @Setter
-    public final Boolean success;
+    public Boolean success;
     
     @Getter
     @Setter
-    public final Map<String, String> messages;
+    public Map<String, String> messages;
   
     public TransactionCreationResponse(Boolean success, Map<String, String> messages) {
       this.success = success;
@@ -168,7 +168,7 @@ public class TransactionCreationService  implements ITransactionCreationService 
       Iterable<CriteriaScoring> criteriaScorings = criteriaScoringService.saveAll(scorings);
 
       List<DocumentFile> docFiles = new ArrayList<DocumentFile>();
-      for (CriteriaScoring cs :  scorings) {
+      for (CriteriaScoring cs :  criteriaScorings) {
         List<MasterDocument> masterDocuments = masterDocumentService.findBymasterCriteriaID(cs.getMasterCriteriaID());
         for (MasterDocument doc : masterDocuments) {
           DocumentFile docFile = new DocumentFile();
