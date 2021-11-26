@@ -66,6 +66,18 @@ public class MasterEvaluation {
   @Setter
   private List<ExerciseAssessment> exercises;
 
+  @SerializedName("approved_score")
+  @Transient
+  @Getter
+  @Setter
+  private Float approvedScore;
+
+  @SerializedName("submitted_score")
+  @Transient
+  @Getter
+  @Setter
+  private Float submittedScore;
+
   // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
   // private List<MasterTemplate> templates = new ArrayList<>();
     

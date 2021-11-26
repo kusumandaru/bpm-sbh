@@ -153,7 +153,7 @@ public class DesignRecognitionController extends GcsUtil {
     }
     String processInstanceId = task.getProcessInstanceId();
 
-    TransactionFetchResponse response = transactionFetchService.getDRTransactionForProcessInstance(processInstanceId);
+    TransactionFetchResponse response = transactionFetchService.GetDRTransactionForProcessInstance(processInstanceId);
 
     String json = new Gson().toJson(response);
     return Response.status(200).entity(json).build();
@@ -285,8 +285,10 @@ public class DesignRecognitionController extends GcsUtil {
   @Path(value = "/design_recognition/{criteriaScoringId}/take_score")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response editExercises(@HeaderParam("Authorization") String authorization,
-                                @PathParam("criteriaScoringId") Integer criteriaScoringId) {
+  public Response takeScore(@HeaderParam("Authorization") String authorization,
+                                @PathParam("criteriaScoringId") Integer criteriaScoringId,
+                                CriteriaScoring scoring
+    ) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     
     List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
@@ -307,8 +309,85 @@ public class DesignRecognitionController extends GcsUtil {
 
     criteriaScoring.setApprovalStatus(2);
     criteriaScoring.setSelected(true);
+
+    if (criteriaScoring.getCriteria().getExerciseType().equals("max_score")) {
+      criteriaScoring.setSubmittedScore(scoring.getSubmittedScore());
+    } else {
+      if (criteriaScoring.getCriteria().getScore() != null) {
+        criteriaScoring.setSubmittedScore(criteriaScoring.getCriteria().getScore());
+      }
+    }
+    
+    criteriaScoring = criteriaScoringService.save(criteriaScoring);
+    
+    Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
+    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
+
+    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    for(ExerciseAssessment assessment : allAssessments) {
+      if(assessment.getExercise().getMaxScore() == null){
+        continue;
+       }
+      Integer assessmentID = assessment.getId();
+      Float approvedScore = allScorings.stream()
+                                       .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
+      Float submittedScore = allScorings.stream()
+                                        .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
+      if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
+        approvedScore = (float) assessment.getExercise().getMaxScore();
+      }
+      if (submittedScore > (float) assessment.getExercise().getMaxScore()) {
+        submittedScore = (float) assessment.getExercise().getMaxScore();
+      }
+      assessment.setApprovedScore(approvedScore);
+      assessment.setSubmittedScore(submittedScore);
+      assessment = exerciseAssessmentService.save(assessment);
+    }
+
+    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    Float approvedScore = allAssessments.stream()
+                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
+    Float submittedScore = allAssessments.stream()
+                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
+    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    projectAssessment.setSubmittedScore(submittedScore);
+    projectAssessment.setApprovedScore(approvedScore);
+    projectAssessment = projectAssessmentService.save(projectAssessment);
+
+    String json = new Gson().toJson(projectAssessment);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/design_recognition/{criteriaScoringId}/untake_score")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response untakeScore(@HeaderParam("Authorization") String authorization,
+                                @PathParam("criteriaScoringId") Integer criteriaScoringId) {
+    CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
+    
+    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
+    List<Integer> criteriaIds = scoringSelecteds.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
+      
+    List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
+    Integer criteriaId = criteriaScoring.getCriteria().getId();
+    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID() == criteriaId).collect(Collectors.toList());
+    if (blockerFounds.size() > 0) {
+      JSONObject json = new JSONObject();
+      try {
+        json.put("message", "Cannot take this criteria since already taken other score " + blockerFounds.get(0).getCriteria().getCode());
+      } catch (Exception e) {
+        e.getMessage();
+      }
+      return Response.status(400).entity(json.toString()).build();
+    }
+
+    criteriaScoring.setApprovalStatus(1);
+    criteriaScoring.setSelected(false);
     if (criteriaScoring.getCriteria().getScore() != null) {
-      criteriaScoring.setSubmittedScore(criteriaScoring.getCriteria().getScore());
+      criteriaScoring.setSubmittedScore(0.0f);
     }
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
     
@@ -672,5 +751,28 @@ public class DesignRecognitionController extends GcsUtil {
     return Response.ok(json).build();
   }
 
+  @GET
+  @Path(value = "/design_recognition/{taskId}/evaluation_scores")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetEvaluationScoreByTaskID(@HeaderParam("Authorization") String authorization, @PathParam("taskId") String taskId) {      
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+ 
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
 
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+
+    List<MasterEvaluation> evaluations = transactionFetchService.GetEvaluationScoreForProcessInstance(processInstanceId);
+    
+    String json = new Gson().toJson(evaluations);
+    return Response.ok(json).build();
+  }
 }

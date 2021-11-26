@@ -34,7 +34,7 @@ import lombok.Setter;
 
 @Service
 @Transactional
-public class TransactionCreationService  implements ITransactionCreationService {
+public class TransactionCreationService implements ITransactionCreationService {
 
   @Autowired
   private IMasterAdminService masterAdminService;
