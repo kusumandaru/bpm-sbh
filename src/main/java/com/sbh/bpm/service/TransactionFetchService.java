@@ -33,7 +33,7 @@ import lombok.Setter;
 
 @Service
 @Transactional
-public class TransactionFetchService  implements ITransactionFetchService {
+public class TransactionFetchService implements ITransactionFetchService {
 
   @Autowired
   private IMasterAdminService masterAdminService;
@@ -95,7 +95,7 @@ public class TransactionFetchService  implements ITransactionFetchService {
   }
 
   @Override
-  public TransactionFetchResponse getDRTransactionForProcessInstance(String processInstanceID) {
+  public TransactionFetchResponse GetDRTransactionForProcessInstance(String processInstanceID) {
     TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
     
@@ -167,5 +167,28 @@ public class TransactionFetchService  implements ITransactionFetchService {
     Map<String, String> resultMap = new HashMap<String, String>();
     resultMap.put("message", "DR transaction has been loaded");
     return new TransactionFetchResponse(true, resultMap, projectAssessments);
+  }
+
+  @Override
+  public List<MasterEvaluation> GetEvaluationScoreForProcessInstance(String processInstanceID) {
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceID);
+    List<Integer> masterTemplateIds = projectAssessments.stream().map(ProjectAssessment::getMasterTemplateID).collect(Collectors.toList());
+    List<MasterEvaluation> evaluations = masterEvaluationService.findByMasterTemplateIDIn(masterTemplateIds);
+    List<ExerciseAssessment> exerciseAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessments.get(0).getId());
+
+    evaluations = evaluations.stream().map(masterEvaluation -> {
+      List<MasterExercise> masterExercises = masterExerciseService.findByMasterEvaluationID(masterEvaluation.getId());
+      List<Integer> masterExerciseIds = masterExercises.stream().map(MasterExercise::getId).collect(Collectors.toList());
+
+      List<ExerciseAssessment> excs = exerciseAssessments.stream().filter(exercise -> masterExerciseIds.contains(exercise.getMasterExerciseID())).collect(Collectors.toList());
+      Float evaluationApprovedScore = excs.stream().map(exercise -> exercise.getApprovedScore()).reduce(0.0f, Float::sum);
+      Float evaluationSubmittedScore = excs.stream().map(exercise -> exercise.getSubmittedScore()).reduce(0.0f, Float::sum);
+      masterEvaluation.setApprovedScore(evaluationApprovedScore);
+      masterEvaluation.setSubmittedScore(evaluationSubmittedScore);
+      
+      return masterEvaluation;
+    }).collect(Collectors.toList());
+
+    return evaluations;
   }
 }
