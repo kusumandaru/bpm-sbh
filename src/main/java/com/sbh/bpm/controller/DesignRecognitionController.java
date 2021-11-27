@@ -437,7 +437,8 @@ public class DesignRecognitionController extends GcsUtil {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response reviewExercises(@HeaderParam("Authorization") String authorization,
                                 @PathParam("criteriaScoringId") Integer criteriaScoringId,
-                                @FormDataParam("approval_status") Integer approvalStatus) {
+                                @FormDataParam("approval_status") Integer approvalStatus,
+                                @FormDataParam("approved_score") Float approveScore) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     
     List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
@@ -466,7 +467,11 @@ public class DesignRecognitionController extends GcsUtil {
       }
       //approved
       if (approvalStatus == 4) {
-        criteriaScoring.setApprovedScore(criteriaScoring.getCriteria().getScore());
+        if (criteriaScoring.getCriteria().getExerciseType().equals("max_score")) {
+          criteriaScoring.setApprovedScore(approveScore);
+        } else {
+          criteriaScoring.setApprovedScore(criteriaScoring.getCriteria().getScore());
+        }
         criteriaScoring.setSubmittedScore(0.0f);
       }
     }
