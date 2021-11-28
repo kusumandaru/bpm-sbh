@@ -296,7 +296,7 @@ public class DesignRecognitionController extends GcsUtil {
       
     List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
     Integer criteriaId = criteriaScoring.getCriteria().getId();
-    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID() == criteriaId).collect(Collectors.toList());
+    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID().equals(criteriaId)).collect(Collectors.toList());
     if (blockerFounds.size() > 0) {
       JSONObject json = new JSONObject();
       try {
@@ -330,10 +330,10 @@ public class DesignRecognitionController extends GcsUtil {
        }
       Integer assessmentID = assessment.getId();
       Float approvedScore = allScorings.stream()
-                                       .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
                                        .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
       Float submittedScore = allScorings.stream()
-                                        .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
                                         .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
       if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
         approvedScore = (float) assessment.getExercise().getMaxScore();
@@ -373,7 +373,7 @@ public class DesignRecognitionController extends GcsUtil {
       
     List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
     Integer criteriaId = criteriaScoring.getCriteria().getId();
-    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID() == criteriaId).collect(Collectors.toList());
+    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID().equals(criteriaId)).collect(Collectors.toList());
     if (blockerFounds.size() > 0) {
       JSONObject json = new JSONObject();
       try {
@@ -401,10 +401,10 @@ public class DesignRecognitionController extends GcsUtil {
        }
       Integer assessmentID = assessment.getId();
       Float approvedScore = allScorings.stream()
-                                       .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
                                        .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
       Float submittedScore = allScorings.stream()
-                                        .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
                                         .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
       if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
         approvedScore = (float) assessment.getExercise().getMaxScore();
@@ -446,7 +446,7 @@ public class DesignRecognitionController extends GcsUtil {
       
     List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
     Integer criteriaId = criteriaScoring.getCriteria().getId();
-    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID() == criteriaId).collect(Collectors.toList());
+    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID().equals(criteriaId)).collect(Collectors.toList());
     if (blockerFounds.size() > 0) {
       JSONObject json = new JSONObject();
       try {
@@ -487,10 +487,10 @@ public class DesignRecognitionController extends GcsUtil {
        }
       Integer assessmentID = assessment.getId();
       Float approvedScore = allScorings.stream()
-                                       .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
                                        .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
       Float submittedScore = allScorings.stream()
-                                        .filter(score -> score.getExerciseAssessmentID() == assessmentID)
+                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
                                         .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
       if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
         approvedScore = (float) assessment.getExercise().getMaxScore();
