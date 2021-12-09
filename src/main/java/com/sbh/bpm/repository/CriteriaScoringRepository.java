@@ -12,5 +12,8 @@ import org.springframework.stereotype.Repository;
 public interface CriteriaScoringRepository extends CrudRepository<CriteriaScoring, Integer> {
   List<CriteriaScoring> findByProjectAssessmentID(Integer projectAsessmentId);
   List<CriteriaScoring> findBySelected(boolean selected);
+  List<CriteriaScoring> findByApprovalStatusIn(List<Integer> approvalStatuses);
+  List<CriteriaScoring> findByProjectAssessmentIDAndApprovalStatusIn(Integer projectAssessmentID,
+      List<Integer> approvalStatuses);
 }
 

@@ -5,8 +5,9 @@ import java.util.Map;
 
 import javax.persistence.Column;
 
-import org.camunda.bpm.engine.task.Task;
 import com.google.gson.annotations.SerializedName;
+
+import org.camunda.bpm.engine.task.Task;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +27,9 @@ public class SbhTask {
 
   @Getter @Setter
   private String name;
+
+  @Getter @Setter
+  private Boolean read;
 
   @SerializedName("created_at")
   @Getter @Setter
@@ -103,6 +107,11 @@ public class SbhTask {
     sbhTask.buildingName =  String.valueOf(variableMap.get("building_name"));
     sbhTask.buildingType =  String.valueOf(variableMap.get("building_type"));
     sbhTask.certificationType =  String.valueOf(variableMap.get("certification_type"));
+    if (variableMap.get("read") != null) {
+      sbhTask.read = ((Boolean) variableMap.get("read")).booleanValue();
+    } else {
+      sbhTask.read = false;
+    }
     switch(String.valueOf(variableMap.get("approved"))) {
       case "true":
         sbhTask.status = "approved";

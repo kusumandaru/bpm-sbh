@@ -42,4 +42,14 @@ public class CriteriaScoringService implements ICriteriaScoringService {
   public List<CriteriaScoring> findBySelected(boolean selected) {
     return repository.findBySelected(selected);
   }
+
+  @Override
+  public List<CriteriaScoring> findByApprovalStatusIn(List<Integer> approvalStatuses) {
+    return repository.findByApprovalStatusIn(approvalStatuses);
+  }
+
+  @Override
+  public List<CriteriaScoring> findByProjectAssessmentIDAndApprovalStatusIn(Integer projectAssessmentID, List<Integer> approvalStatuses) {
+    return repository.findByProjectAssessmentIDAndApprovalStatusIn(projectAssessmentID, approvalStatuses);
+  }
 }

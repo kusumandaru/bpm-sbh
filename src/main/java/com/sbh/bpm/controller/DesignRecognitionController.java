@@ -3,6 +3,7 @@ package com.sbh.bpm.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import com.sbh.bpm.model.ExerciseAssessment;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterEvaluation;
 import com.sbh.bpm.model.ProjectAssessment;
+import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICommentService;
@@ -40,6 +42,7 @@ import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterEvaluationService;
 import com.sbh.bpm.service.IProjectAssessmentService;
+import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.ITransactionFetchService;
 import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
@@ -97,6 +100,9 @@ public class DesignRecognitionController extends GcsUtil {
 
   @Autowired
   private IAttachmentService attachmentService;
+
+  @Autowired
+  private IProjectAttachmentService projectAttachmentService;
  
   @POST
   @Path(value = "/design_recognition")
@@ -190,11 +196,11 @@ public class DesignRecognitionController extends GcsUtil {
 
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
     ProjectAssessment projectAssessment = projectAssessments.get(0);
+    String fileType = "assessment_attachment";
     try{
-        String filename = assessmentAttachmentFdcd.getFileName().replaceAll(" ", "_").toLowerCase();
-        BlobId blobId = UploadToGcs(activityInstanceId, assessmentAttachment, filename);
-        projectAssessment.setAssessmentAttachment(blobId.getName());
-        projectAssessment =  projectAssessmentService.save(projectAssessment);
+      ProjectAttachment attachment = SaveWithVersion(processInstanceId, activityInstanceId, assessmentAttachment, assessmentAttachmentFdcd, fileType, username);
+      projectAssessment.setAssessmentAttachment(attachment.getLink());
+      projectAssessment =  projectAssessmentService.save(projectAssessment);
     } catch (Exception e) {
       return Response.status(400, e.getMessage()).build();
     }
@@ -291,16 +297,19 @@ public class DesignRecognitionController extends GcsUtil {
     ) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     
-    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
+    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(criteriaScoring.getProjectAssessmentID(), Arrays.asList(2,4));
     List<Integer> criteriaIds = scoringSelecteds.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
       
     List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
     Integer criteriaId = criteriaScoring.getCriteria().getId();
     List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID().equals(criteriaId)).collect(Collectors.toList());
+    
     if (blockerFounds.size() > 0) {
       JSONObject json = new JSONObject();
       try {
-        json.put("message", "Cannot take this criteria since already taken other score " + blockerFounds.get(0).getCriteria().getCode());
+        List<String> blockerLists = blockerFounds.stream().map(b -> b.getCriteria().getCode()).collect(Collectors.toList());
+        String blockerMessages = String.join(",", blockerLists);
+        json.put("message", "Cannot take this criteria since already taken other score " + blockerMessages);
       } catch (Exception e) {
         e.getMessage();
       }
@@ -367,22 +376,6 @@ public class DesignRecognitionController extends GcsUtil {
   public Response untakeScore(@HeaderParam("Authorization") String authorization,
                                 @PathParam("criteriaScoringId") Integer criteriaScoringId) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
-    
-    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
-    List<Integer> criteriaIds = scoringSelecteds.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
-      
-    List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
-    Integer criteriaId = criteriaScoring.getCriteria().getId();
-    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID().equals(criteriaId)).collect(Collectors.toList());
-    if (blockerFounds.size() > 0) {
-      JSONObject json = new JSONObject();
-      try {
-        json.put("message", "Cannot take this criteria since already taken other score " + blockerFounds.get(0).getCriteria().getCode());
-      } catch (Exception e) {
-        e.getMessage();
-      }
-      return Response.status(400).entity(json.toString()).build();
-    }
 
     criteriaScoring.setApprovalStatus(1);
     criteriaScoring.setSelected(false);
@@ -441,22 +434,6 @@ public class DesignRecognitionController extends GcsUtil {
                                 @FormDataParam("approved_score") Float approveScore) {
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     
-    List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findBySelected(true);
-    List<Integer> criteriaIds = scoringSelecteds.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
-      
-    List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaIDIn(criteriaIds);
-    Integer criteriaId = criteriaScoring.getCriteria().getId();
-    List<MasterCriteriaBlocker> blockerFounds = blockers.stream().filter(block -> block.getBlockerID().equals(criteriaId)).collect(Collectors.toList());
-    if (blockerFounds.size() > 0) {
-      JSONObject json = new JSONObject();
-      try {
-        json.put("message", "Cannot take this criteria since already taken other score " + blockerFounds.get(0).getCriteria().getCode());
-      } catch (Exception e) {
-        e.getMessage();
-      }
-      return Response.status(400).entity(json.toString()).build();
-    }
-
     criteriaScoring.setApprovalStatus(approvalStatus);
     criteriaScoring.setSelected(true);
     if (criteriaScoring.getCriteria().getScore() != null) {
