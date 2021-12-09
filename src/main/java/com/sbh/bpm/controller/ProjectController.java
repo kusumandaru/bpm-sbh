@@ -16,6 +16,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
@@ -110,8 +111,11 @@ public class ProjectController extends GcsUtil{
     ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
     String activityInstanceId = activityInstance.getId();
 
+    ProjectAttachment attachment = new ProjectAttachment();
+
     try {
-      UploadToGcs(runtimeService, processInstance.getId(), activityInstanceId, file, fileFdcd, "proof_of_payment");
+      attachment = SaveWithVersion(processInstance.getId(), activityInstanceId, file, fileFdcd, "proof_of_payment", username);
+
     } catch (IOException e) {
       logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
@@ -209,17 +213,16 @@ public class ProjectController extends GcsUtil{
     taskService.setVariable(task.getId(), "design_recognition", designRecognition);
     taskService.setVariable(task.getId(), "approved", null);
 
+    // change later
+    String username = "indofood1";
+    String tenant = "indofood";
+
     try {
-      if (file.available() > 0) {
-        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, file, fileFdcd, "proof_of_payment");
-      }
+      SaveWithVersion(processInstanceId, activityInstanceId, file, fileFdcd, "proof_of_payment", username);
     } catch (IOException e) {
       logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
-    
-    String username = "indofood1";
-    String tenant = "indofood";
 
     task.setTenantId(tenant);
     taskService.claim(task.getId(), username);

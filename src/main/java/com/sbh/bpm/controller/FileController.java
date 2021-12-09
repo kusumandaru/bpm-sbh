@@ -5,8 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.ByteArrayInputStream;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,8 +23,10 @@ import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -32,12 +37,14 @@ import javax.ws.rs.core.StreamingOutput;
 import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.City;
+import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
+import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService;
@@ -54,6 +61,11 @@ import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
@@ -78,7 +90,10 @@ public class FileController extends GcsUtil{
   @Autowired
   private IMasterAdminService masterAdminService;
  
-  
+  @Autowired
+  private IProjectAttachmentService projectAttachmentService;
+
+  @Deprecated
   @GET
   @Path(value = "/archived_files/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -259,13 +274,16 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
 
-    String fileName = "eligibility_statement";
+    String fileType = "eligibility_statement";
+    String fileName = "eligibility_statement.pdf";
+
+    ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
     Pair<String, String> result;
     byte[] bytes;
 
-    if (variableMap.get(fileName) != null) {
+    if (attachment != null) {
       try {
-        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
         bytes = googleCloudStorage.getContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
@@ -307,8 +325,13 @@ public class FileController extends GcsUtil{
   
       bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
 
+      // change later
+      String username = "indofood1";
+
       try {
-        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+        ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
+        InputStream targetStream = new ByteArrayInputStream(bytes);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -355,12 +378,18 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
 
-    String fileName = "registered_project";
+    // remove later
+    String username = "indofood1";
+
+    String fileType = "registered_project";
+    String fileName = "registered_project.pdf";
+
+    ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
     Pair<String, String> result;
     byte[] bytes;
-    if (variableMap.get(fileName) != null) {
+    if (attachment != null) {
       try {
-        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
         bytes = googleCloudStorage.getContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
@@ -407,7 +436,9 @@ public class FileController extends GcsUtil{
       bytes = pdfGeneratorUtil.CreatePdf("registered-project", variableMap);
 
       try {
-        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+        ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
+        InputStream targetStream = new ByteArrayInputStream(bytes);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -454,12 +485,18 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
 
-    String fileName = "design_recognition_statement";
+    // remove later
+    String username = "indofood1";
+
+    String fileType = "design_recognition_statement";
+    String fileName = "design_recognition_statement.pdf";
+
+    ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
     Pair<String, String> result;
     byte[] bytes;
-    if (variableMap.get(fileName) != null) {
+    if (attachment != null) {
       try {
-        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
         bytes = googleCloudStorage.getContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
@@ -512,7 +549,9 @@ public class FileController extends GcsUtil{
       bytes = pdfGeneratorUtil.CreatePdf("design-recognition-statement", variableMap);
 
       try {
-        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+        ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
+        InputStream targetStream = new ByteArrayInputStream(bytes);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -559,12 +598,18 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
 
-    String fileName = "design_recognition_result";
+    // remove later
+    String username = "indofood1";
+    
+    String fileType = "design_recognition_result";
+    String fileName = "design_recognition_result.pdf";
+
+    ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
     Pair<String, String> result;
     byte[] bytes;
-    if (variableMap.get(fileName) != null) {
+    if (attachment != null) {
       try {
-        Blob blob = GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, fileName);
+        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
         bytes = googleCloudStorage.getContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
@@ -626,7 +671,9 @@ public class FileController extends GcsUtil{
       bytes = pdfGeneratorUtil.CreatePdf("design-recognition-result", variableMap);
 
       try {
-        UploadToGcs(runtimeService, processInstanceId, activityInstanceId, bytes, fileName, "pdf");
+        ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
+        InputStream targetStream = new ByteArrayInputStream(bytes);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -640,4 +687,271 @@ public class FileController extends GcsUtil{
     return responseBuilder.build();
   }
 
+  @POST
+  @Path(value = "/project/attachments")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ProjectAttachmentCreation(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId,
+    @FormDataParam("file_type") String fileType
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    // change later
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+    ProjectAttachment attachment = new ProjectAttachment();
+
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        if (meta.getFileName() == null){
+          continue;
+        }
+
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+        break;
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    String json = new Gson().toJson(attachment);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/project/attachments/{task_id}/{attachment_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectAttachmentUrl(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("attachment_id") Integer attachmentId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    
+    Task task;
+    String processInstanceId;
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    ProjectAttachment attachment = projectAttachmentService.findByProcessInstanceIDAndId(processInstanceId, attachmentId);
+
+    String result;
+    try {
+      result = GetUrlGcs(attachment.getLink());
+    } catch (IOException e) {
+      return Response.status(404).build();
+    }
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("url", result);
+    map.put("filename", attachment.getFilename());
+    map.put("file_type", attachment.getFileType());
+    map.put("version", attachment.getVersion().toString());
+
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/project/attachments/{task_id}/{file_type}/files")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectAttachmentListByFileType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("file_type") String fileType
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Task task;
+    String processInstanceId;
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    List<ProjectAttachment> attachments = projectAttachmentService.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
+
+    String json = new Gson().toJson(attachments);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/project/attachments/{task_id}/{file_type}/latest")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetLatestProjectAttachmentListByFileType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("file_type") String fileType
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+ 
+    Task task;
+    String processInstanceId;
+    Map<String, Object> variableMap;
+    try {
+      variableMap = taskService.getVariables(taskId);
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
+
+    String json = new Gson().toJson(attachment);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/project/attachments/{taskId}/archived_files")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ProjectAttachmentArchivedFile(@PathParam("taskId") String taskId, 
+  @HeaderParam("Authorization") String authorization) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Task task;
+    String processInstanceId;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+    } catch (NullValueException e) {
+      return Response.status(400, "task id not found").build();
+    }
+
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    ProjectAttachment proofOfPayment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "proof_of_payment");
+    ProjectAttachment buildingPlan = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "building_plan");
+    ProjectAttachment rtRw = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "rt_rw");
+    ProjectAttachment uplUkl = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "upl_ukl");
+    ProjectAttachment earthquakeResistance = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "earthquake_resistance");
+    ProjectAttachment disabilityFriendly = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "disability_friendly");
+    ProjectAttachment safetyAndFireRequirement = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "safety_and_fire_requirement");
+    ProjectAttachment studyCaseReadiness = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "study_case_readiness");
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Blob>> listOfCallable = new ArrayList<Callable<Blob>>();
+    if (proofOfPayment != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, proofOfPayment.getLink()));
+    }
+    if (buildingPlan != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, buildingPlan.getLink()));
+    }
+    if (rtRw != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, rtRw.getLink()));
+    }
+    if (uplUkl != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, uplUkl.getLink()));
+    }
+    if (earthquakeResistance != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, earthquakeResistance.getLink()));
+    }
+    if (disabilityFriendly != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, disabilityFriendly.getLink()));
+    }
+    if (safetyAndFireRequirement != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, safetyAndFireRequirement.getLink()));
+    }
+    if (studyCaseReadiness != null) {
+      listOfCallable.add(() -> GetBlob(googleCloudStorage, studyCaseReadiness.getLink()));
+    }
+
+    FileOutputStream fos;
+    ZipOutputStream zipOut;
+    try {
+      fos = new FileOutputStream(taskId + ".zip");
+      zipOut = new ZipOutputStream(fos);
+    } catch (FileNotFoundException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    try {
+      List<Future<Blob>> futures = executor.invokeAll(listOfCallable);
+
+      futures.stream().forEach(f -> {
+          try {
+            Blob blob = f.get();
+            if (blob != null) {
+              ZipEntry zipEntry = new ZipEntry(blob.getName());
+              zipOut.putNextEntry(zipEntry);
+              byte[] byteArray = blob.getContent();
+              zipOut.write(byteArray);
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    try {
+      zipOut.close();
+      fos.close();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+  
+
+    File zipFile = new File(taskId + ".zip");
+    StreamingOutput stream = new StreamingOutput() {
+        @Override
+        public void write(OutputStream output) throws IOException {
+            try {
+                output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+    };
+
+    return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+        .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
+        .build();
+  }
 }
