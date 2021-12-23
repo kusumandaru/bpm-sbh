@@ -14,4 +14,5 @@ public interface IProjectAttachmentService {
   ProjectAttachment saveWithVersion(ProjectAttachment projectAttachment, String processInstanceId);
   ProjectAttachment findByProcessInstanceIDAndId(String processInstanceId, Integer attachmentId);
   List<ProjectAttachment> findByProcessInstanceIDAndFileType(String processInstanceId, String fileType);
+  boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId);
 }

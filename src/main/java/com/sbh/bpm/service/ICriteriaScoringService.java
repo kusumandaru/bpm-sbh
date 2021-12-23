@@ -14,4 +14,5 @@ public interface ICriteriaScoringService {
   List<CriteriaScoring> findBySelected(boolean selected);
   List<CriteriaScoring> findByApprovalStatusIn(List<Integer> approvalStatuses);
   List<CriteriaScoring> findByProjectAssessmentIDAndApprovalStatusIn(Integer projectAssessmentID, List<Integer> approvalStatuses);
+  List<CriteriaScoring> findByProjectAssessmentIDAndSelected(Integer projectAsessmentId, boolean selected);
 }

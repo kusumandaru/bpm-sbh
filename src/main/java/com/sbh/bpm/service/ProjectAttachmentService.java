@@ -2,6 +2,7 @@ package com.sbh.bpm.service;
 
 import java.util.List;
 
+import com.google.cloud.storage.Blob;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.repository.ProjectAttachmentRepository;
 
@@ -55,6 +56,20 @@ public class ProjectAttachmentService implements IProjectAttachmentService {
   @Override
   public List<ProjectAttachment> findByProcessInstanceIDAndFileType(String processInstanceId, String fileType) {
     return repository.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
+  }
+
+  @Override
+  public boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId) {
+    ProjectAttachment attachment = findById(attachmentId);
+
+    String attachmentLink = attachment.getLink();
+    Blob blob = googleCloudStorage.GetBlobByName(attachmentLink);
+    if (blob != null) {
+      googleCloudStorage.DeleteBlob(blob);
+    }
+
+    repository.deleteById(attachmentId);
+    return !repository.existsById(attachmentId);
   }
 
 }

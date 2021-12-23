@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MasterLevelRepository extends CrudRepository<MasterLevel, Integer> {
+  MasterLevel findFirstByOrderByMinimumScoreAsc();
 }
 

@@ -28,8 +28,10 @@ import com.sbh.bpm.model.Comment;
 import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
+import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterEvaluation;
+import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.ProjectAssessment;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.service.GoogleCloudStorage;
@@ -41,6 +43,7 @@ import com.sbh.bpm.service.IExerciseAssessmentService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterEvaluationService;
+import com.sbh.bpm.service.IMasterLevelService;
 import com.sbh.bpm.service.IProjectAssessmentService;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.ITransactionCreationService;
@@ -59,7 +62,6 @@ import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +105,9 @@ public class DesignRecognitionController extends GcsUtil {
 
   @Autowired
   private IProjectAttachmentService projectAttachmentService;
+
+  @Autowired
+  private IMasterLevelService masterLevelService;
  
   @POST
   @Path(value = "/design_recognition")
@@ -135,6 +140,48 @@ public class DesignRecognitionController extends GcsUtil {
     return Response.status(200).entity(json).build();
   }
 
+  @POST
+  @Path(value = "/design_recognition/{task_id}/submission")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response PostDesignRecognitionSubmission(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("task_id") String taskId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    // change later
+    String username = "indofood1";
+    String tenant = "indofood";
+
+    task.setTenantId(tenant);
+    if (taskService.getVariable(taskId, "third_payment_paid") == null) {
+      taskService.setVariable(taskId, "third_payment_paid", false);
+    }
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.claim(task.getId(), username);
+    taskService.setAssignee(task.getId(), username);
+    taskService.complete(task.getId());
+
+    return Response.status(200).build();
+  }
+
   @GET
   @Path(value = "/design_recognition/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -165,14 +212,42 @@ public class DesignRecognitionController extends GcsUtil {
     return Response.status(200).entity(json).build();
   }
 
+  @GET
+  @Path(value = "/design_recognition/{task_id}/assessment_attachments")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetAttachmentAssessments(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String fileType = "dr_assessment_attachment";
+
+    List<ProjectAttachment> attachments = projectAttachmentService.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
+
+    return Response.status(200).entity(attachments).build();
+  }
+
   @POST
   @Path(value = "/design_recognition/{task_id}/assessment_attachment")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   public Response PostDesignRecognitionAssessmentAttachment(
     @HeaderParam("Authorization") String authorization,
-    @FormDataParam("assessment_attachment") InputStream assessmentAttachment, 
-    @FormDataParam("assessment_attachment") FormDataContentDisposition assessmentAttachmentFdcd,
+    @FormDataParam("files") FormDataBodyPart files,
     @PathParam("task_id") String taskId
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
@@ -196,17 +271,94 @@ public class DesignRecognitionController extends GcsUtil {
 
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
     ProjectAssessment projectAssessment = projectAssessments.get(0);
-    String fileType = "assessment_attachment";
+    String fileType = "dr_assessment_attachment";
+ 
     try{
-      ProjectAttachment attachment = SaveWithVersion(processInstanceId, activityInstanceId, assessmentAttachment, assessmentAttachmentFdcd, fileType, username);
-      projectAssessment.setAssessmentAttachment(attachment.getLink());
-      projectAssessment =  projectAssessmentService.save(projectAssessment);
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
     } catch (Exception e) {
       return Response.status(400, e.getMessage()).build();
     }
 
     String json = new Gson().toJson(projectAssessment);
     return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/design_recognition/assessment_attachment/{attachmentId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetAttachmentAssessmentUrlFile(@HeaderParam("Authorization") String authorization, 
+    @PathParam("attachmentId") Integer attachmentId
+  ) {
+    ProjectAttachment attachment = projectAttachmentService.findById(attachmentId);
+    String attachmentLink = attachment.getLink();
+
+    String result;
+    try {
+      result = GetUrlGcs(attachmentLink);
+    } catch (IOException e) {
+      result = null;
+      return Response.status(404).build();
+    }
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("url", result);
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/design_recognition/assessment_attachment/{attachment_id}")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DesignRecognitionAssessmentAttachmentDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("attachment_id") Integer attachmentId
+
+  ) {
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    boolean status = projectAttachmentService.deleteById(googleCloudStorage, attachmentId);
+    return Response.status(status ? 200 : 400).build();
+  }
+
+  @POST
+  @Path(value = "/design_recognition/{task_id}/review_dr")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  public Response drReview(@HeaderParam("Authorization") String authorization,
+                                @PathParam("task_id") String taskId,
+                                @FormDataParam("approval_status") Boolean approvalStatus,
+                                @FormDataParam("rejected_reason") String rejectedReason) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    String processInstanceId = task.getProcessInstanceId();
+    taskService.setVariable(taskId, "dr_approved", approvalStatus);
+    taskService.setVariable(taskId, "approved", approvalStatus);
+    taskService.setVariable(taskId, "rejected_reason", rejectedReason);
+    taskService.setVariable(taskId, "read", false);
+    taskService.claim(taskId, "admin");
+    taskService.complete(taskId);
+
+    task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
+    String assignee = taskService.getVariable(task.getId(), "assignee").toString();
+    String tenant = taskService.getVariable(task.getId(), "tenant").toString();
+    task.setAssignee(assignee);
+    task.setTenantId(tenant);
+    taskService.claim(task.getId(), assignee);
+
+    return Response.ok().build();
   }
 
   @POST
@@ -286,6 +438,91 @@ public class DesignRecognitionController extends GcsUtil {
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
   }
+
+  @GET
+  @Path(value = "/design_recognition/{task_id}/eligible_submit")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response EligibleSubmit(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
+    ProjectAssessment projectAssessment = projectAssessments.get(0);
+
+    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByOrderByMinimumScoreAsc();
+    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= minimumLevel.getMinimumScore();
+  
+    List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
+    List<String> unselectedMasterCriteriaCodes = unselectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
+    Boolean prequisiteTask = unselectedMasterCriterias.isEmpty();
+
+    String fileType = "dr_assessment_attachment";
+    List<ProjectAttachment> projectAttachments = projectAttachmentService.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
+    Boolean prequisiteAttachment = !projectAttachments.isEmpty();
+
+    Map<String, Object> map = new HashMap<String, Object>();
+    map.put("eligible", prequisiteScore && prequisiteAttachment && prequisiteTask);
+    map.put("score", prequisiteScore);
+    map.put("attachment", prequisiteAttachment);
+    map.put("prequisite", prequisiteTask);
+    map.put("prequisite_codes", unselectedMasterCriteriaCodes);
+
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/design_recognition/{task_id}/eligible_approve")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response EligiblApprove(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
+    ProjectAssessment projectAssessment = projectAssessments.get(0);
+    
+    List<CriteriaScoring> underReviewScorings = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(projectAssessment.getId(), Arrays.asList(2));
+    List<MasterCriteria> masterCriterias = underReviewScorings.stream().map(CriteriaScoring::getCriteria).collect(Collectors.toList());
+    List<String> criteriaCodes = masterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
+
+    Map<String, Object> map = new HashMap<String, Object>();
+    map.put("eligible", underReviewScorings.isEmpty());
+    map.put("criteria_codes", criteriaCodes);
+
+    String json = new Gson().toJson(map);
+    return Response.status(200).entity(json).build();
+  }
+
 
   @POST
   @Path(value = "/design_recognition/{criteriaScoringId}/take_score")
@@ -667,7 +904,7 @@ public class DesignRecognitionController extends GcsUtil {
         attachment.setCreatedAt(new Date());
         //change later
         attachment.setRole("client");
-        attachment.setUploaderID("indofood1");
+        attachment.setUploaderID(username);
         attachment.setFilename(filename);
         attachment.setLink(blobId.getName());
         attachment.setDocumentFileID(documentId);

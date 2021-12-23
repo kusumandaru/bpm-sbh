@@ -25,7 +25,6 @@ import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
-import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -237,8 +236,8 @@ public class NewBuildingController extends GcsUtil{
         executor.shutdown();
     }
 
-    // taskService.setVariable(task.getId(), "approved", false);
-    // taskService.claim(taskId, "admin");
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "first_payment_paid", false);
     taskService.setVariable(task.getId(), "read", false);
     taskService.complete(taskId);
 
@@ -253,8 +252,6 @@ public class NewBuildingController extends GcsUtil{
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("second_payment_document") InputStream secondPaymentDocument, 
     @FormDataParam("second_payment_document") FormDataContentDisposition secondPaymentDocumentFdcd,
-    @FormDataParam("second_payment") Boolean secondPayment,
-    @FormDataParam("design_recognition") Boolean designRecognition,
     @FormDataParam("task_id") String taskId
   ) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
@@ -293,17 +290,9 @@ public class NewBuildingController extends GcsUtil{
         executor.shutdown();
     }
 
-    taskService.setVariable(task.getId(), "second_payment", secondPayment);
-    taskService.setVariable(task.getId(), "third_payment_paid", false);
     taskService.setVariable(task.getId(), "read", false);
-    taskService.setVariable(task.getId(), "design_recognition", designRecognition);
-
-    if (designRecognition) {
-      TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
-    }
-
-    taskService.setVariable(task.getId(), "approved", true);
-    taskService.claim(taskId, "admin");
+    taskService.setVariable(task.getId(), "second_payment_paid", false);
+    taskService.setVariable(task.getId(), "approved", null);
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -317,7 +306,6 @@ public class NewBuildingController extends GcsUtil{
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("third_payment_document") InputStream thirdPaymentDocument, 
     @FormDataParam("third_payment_document") FormDataContentDisposition thirdPaymentDocumentFdcd,
-    @FormDataParam("third_payment") Boolean thirdPayment,
     @FormDataParam("task_id") String taskId
   ) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
@@ -355,11 +343,9 @@ public class NewBuildingController extends GcsUtil{
         executor.shutdown();
     }
 
-    taskService.setVariable(task.getId(), "third_payment", thirdPayment);
     taskService.setVariable(task.getId(), "read", false);
-
-    taskService.setVariable(task.getId(), "approved", true);
-    taskService.claim(taskId, "admin");
+    taskService.setVariable(task.getId(), "first_payment_paid", false);
+    taskService.setVariable(task.getId(), "approved", null);
     taskService.complete(taskId);
 
     return Response.ok().build();

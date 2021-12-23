@@ -79,6 +79,17 @@ public class MasterProjectController extends GcsUtil{
   }
 
   @GET
+  @Path(value = "/levels/minimum_score")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response masterLevelMinimumScore(@HeaderParam("Authorization") String authorization) {      
+    MasterLevel level = (MasterLevel) masterLevelService.findFirstByOrderByMinimumScoreAsc();
+
+    String json = new Gson().toJson(level);
+    return Response.ok(json).build();
+  }
+
+
+  @GET
   @Path(value = "/vendors")
   @Produces(MediaType.APPLICATION_JSON)
   public Response allMasterVendor(@HeaderParam("Authorization") String authorization) {      

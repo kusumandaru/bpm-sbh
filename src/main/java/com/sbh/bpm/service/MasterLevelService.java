@@ -27,4 +27,9 @@ public class MasterLevelService implements IMasterLevelService {
   public MasterLevel save(MasterLevel masterLevel) {
     return repository.save(masterLevel);
   }
+
+  @Override
+  public MasterLevel findFirstByOrderByMinimumScoreAsc() {
+    return repository.findFirstByOrderByMinimumScoreAsc();
+  }
 }
