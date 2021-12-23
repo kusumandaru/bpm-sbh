@@ -24,6 +24,8 @@ import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
+import com.sbh.bpm.service.ITransactionCreationService;
+import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +53,9 @@ public class TaskController {
 
   @Autowired
   private IMailerService mailerService;
+
+  @Autowired
+  private ITransactionCreationService transactionCreationService;
 
   @Autowired
   private IPdfGeneratorUtil pdfGeneratorUtil;
@@ -194,7 +199,28 @@ public class TaskController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
-    // Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    String taskDefinitionKey = task.getTaskDefinitionKey();
+    switch(taskDefinitionKey) {
+      case "check-first-payment":
+        taskService.setVariable(taskId, "first_payment_paid", true);
+        break;
+      case "check-second-payment":
+        taskService.setVariable(taskId, "second_payment_paid", true);
+        boolean designRecognition = (Boolean) taskService.getVariable(taskId, "design_recognition");
+        if (designRecognition) {
+          String processInstanceId = task.getProcessInstanceId();
+          TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+        }
+        break;
+      case "check-third-payment":
+        taskService.setVariable(taskId, "third_payment_paid", true);
+        break;
+      case "check-third-payment-fa":
+        taskService.setVariable(taskId, "third_payment_paid", true);
+        break;
+    }
+
     taskService.setVariable(taskId, "approved", true);
     taskService.setVariable(taskId, "read", false);
     taskService.claim(taskId, "admin");

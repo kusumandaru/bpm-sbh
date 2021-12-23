@@ -9,4 +9,5 @@ public interface IMasterLevelService {
   List<MasterLevel> findAll();
   MasterLevel findById(Integer masterLevelId);
   MasterLevel save(MasterLevel masterLevel);
+  MasterLevel findFirstByOrderByMinimumScoreAsc();
 }

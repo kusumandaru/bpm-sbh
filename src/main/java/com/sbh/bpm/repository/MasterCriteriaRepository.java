@@ -13,5 +13,6 @@ public interface MasterCriteriaRepository extends CrudRepository<MasterCriteria,
   List<MasterCriteria> findByMasterExerciseID(Integer exerciseId);
   List<MasterCriteria> findByMasterExerciseIDAndIdNot(Integer exerciseId, Integer blockerId);
   List<MasterCriteria> findByMasterExerciseIDIn(List<Integer> exerciseIds);
+  List<MasterCriteria> findByExerciseType(String string);
 }
 

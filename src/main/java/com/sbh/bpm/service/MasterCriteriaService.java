@@ -1,8 +1,11 @@
 package com.sbh.bpm.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.MasterCriteria;
+import com.sbh.bpm.repository.CriteriaScoringRepository;
 import com.sbh.bpm.repository.MasterCriteriaRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,9 @@ import org.springframework.stereotype.Service;
 public class MasterCriteriaService implements IMasterCriteriaService {
   @Autowired
   private MasterCriteriaRepository repository;
+
+  @Autowired
+  private CriteriaScoringRepository criteriaScoringRepository;
 
   @Override
   public List<MasterCriteria> findAll() {
@@ -42,5 +48,15 @@ public class MasterCriteriaService implements IMasterCriteriaService {
   @Override
   public List<MasterCriteria> findByMasterExerciseIDIn(List<Integer> exerciseIds) {
     return (List<MasterCriteria>) repository.findByMasterExerciseIDIn(exerciseIds);
+  }
+
+  @Override
+  public List<MasterCriteria> findByProjectAssessmentIDAndSelectedAndPrequisite(Integer projectAsessmentId, boolean selected) {
+    List<CriteriaScoring> scorings = criteriaScoringRepository.findByProjectAssessmentIDAndSelected(projectAsessmentId, selected);
+    List<Integer> masterCriteriaIds = scorings.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());
+    List<MasterCriteria> criterias = repository.findByExerciseType("prequisite");
+
+    List<MasterCriteria> unselectedCriterias = criterias.stream().filter(criteria -> masterCriteriaIds.contains(criteria.getId())).collect(Collectors.toList());
+    return unselectedCriterias;
   }
 }

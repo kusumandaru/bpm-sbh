@@ -12,4 +12,5 @@ public interface IMasterCriteriaService {
   List<MasterCriteria> withoutSelfSameExercise(Integer criteriaId);
   MasterCriteria findById(Integer masterCriteriaID);
   MasterCriteria save(MasterCriteria masterCriteria);
+  List<MasterCriteria> findByProjectAssessmentIDAndSelectedAndPrequisite(Integer projectAsessmentId, boolean selected);
 }
