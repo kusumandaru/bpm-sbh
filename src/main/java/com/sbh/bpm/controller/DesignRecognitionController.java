@@ -238,7 +238,8 @@ public class DesignRecognitionController extends GcsUtil {
 
     List<ProjectAttachment> attachments = projectAttachmentService.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
 
-    return Response.status(200).entity(attachments).build();
+    String json = new Gson().toJson(attachments);
+    return Response.status(200).entity(json).build();
   }
 
   @POST
