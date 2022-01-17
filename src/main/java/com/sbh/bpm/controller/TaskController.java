@@ -3,6 +3,7 @@ package com.sbh.bpm.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -150,6 +151,7 @@ public class TaskController {
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("tenant_id", task.getTenantId());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
+    variableMap.put("task_name", task.getName());
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));
@@ -219,11 +221,29 @@ public class TaskController {
       case "check-third-payment-fa":
         taskService.setVariable(taskId, "third_payment_paid", true);
         break;
+      case "design-recognition-trial":
+        taskService.setVariable(taskId, "approved_dr_trial", true);
+        break;
+      case "design-recognition-revision-review":
+        taskService.setVariable(taskId, "approved_dr_review", true);
+        break;
+      case "design-recognition-letter":
+        String processInstanceId = task.getProcessInstanceId();
+        TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
+        break;
+      case "final-assessment-trial":
+        taskService.setVariable(taskId, "approved_fa_trial", true);
+        break;
+      case "final-assessment-revision-review":
+        taskService.setVariable(taskId, "approved_fa_review", true);
+        break;
     }
 
     taskService.setVariable(taskId, "approved", true);
     taskService.setVariable(taskId, "read", false);
-    taskService.claim(taskId, "admin");
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(taskId, "admin");
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -243,11 +263,40 @@ public class TaskController {
 
     Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
     String processInstanceId = task.getProcessInstanceId();
+    String taskDefinitionKey = task.getTaskDefinitionKey();
+    switch(taskDefinitionKey) {
+      case "check-first-payment":
+        taskService.setVariable(taskId, "first_payment_paid", false);
+        break;
+      case "check-second-payment":
+        taskService.setVariable(taskId, "second_payment_paid", false);
+        break;
+      case "check-third-payment":
+        taskService.setVariable(taskId, "third_payment_paid", false);
+        break;
+      case "check-third-payment-fa":
+        taskService.setVariable(taskId, "third_payment_paid", false);
+        break;
+      case "design-recognition-trial":
+        taskService.setVariable(taskId, "approved_dr_trial", false);
+        break;
+      case "design-recognition-revision-review":
+        taskService.setVariable(taskId, "approved_dr_review", false);
+        break;
+      case "final-assessment-trial":
+        taskService.setVariable(taskId, "approved_fa_trial", false);
+        break;
+      case "final-assessment-revision-review":
+        taskService.setVariable(taskId, "approved_fa_review", false);
+        break;
+    }
 
     taskService.setVariable(taskId, "approved", false);
     taskService.setVariable(taskId, "rejected_reason", rejectedReason);
     taskService.setVariable(taskId, "read", false);
-    taskService.claim(taskId, "admin");
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(taskId, "admin");
+    }
     taskService.complete(taskId);
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();

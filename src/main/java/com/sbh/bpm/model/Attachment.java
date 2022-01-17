@@ -67,6 +67,12 @@ public class Attachment {
   @Setter
   private Date updatedAt;
 
+  @SerializedName("submitted_at")
+  @Column(name="submitted_at")
+  @Getter
+  @Setter
+  private Date submittedAt;
+
   @SerializedName("created_by")
   @Column(name="created_by")
   @Getter

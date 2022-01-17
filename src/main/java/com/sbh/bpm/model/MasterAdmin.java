@@ -59,6 +59,12 @@ public class MasterAdmin {
   @Setter
   private String thirdAttachment;
 
+  @SerializedName("scoring_form")
+  @Column(name="scoring_form")
+  @Getter
+  @Setter
+  private String scoringForm;
+
   @SerializedName("dr_template_id")
   @Column(name="dr_template_id")
   @Getter

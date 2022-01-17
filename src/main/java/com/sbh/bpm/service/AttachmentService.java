@@ -1,6 +1,7 @@
 package com.sbh.bpm.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.google.cloud.storage.Blob;
 import com.sbh.bpm.model.Attachment;
@@ -51,7 +52,10 @@ public class AttachmentService implements IAttachmentService {
   @Override
   public boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId) {
     Attachment attachment = findById(attachmentId);
-
+    if (!Objects.isNull(attachment.getSubmittedAt())) {
+      return false;
+    }
+    
     String attachmentLink = attachment.getLink();
     Blob blob = googleCloudStorage.GetBlobByName(attachmentLink);
     if (blob != null) {
@@ -65,5 +69,15 @@ public class AttachmentService implements IAttachmentService {
   @Override
   public boolean existsAttachmentByFilenameAndDocumentFileID(String fileName, Integer documentId) {
     return repository.existsAttachmentByFilenameAndDocumentFileID(fileName, documentId);
+  }
+
+  @Override
+  public List<Attachment> findByProcessInstanceIdAndMasterTemplateId(String processInstanceId, Integer masterTemplateId) {
+    return repository.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplateId);
+  }
+
+  @Override
+  public List<Attachment> findByProcessInstanceIdAndAssessmentType(String processInstanceId, String assessmentType) {
+    return repository.findByProcessInstanceIdAndAssessmentType(processInstanceId, assessmentType);
   }
 }

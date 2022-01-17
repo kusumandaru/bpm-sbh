@@ -44,6 +44,7 @@ public class MasterAdminService implements IMasterAdminService {
     variableMap.put("first_attachment", masterAdmin.getFirstAttachment());
     variableMap.put("second_attachment", masterAdmin.getSecondAttachment());
     variableMap.put("third_attachment", masterAdmin.getThirdAttachment());
+    variableMap.put("scoring_form", masterAdmin.getScoringForm());
 
     return variableMap;
   }

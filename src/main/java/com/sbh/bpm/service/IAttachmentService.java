@@ -14,4 +14,6 @@ public interface IAttachmentService {
   List<Attachment> findByDocumentFileIDIn(List<Integer> documentFileIds);
   boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId);
   boolean existsAttachmentByFilenameAndDocumentFileID(String fileName, Integer documentId);
+  List<Attachment> findByProcessInstanceIdAndMasterTemplateId(String processInstanceId, Integer masterTemplateId);
+  List<Attachment> findByProcessInstanceIdAndAssessmentType(String processInstanceID, String assessmentType);
 }

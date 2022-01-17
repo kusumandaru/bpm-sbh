@@ -113,7 +113,7 @@ public class TransactionFetchService implements ITransactionFetchService {
     }
 
     try {
-      projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceID);
+      projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceID, "DR");
       for (ProjectAssessment pa : projectAssessments) {
         List<MasterEvaluation> masterEvaluations = masterEvaluationService.findByMasterTemplateID(pa.getMasterTemplateID());
         List<ExerciseAssessment> exerciseAssessments = exerciseAssessmentService.findByProjectAssessmentID(pa.getId());
@@ -170,8 +170,83 @@ public class TransactionFetchService implements ITransactionFetchService {
   }
 
   @Override
-  public List<MasterEvaluation> GetEvaluationScoreForProcessInstance(String processInstanceID) {
-    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceID);
+  public TransactionFetchResponse GetFATransactionForProcessInstance(String processInstanceID) {
+    TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+    TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
+    
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+
+    List<ProjectAssessment> projectAssessments = new ArrayList<ProjectAssessment>();
+    try {
+      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "process instance not found");
+
+      return new TransactionFetchResponse(false, map, projectAssessments);
+    }
+
+    try {
+      projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceID, "FA");
+      for (ProjectAssessment pa : projectAssessments) {
+        List<MasterEvaluation> masterEvaluations = masterEvaluationService.findByMasterTemplateID(pa.getMasterTemplateID());
+        List<ExerciseAssessment> exerciseAssessments = exerciseAssessmentService.findByProjectAssessmentID(pa.getId());
+        List<CriteriaScoring> criteriaScorings = criteriaScoringService.findByProjectAssessmentID(pa.getId());
+
+        List<Integer> criteriaScoringIds = criteriaScorings.stream().map(CriteriaScoring::getId).collect(Collectors.toList());
+        List<Comment> comments = commentService.findByCriteriaScoringIDIn(criteriaScoringIds);
+        List<DocumentFile> documentFiles = documentFileService.findByCriteriaScoringIDIn(criteriaScoringIds);
+        List<Integer> documentFileIds = documentFiles.stream().map(DocumentFile::getId).collect(Collectors.toList());
+        List<Attachment> attachments = attachmentService.findByDocumentFileIDIn(documentFileIds);
+
+        for (CriteriaScoring criteriaScoring : criteriaScorings) {
+          List<DocumentFile> docs = documentFiles.stream().filter(documentFile -> documentFile.getCriteriaScoringID().equals(criteriaScoring.getId())).collect(Collectors.toList());
+          for(DocumentFile doc : docs) {
+            List<Attachment> attchs = attachments.stream().filter(attachment -> attachment.getDocumentFileID().equals(doc.getId())).collect(Collectors.toList());
+            doc.setAttachments(attchs);
+          }
+          criteriaScoring.setDocuments(docs);
+
+          List<Comment> coms = comments.stream().filter(comment -> comment.getCriteriaScoringID().equals(criteriaScoring.getId())).collect(Collectors.toList());
+          criteriaScoring.setComments(coms);
+        }
+
+        for (ExerciseAssessment exerciseAsessment : exerciseAssessments) {
+          List<MasterCriteria> masterCriterias = masterCriteriaService.findByMasterExerciseID(exerciseAsessment.getMasterExerciseID());
+          List<Integer> masterCriteriaIds = masterCriterias.stream().map(MasterCriteria::getId).collect(Collectors.toList());
+
+          List<CriteriaScoring> crts = criteriaScorings.stream().filter(exercise -> masterCriteriaIds.contains(exercise.getMasterCriteriaID())).collect(Collectors.toList());
+          exerciseAsessment.setCriterias(crts);
+        }
+
+        for (MasterEvaluation masterEvaluation : masterEvaluations) {
+          List<MasterExercise> masterExercises = masterExerciseService.findByMasterEvaluationID(masterEvaluation.getId());
+          List<Integer> masterExerciseIds = masterExercises.stream().map(MasterExercise::getId).collect(Collectors.toList());
+
+          List<ExerciseAssessment> excs = exerciseAssessments.stream().filter(exercise -> masterExerciseIds.contains(exercise.getMasterExerciseID())).collect(Collectors.toList());
+          masterEvaluation.setExercises(excs);
+        }
+        pa.setMasterEvaluations(masterEvaluations);
+      }
+
+    } catch(Exception ex) {
+      transactionManager.rollback(transactionStatus);
+
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", ex.getMessage());
+
+      return new TransactionFetchResponse(false, map, projectAssessments);
+    }
+
+    Map<String, String> resultMap = new HashMap<String, String>();
+    resultMap.put("message", "DR transaction has been loaded");
+    return new TransactionFetchResponse(true, resultMap, projectAssessments);
+  }
+
+  @Override
+  public List<MasterEvaluation> GetEvaluationScoreForProcessInstance(String processInstanceID, String assessmentType) {
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceID, assessmentType);
     List<Integer> masterTemplateIds = projectAssessments.stream().map(ProjectAssessment::getMasterTemplateID).collect(Collectors.toList());
     List<MasterEvaluation> evaluations = masterEvaluationService.findByMasterTemplateIDIn(masterTemplateIds);
     List<ExerciseAssessment> exerciseAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessments.get(0).getId());

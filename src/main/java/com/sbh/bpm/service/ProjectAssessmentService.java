@@ -32,4 +32,17 @@ public class ProjectAssessmentService implements IProjectAssessmentService {
   public List<ProjectAssessment> findByProcessInstanceID(String processInstanceId) {
     return repository.findByProcessInstanceID(processInstanceId);
   }
+
+  @Override
+  public List<ProjectAssessment> findByProcessInstanceIDAndMasterTemplateID(String processInstanceId,
+      Integer masterTemplateId) {
+    return repository.findByProcessInstanceIDAndMasterTemplateID(processInstanceId, masterTemplateId);
+  }
+
+  @Override
+  public List<ProjectAssessment> findByProcessInstanceIDAndAssessmentType(String processInstanceId,
+      String assessmentType) {
+        return repository.findByProcessInstanceIDAndAssessmentType(processInstanceId, assessmentType);
+
+  }
 }

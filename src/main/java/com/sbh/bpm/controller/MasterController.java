@@ -268,7 +268,9 @@ public class MasterController extends GcsUtil{
     @FormDataParam("second_attachment") InputStream secondAttachment, 
     @FormDataParam("second_attachment") FormDataContentDisposition secondAttachmentFdcd,
     @FormDataParam("third_attachment") InputStream thirdAttachment, 
-    @FormDataParam("third_attachment") FormDataContentDisposition thirdAttachmentFdcd
+    @FormDataParam("third_attachment") FormDataContentDisposition thirdAttachmentFdcd,
+    @FormDataParam("scoring_form") InputStream scoringForm, 
+    @FormDataParam("scoring_form") FormDataContentDisposition scoringFormFdcd
     ) {         
  
     MasterAdmin masterAdmin = masterAdminService.findLast();
@@ -279,7 +281,8 @@ public class MasterController extends GcsUtil{
                 () -> UploadToGcs("admin", registrationLetter, registrationLetterFdcd, "registration_letter"),
                 () -> UploadToGcs("admin", firstAttachment, firstAttachmentFdcd, "first_attachment"),
                 () -> UploadToGcs("admin", secondAttachment, secondAttachmentFdcd, "second_attachment"),
-                () -> UploadToGcs("admin", thirdAttachment, thirdAttachmentFdcd, "third_attachment")
+                () -> UploadToGcs("admin", thirdAttachment, thirdAttachmentFdcd, "third_attachment"),
+                () -> UploadToGcs("admin", scoringForm, scoringFormFdcd, "scoring_form")
               );
     
     Map<String, String> results = new HashMap<String, String>();

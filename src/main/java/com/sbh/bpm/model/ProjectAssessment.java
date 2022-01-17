@@ -81,6 +81,12 @@ public class ProjectAssessment {
   @Setter
   private String assessmentAttachment;
 
+  @SerializedName("assessment_type")
+  @Column(name="assessment_type")
+  @Getter
+  @Setter
+  private String assessmentType;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
