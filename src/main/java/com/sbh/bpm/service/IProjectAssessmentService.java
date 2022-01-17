@@ -10,4 +10,7 @@ public interface IProjectAssessmentService {
   ProjectAssessment findById(Integer projectAssessmentId);
   ProjectAssessment save(ProjectAssessment projectAssessment);
   List<ProjectAssessment> findByProcessInstanceID(String processInstanceId);
+  List<ProjectAssessment> findByProcessInstanceIDAndMasterTemplateID(String processInstanceId, Integer masterTemplateID);
+  List<ProjectAssessment> findByProcessInstanceIDAndAssessmentType(String processInstanceId, String assessmentType);
+
 }

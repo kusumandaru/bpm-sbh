@@ -7,5 +7,6 @@ import com.sbh.bpm.service.TransactionFetchService.TransactionFetchResponse;
 
 public interface ITransactionFetchService {
   TransactionFetchResponse GetDRTransactionForProcessInstance(String processInstanceID);
-  List<MasterEvaluation> GetEvaluationScoreForProcessInstance(String processInstanceID);
+  TransactionFetchResponse GetFATransactionForProcessInstance(String processInstanceID);
+  List<MasterEvaluation> GetEvaluationScoreForProcessInstance(String processInstanceID, String assessmentType);
 }

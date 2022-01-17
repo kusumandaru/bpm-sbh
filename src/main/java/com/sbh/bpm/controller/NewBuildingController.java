@@ -11,9 +11,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -23,6 +25,7 @@ import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
 
@@ -34,6 +37,9 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.task.Task;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +62,9 @@ public class NewBuildingController extends GcsUtil{
 
   @Autowired
   private ITransactionCreationService transactionCreationService;
+
+  @Autowired
+  private IProjectAttachmentService projectAttachmentService;
 
   @POST
   @Path(value = "/upload-eligibility-document")
@@ -407,4 +416,127 @@ public class NewBuildingController extends GcsUtil{
     return Response.ok().build();
   }
 
+  @POST
+  @Path(value = "/dr_revision_submission")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DRRevisionSubmission(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    String fileType = "dr_revision_submission";
+ 
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @POST
+  @Path(value = "/fa_revision_submission")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response FARevisionSubmission(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    String fileType = "fa_revision_submission";
+ 
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @GET
+  @Path(value = "/project_attachments/{task_id}/file_type/{file_type}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectAttachmentsByFileType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("file_type") String fileType
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+
+    List<ProjectAttachment> attachments = projectAttachmentService.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
+
+    String json = new Gson().toJson(attachments);
+    return Response.status(200).entity(json).build();
+  }
 }

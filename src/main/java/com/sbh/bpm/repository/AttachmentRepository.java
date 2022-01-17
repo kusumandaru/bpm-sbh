@@ -22,5 +22,23 @@ public interface AttachmentRepository extends CrudRepository<Attachment, Integer
   @Modifying
   @Query("DELETE from Attachment a where a.id = :id")
   void delete(@Param("id") Integer id);
+
+  @Transactional
+  @Modifying
+  @Query(value="SELECT attachments.* from attachments "+
+    "WHERE document_file_id IN (SELECT id from document_files "+
+    "WHERE criteria_scoring_id IN (SELECT id from criteria_scorings "+
+    "WHERE project_assessment_id = (SELECT id from project_assessments "+
+    "WHERE process_instance_id = :processInstanceId and master_template_id = :masterTemplateId)))", nativeQuery=true)
+  List<Attachment> findByProcessInstanceIdAndMasterTemplateId(@Param("processInstanceId") String processInstanceId, @Param("masterTemplateId") Integer masterTemplateId);
+
+  @Transactional
+  @Modifying
+  @Query(value="SELECT attachments.* from attachments "+
+    "WHERE document_file_id IN (SELECT id from document_files "+
+    "WHERE criteria_scoring_id IN (SELECT id from criteria_scorings "+
+    "WHERE project_assessment_id = (SELECT id from project_assessments "+
+    "WHERE process_instance_id = :processInstanceId and assessment_type = :assessmentType)))", nativeQuery=true)
+  List<Attachment> findByProcessInstanceIdAndAssessmentType(String processInstanceId, String assessmentType);
 }
 
