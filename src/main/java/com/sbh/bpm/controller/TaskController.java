@@ -221,18 +221,12 @@ public class TaskController {
       case "check-third-payment-fa":
         taskService.setVariable(taskId, "third_payment_paid", true);
         break;
-      case "design-recognition-trial":
-        taskService.setVariable(taskId, "approved_dr_trial", true);
-        break;
       case "design-recognition-revision-review":
         taskService.setVariable(taskId, "approved_dr_review", true);
         break;
       case "design-recognition-letter":
         String processInstanceId = task.getProcessInstanceId();
         TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
-        break;
-      case "final-assessment-trial":
-        taskService.setVariable(taskId, "approved_fa_trial", true);
         break;
       case "final-assessment-revision-review":
         taskService.setVariable(taskId, "approved_fa_review", true);
@@ -277,14 +271,8 @@ public class TaskController {
       case "check-third-payment-fa":
         taskService.setVariable(taskId, "third_payment_paid", false);
         break;
-      case "design-recognition-trial":
-        taskService.setVariable(taskId, "approved_dr_trial", false);
-        break;
       case "design-recognition-revision-review":
         taskService.setVariable(taskId, "approved_dr_review", false);
-        break;
-      case "final-assessment-trial":
-        taskService.setVariable(taskId, "approved_fa_trial", false);
         break;
       case "final-assessment-revision-review":
         taskService.setVariable(taskId, "approved_fa_review", false);

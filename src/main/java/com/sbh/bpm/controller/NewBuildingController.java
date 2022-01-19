@@ -417,6 +417,54 @@ public class NewBuildingController extends GcsUtil{
   }
 
   @POST
+  @Path(value = "/dr_evaluation_assessment")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DREvaluationAssessment(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    String fileType = "dr_evaluation_assessment";
+ 
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @POST
   @Path(value = "/dr_revision_submission")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
@@ -445,6 +493,54 @@ public class NewBuildingController extends GcsUtil{
     String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
 
     String fileType = "dr_revision_submission";
+ 
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @POST
+  @Path(value = "/fa_evaluation_assessment")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response FAEvaluationAssessment(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (NullValueException e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    String fileType = "fa_evaluation_assessment";
  
     try{
       for(BodyPart part : files.getParent().getBodyParts()){
