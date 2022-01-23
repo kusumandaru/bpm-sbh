@@ -77,6 +77,18 @@ public class MasterAdmin {
   @Setter
   private Integer faTemplateID;
 
+  @SerializedName("default_dr_level")
+  @Column(name="default_dr_level")
+  @Getter
+  @Setter
+  private Integer defaultDRLevel;
+
+  @SerializedName("default_fa_level")
+  @Column(name="default_fa_level")
+  @Getter
+  @Setter
+  private Integer defaultFALevel;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

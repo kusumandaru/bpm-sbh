@@ -353,7 +353,7 @@ public class NewBuildingController extends GcsUtil{
     }
 
     taskService.setVariable(task.getId(), "read", false);
-    taskService.setVariable(task.getId(), "first_payment_paid", false);
+    taskService.setVariable(task.getId(), "third_payment_paid", false);
     taskService.setVariable(task.getId(), "approved", null);
     taskService.complete(taskId);
 

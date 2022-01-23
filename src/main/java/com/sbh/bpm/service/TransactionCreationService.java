@@ -126,8 +126,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setSubmittedScore(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("DR");
-      // change it later
-      projectAssessment.setProposedLevelID(1);
+      projectAssessment.setProposedLevelID(masterAdmin.getDefaultDRLevel());
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 
@@ -247,8 +246,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setSubmittedScore(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("FA");
-      // change it later
-      projectAssessment.setProposedLevelID(1);
+      projectAssessment.setProposedLevelID(masterAdmin.getDefaultFALevel());
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 

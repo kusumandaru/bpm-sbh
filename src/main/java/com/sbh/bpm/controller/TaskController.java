@@ -213,6 +213,9 @@ public class TaskController {
         if (designRecognition) {
           String processInstanceId = task.getProcessInstanceId();
           TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+        } else {
+          String processInstanceId = task.getProcessInstanceId();
+          TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
         }
         break;
       case "check-third-payment":
@@ -226,7 +229,7 @@ public class TaskController {
         break;
       case "design-recognition-letter":
         String processInstanceId = task.getProcessInstanceId();
-        TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
+        TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId);
         break;
       case "final-assessment-revision-review":
         taskService.setVariable(taskId, "approved_fa_review", true);
