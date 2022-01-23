@@ -259,6 +259,8 @@ public class MasterController extends GcsUtil{
     @FormDataParam("manager_name") String managerName,
     @FormDataParam("fa_template_id") Integer faTemplateID,
     @FormDataParam("dr_template_id") Integer drTemplateID,
+    @FormDataParam("default_dr_level") Integer defaultDRLevel,
+    @FormDataParam("default_fa_level") Integer defaultFALevel,
     @FormDataParam("manager_signature") InputStream managerSignature, 
     @FormDataParam("manager_signature") FormDataContentDisposition managerSignatureFdcd,
     @FormDataParam("registration_letter") InputStream registrationLetter, 
@@ -329,6 +331,12 @@ public class MasterController extends GcsUtil{
     }
     if (drTemplateID != null) {
       masterAdmin.setDrTemplateID(drTemplateID);
+    }
+    if (defaultDRLevel != null) {
+      masterAdmin.setDefaultDRLevel(defaultDRLevel);
+    }
+    if (defaultFALevel != null) {
+      masterAdmin.setDefaultFALevel(defaultFALevel);
     }
     masterAdmin = masterAdminService.save(masterAdmin);
 
