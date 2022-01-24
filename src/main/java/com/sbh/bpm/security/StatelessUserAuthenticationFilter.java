@@ -41,7 +41,7 @@ public class StatelessUserAuthenticationFilter implements Filter {
 
         try {
             Class<?> authenticationProviderClass = Class.forName(authenticationProviderClassName);
-            authenticationProvider = (AuthenticationProvider) authenticationProviderClass.newInstance();
+            authenticationProvider = (AuthenticationProvider) authenticationProviderClass.getDeclaredConstructor().newInstance();
 
         } catch (ClassNotFoundException e) {
             throw new ServletException("Cannot instantiate authentication filter: authentication provider not found", e);
@@ -52,6 +52,8 @@ public class StatelessUserAuthenticationFilter implements Filter {
         } catch (ClassCastException e) {
             throw new ServletException("Cannot instantiate authentication filter: authentication provider does not implement interface " +
                     AuthenticationProvider.class.getName(), e);
+        } catch (Exception e) {
+            throw new ServletException(e.getMessage(), e);
         }
 
         try {

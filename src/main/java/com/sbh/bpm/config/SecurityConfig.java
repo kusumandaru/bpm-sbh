@@ -30,9 +30,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .requestMatchers().antMatchers("/engine-rest/**", "/auth/**", "/rest/**")
+                .requestMatchers().antMatchers("/engine-rest/**", "/auth/**", "/rest/**", "/client/**")
                 .and()
-                .csrf().ignoringAntMatchers("/engine-rest/**", "/auth/**", "/rest/**")
+                .csrf().ignoringAntMatchers("/engine-rest/**", "/auth/**", "/rest/**", "/client/**")
                 .and()
                 .exceptionHandling().authenticationEntryPoint(entryPoint);
     }

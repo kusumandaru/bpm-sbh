@@ -9,6 +9,7 @@ import com.sbh.bpm.payload.MessageResponse;
 
 import java.util.ArrayList;
 
+import org.camunda.bpm.engine.BadUserRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -49,7 +50,7 @@ public class RestControllerExceptionHandler {
     }
 
     @ExceptionHandler(BadRequestException.class)
-    @ResponseBody
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     public ResponseEntity<ApiResponse> resolveException(BadRequestException exception) {
         ApiResponse apiResponse = exception.getApiResponse();
 
@@ -125,5 +126,15 @@ public class RestControllerExceptionHandler {
     public ResponseEntity<MessageResponse> handleMaxSizeException(MaxUploadSizeExceededException exc) {
         return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
                 .body(new MessageResponse(HttpStatus.EXPECTATION_FAILED.value(), "File too large!"));
+    }
+
+    @ExceptionHandler(BadUserRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiResponse> handleBadUserRequestException(BadUserRequestException exc) {
+        ApiResponse response = new ApiResponse();
+        response.setSuccess(Boolean.FALSE);
+        response.setMessage(exc.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }

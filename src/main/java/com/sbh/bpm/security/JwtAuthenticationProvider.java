@@ -1,9 +1,12 @@
 package com.sbh.bpm.security;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.sbh.bpm.exception.UnauthorizedException;
 
 import org.camunda.bpm.engine.ProcessEngine;
 import org.slf4j.Logger;
@@ -18,11 +21,13 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         String jwt = getJwtFromRequest(request);
 
         try{
-            AbstractValidator validator = (AbstractValidator) jwtValidator.newInstance();
+            AbstractValidator validator = (AbstractValidator) jwtValidator.getDeclaredConstructor().newInstance();
             AuthenticationResult validationResult = validator.validateToken(jwt, jwtSecret);
             if (validationResult.isAuthenticated()) {
+                List<String> groupIds = validationResult.getGroupIds();
+                List<String> tenantIds = validationResult.getTenantIds();
                 String username = validationResult.getAuthenticatedUser();
-                AuthenticationResult authenticationResult = new AuthenticationResult(username, true, null, null);
+                AuthenticationResult authenticationResult = new AuthenticationResult(username, true, groupIds, tenantIds);
                 return authenticationResult;
             }
 
@@ -30,7 +35,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         } catch(JWTVerificationException e){
             // @TODO Add better Exception handling for JWT Validator class loading
             logger.error("Could not load Jwt Validator Class: " + e.getLocalizedMessage());
-            throw e;
+            throw new UnauthorizedException(e.getLocalizedMessage());
         } catch (Exception e) {
             logger.error(e.getMessage());
             return AuthenticationResult.unsuccessful();

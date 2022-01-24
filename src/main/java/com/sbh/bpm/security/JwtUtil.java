@@ -12,6 +12,7 @@ import com.sbh.bpm.payload.AuthResponse;
 
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.identity.Group;
+import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,14 +34,17 @@ public class JwtUtil {
         if(isAuthenticated(username, password)) {
             try {
                 Algorithm algorithm = Algorithm.HMAC256(secret);
-                // TODO: create token with groupIds and tenantIds
+                List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
+                List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
+                List<Tenant> tenants = identityService.createTenantQuery().groupMember(username).list();
+                List<String> tenantIds = tenants.stream().map(Tenant::getId).collect(Collectors.toList());
                 String accessToken =  JWT.create()
                         .withClaim("username", username)
+                        .withClaim("groupIds", groupIds)
+                        .withClaim("tenantIds", tenantIds)
                         .withIssuedAt(new Date(System.currentTimeMillis()))
                         .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                         .sign(algorithm);
-                List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
-                List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
                 User user = identityService.createUserQuery().userId(username).singleResult();
                 String name = user.getFirstName() + " " + user.getLastName();
                 return new AuthResponse(accessToken, "", name, username, groupIds);

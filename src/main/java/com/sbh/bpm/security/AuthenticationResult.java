@@ -35,6 +35,14 @@ public class AuthenticationResult  {
         return authenticatedUser;
     }
 
+    public List<String> getGroupIds() {
+        return groups;
+    }
+
+    public List<String> getTenantIds() {
+        return tenants;
+    }
+
     public static AuthenticationResult successful(String userId) {
         return new AuthenticationResult(userId, true, null, null);
     }

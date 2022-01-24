@@ -40,7 +40,6 @@ public class JwtValidator extends AbstractValidator {
         } catch (JWTVerificationException ex) {
             LOGGER.error("Verification error: " + ex.getLocalizedMessage());
             throw ex;
-            //return new AuthenticationResult(null, false, null, null);
         }
     }
 }

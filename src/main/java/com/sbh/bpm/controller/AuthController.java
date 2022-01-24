@@ -1,15 +1,17 @@
 package com.sbh.bpm.controller;
 
-import javax.servlet.ServletException;
-import javax.validation.Valid;
-
 import com.sbh.bpm.payload.AuthRequest;
 import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.security.JwtUtil;
+import javax.servlet.ServletException;
+import javax.validation.Valid;
 
+import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.IdentityService;
+import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
