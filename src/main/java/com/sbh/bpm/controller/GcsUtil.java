@@ -204,7 +204,9 @@ class GcsUtil {
   private BlobId uploadToGCSService(InputStream is, ContentDisposition meta, String activityInstanceId, String fileType) throws IOException {
     String filename = meta.getFileName().replaceAll(" ", "_").toLowerCase();
     String ext = FilenameUtils.getExtension(filename);
-    String blobFilename = fileType + "_" + String.valueOf(Instant.now().toEpochMilli()) + "." + ext;
+    String name = FilenameUtils.getBaseName(filename);
+
+    String blobFilename = name + "_" + String.valueOf(Instant.now().toEpochMilli()) + "." + ext;
     BlobId blobId = UploadToGcs(activityInstanceId, is, blobFilename);
 
     return blobId;
