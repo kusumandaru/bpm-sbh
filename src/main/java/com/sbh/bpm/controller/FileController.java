@@ -50,7 +50,9 @@ import com.sbh.bpm.service.ISequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -858,40 +860,12 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
 
-    ProjectAttachment proofOfPayment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "proof_of_payment");
-    ProjectAttachment buildingPlan = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "building_plan");
-    ProjectAttachment rtRw = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "rt_rw");
-    ProjectAttachment uplUkl = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "upl_ukl");
-    ProjectAttachment earthquakeResistance = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "earthquake_resistance");
-    ProjectAttachment disabilityFriendly = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "disability_friendly");
-    ProjectAttachment safetyAndFireRequirement = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "safety_and_fire_requirement");
-    ProjectAttachment studyCaseReadiness = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, "study_case_readiness");
-
+    List<ProjectAttachment> projectAttachments = projectAttachmentService.findByProcessInstanceID(processInstanceId);
     ExecutorService executor = Executors.newCachedThreadPool();
-    List<Callable<Blob>> listOfCallable = new ArrayList<Callable<Blob>>();
-    if (proofOfPayment != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, proofOfPayment.getLink()));
-    }
-    if (buildingPlan != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, buildingPlan.getLink()));
-    }
-    if (rtRw != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, rtRw.getLink()));
-    }
-    if (uplUkl != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, uplUkl.getLink()));
-    }
-    if (earthquakeResistance != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, earthquakeResistance.getLink()));
-    }
-    if (disabilityFriendly != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, disabilityFriendly.getLink()));
-    }
-    if (safetyAndFireRequirement != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, safetyAndFireRequirement.getLink()));
-    }
-    if (studyCaseReadiness != null) {
-      listOfCallable.add(() -> GetBlob(googleCloudStorage, studyCaseReadiness.getLink()));
+    List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
+
+    for (ProjectAttachment projectAttachment : projectAttachments) {
+      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(googleCloudStorage, projectAttachment.getLink()), projectAttachment.getFileType()));
     }
 
     FileOutputStream fos;
@@ -904,13 +878,18 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
     try {
-      List<Future<Blob>> futures = executor.invokeAll(listOfCallable);
+      List<Future<Pair<Blob, String>>> futures = executor.invokeAll(listOfCallable);
 
       futures.stream().forEach(f -> {
           try {
-            Blob blob = f.get();
+            Pair<Blob, String> result = f.get();
+            Blob blob = result.getLeft();
+            String fileType = result.getRight();
+
             if (blob != null) {
-              ZipEntry zipEntry = new ZipEntry(blob.getName());
+              String name = FilenameUtils.getName(blob.getName());
+
+              ZipEntry zipEntry = new ZipEntry(fileType + '/' + name);
               zipOut.putNextEntry(zipEntry);
               byte[] byteArray = blob.getContent();
               zipOut.write(byteArray);
