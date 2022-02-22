@@ -124,7 +124,7 @@ public class MasterProjectController extends GcsUtil{
   @Consumes(MediaType.APPLICATION_JSON)
   public Response saveVendors(@HeaderParam("Authorization") String authorization,
                                 MasterVendor vendor) {
-    vendor.setCreatedAt(new Date());                  
+    vendor.setCreatedAt(new Date());               
     vendor = masterVendorService.save(vendor);
 
     String json = new Gson().toJson(vendor);

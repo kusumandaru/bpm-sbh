@@ -35,7 +35,6 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -97,7 +96,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -163,7 +162,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -219,7 +218,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -272,7 +271,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -326,7 +325,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -381,7 +380,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -434,7 +433,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -482,7 +481,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -530,7 +529,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -578,7 +577,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -621,7 +620,7 @@ public class NewBuildingController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);

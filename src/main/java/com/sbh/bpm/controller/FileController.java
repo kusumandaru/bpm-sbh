@@ -60,7 +60,6 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.BodyPart;
@@ -110,8 +109,12 @@ public class FileController extends GcsUtil{
       variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     GoogleCloudStorage googleCloudStorage;
@@ -225,8 +228,12 @@ public class FileController extends GcsUtil{
       variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     Pair<String, String> result;
@@ -260,7 +267,7 @@ public class FileController extends GcsUtil{
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
       activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -320,7 +327,6 @@ public class FileController extends GcsUtil{
         Map<String, Object> maps = masterAdminService.getVariableMap();
         result = GetUrlGcs(maps, "admin", "manager_signature");
         variableMap.put("manager_signature", result.getValue());
-        logger.info(result.getValue());
       } catch (IOException e) {
         logger.error(e.getMessage());
       }
@@ -364,7 +370,7 @@ public class FileController extends GcsUtil{
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
       activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -430,7 +436,6 @@ public class FileController extends GcsUtil{
         Map<String, Object> maps = masterAdminService.getVariableMap();
         result = GetUrlGcs(maps, "admin", "manager_signature");
         variableMap.put("manager_signature", result.getValue());
-        logger.info(result.getValue());
       } catch (IOException e) {
         logger.error(e.getMessage());
       }
@@ -471,7 +476,7 @@ public class FileController extends GcsUtil{
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
       activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -543,7 +548,6 @@ public class FileController extends GcsUtil{
         //TODO change to proper signature
         variableMap.put("director_signature", result.getValue());
         variableMap.put("reviewer_signature", result.getValue());
-        logger.info(result.getValue());
       } catch (IOException e) {
         logger.error(e.getMessage());
       }
@@ -584,7 +588,7 @@ public class FileController extends GcsUtil{
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
       activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -665,7 +669,6 @@ public class FileController extends GcsUtil{
 
         //TODO change to proper signature
         variableMap.put("director_signature", result.getValue());
-        logger.info(result.getValue());
       } catch (IOException e) {
         logger.error(e.getMessage());
       }
@@ -709,7 +712,7 @@ public class FileController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -758,8 +761,12 @@ public class FileController extends GcsUtil{
       variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     ProjectAttachment attachment = projectAttachmentService.findByProcessInstanceIDAndId(processInstanceId, attachmentId);
@@ -793,16 +800,46 @@ public class FileController extends GcsUtil{
 
     Task task;
     String processInstanceId;
-    Map<String, Object> variableMap;
     try {
-      variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     List<ProjectAttachment> attachments = projectAttachmentService.findByProcessInstanceIDAndFileType(processInstanceId, fileType);
+
+    String json = new Gson().toJson(attachments);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/project/attachments/{task_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectAttachmentListByTaskId(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Task task;
+    String processInstanceId;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      processInstanceId = task.getProcessInstanceId();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    List<ProjectAttachment> attachments = projectAttachmentService.findByProcessInstanceID(processInstanceId);
 
     String json = new Gson().toJson(attachments);
     return Response.status(200).entity(json).build();
@@ -825,8 +862,12 @@ public class FileController extends GcsUtil{
       variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
@@ -848,8 +889,12 @@ public class FileController extends GcsUtil{
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     GoogleCloudStorage googleCloudStorage;
@@ -870,8 +915,9 @@ public class FileController extends GcsUtil{
 
     FileOutputStream fos;
     ZipOutputStream zipOut;
+    String zipfilename = taskId + ".zip";
     try {
-      fos = new FileOutputStream(taskId + ".zip");
+      fos = new FileOutputStream(zipfilename);
       zipOut = new ZipOutputStream(fos);
     } catch (FileNotFoundException e) {
       logger.error(e.getMessage());
@@ -917,16 +963,16 @@ public class FileController extends GcsUtil{
     }
   
 
-    File zipFile = new File(taskId + ".zip");
+    File zipFile = new File(zipfilename);
     StreamingOutput stream = new StreamingOutput() {
-        @Override
-        public void write(OutputStream output) throws IOException {
-            try {
-                output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-            }
+      @Override
+      public void write(OutputStream output) throws IOException {
+        try {
+            output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
+        } catch (Exception e) {
+            logger.error(e.getMessage());
         }
+      }
     };
 
     return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)

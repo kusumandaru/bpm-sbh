@@ -30,7 +30,6 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -179,7 +178,7 @@ public class ProjectController extends GcsUtil{
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
       activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);

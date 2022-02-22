@@ -3,6 +3,7 @@ package com.sbh.bpm;
 import javax.ws.rs.ApplicationPath;
 
 import com.sbh.bpm.controller.AssessmentController;
+import com.sbh.bpm.controller.DocumentBuildingController;
 import com.sbh.bpm.controller.FileController;
 import com.sbh.bpm.controller.GoogleCloudStorageController;
 import com.sbh.bpm.controller.MasterController;
@@ -29,5 +30,6 @@ public class JerseyConfig extends CamundaJerseyResourceConfig {
     register(AssessmentController.class);
     register(ProjectController.class);
     register(TaskController.class);
+    register(DocumentBuildingController.class);
   }
 }
