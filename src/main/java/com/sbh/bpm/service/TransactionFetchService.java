@@ -19,7 +19,6 @@ import com.sbh.bpm.model.ProjectAssessment;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.exception.NullValueException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -105,7 +104,7 @@ public class TransactionFetchService implements ITransactionFetchService {
     List<ProjectAssessment> projectAssessments = new ArrayList<ProjectAssessment>();
     try {
       String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
 
@@ -180,7 +179,7 @@ public class TransactionFetchService implements ITransactionFetchService {
     List<ProjectAssessment> projectAssessments = new ArrayList<ProjectAssessment>();
     try {
       String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
-    } catch (NullValueException e) {
+    } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
 

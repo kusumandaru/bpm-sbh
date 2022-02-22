@@ -388,8 +388,9 @@ public class MasterController extends GcsUtil{
 
     FileOutputStream fos;
     ZipOutputStream zipOut;
+    String zipfilename = "registered_project_attachment" + ".zip";
     try {
-      fos = new FileOutputStream("registered_project_attachment" + ".zip");
+      fos = new FileOutputStream(zipfilename);
       zipOut = new ZipOutputStream(fos);
     } catch (FileNotFoundException e) {
       logger.error(e.getMessage());
@@ -430,7 +431,7 @@ public class MasterController extends GcsUtil{
     }
   
 
-    File zipFile = new File("registered_project_attachment" + ".zip");
+    File zipFile = new File(zipfilename);
     StreamingOutput stream = new StreamingOutput() {
         @Override
         public void write(OutputStream output) throws IOException {

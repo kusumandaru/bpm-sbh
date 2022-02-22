@@ -1,6 +1,7 @@
 package com.sbh.bpm.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +35,6 @@ import org.apache.logging.log4j.Logger;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,8 +142,12 @@ public class TaskController {
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       variableMap = taskService.getVariables(taskId);
-    } catch (NullValueException e) {
-      return Response.status(400, "task id not found").build();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
     }
 
     variableMap.put("task_id", task.getId());
