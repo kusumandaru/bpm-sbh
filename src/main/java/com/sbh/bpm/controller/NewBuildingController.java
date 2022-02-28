@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,6 +29,7 @@ import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
+import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -301,6 +303,70 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(task.getId(), "read", false);
     taskService.setVariable(task.getId(), "second_payment_paid", false);
     taskService.setVariable(task.getId(), "approved", null);
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @POST
+  @Path(value = "/second_payment_approval")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response SecondPaymentApproval(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("scoring_form") InputStream scoringForm, 
+    @FormDataParam("scoring_form") FormDataContentDisposition scoringFormFdcd,
+    @FormDataParam("approved") Boolean approved,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "admin";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    //limit the number of actual threads
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<ProjectAttachment>> listOfCallable = Arrays.asList(
+      () -> SaveWithVersion(processInstanceId, activityInstanceId, scoringForm, scoringFormFdcd, "scoring_form", username)
+    );
+    try {
+      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    boolean designRecognition = (Boolean) taskService.getVariable(taskId, "design_recognition");
+    if (designRecognition && approved) {
+      TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+    } else {
+      TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
+    }
+
+    taskService.setVariable(taskId, "second_payment_paid", approved);
+    taskService.setVariable(taskId, "approved", approved);
+    taskService.setVariable(taskId, "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(taskId, username);
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
