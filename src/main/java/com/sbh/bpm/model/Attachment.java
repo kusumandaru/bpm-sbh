@@ -37,6 +37,12 @@ public class Attachment {
   @Setter
   private String filename;
 
+  @SerializedName("criteria_code")
+  @Column(name="criteria_code")
+  @Getter
+  @Setter
+  private String criteriaCode;
+
   @SerializedName("link")
   @Column(name="link")
   @Getter
