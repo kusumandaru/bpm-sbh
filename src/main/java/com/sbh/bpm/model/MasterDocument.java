@@ -35,6 +35,12 @@ public class  MasterDocument {
   @Setter
   private String name;
 
+  @SerializedName("criteria_code")
+  @Column(name="criteria_code")
+  @Getter
+  @Setter
+  private String criteriaCode;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

@@ -36,10 +36,12 @@ import javax.ws.rs.core.StreamingOutput;
 
 import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
+import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.service.GoogleCloudStorage;
+import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IMasterAdminService;
@@ -47,8 +49,10 @@ import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
+import com.sbh.bpm.service.ITransactionFetchService;
 import com.sbh.bpm.service.SequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
+import com.sbh.bpm.service.TransactionFetchService.TransactionFetchResponse;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -93,6 +97,12 @@ public class FileController extends GcsUtil{
  
   @Autowired
   private IProjectAttachmentService projectAttachmentService;
+
+  @Autowired
+  private ITransactionFetchService transactionFetchService;
+
+  @Autowired
+  private IAttachmentService attachmentService;
 
   @Deprecated
   @GET
@@ -877,9 +887,9 @@ public class FileController extends GcsUtil{
   }
 
   @GET
-  @Path(value = "/project/attachments/{taskId}/archived_files")
+  @Path(value = "/project/attachments/{task_id}/archived_files")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response ProjectAttachmentArchivedFile(@PathParam("taskId") String taskId, 
+  public Response ProjectAttachmentArchivedFile(@PathParam("task_id") String taskId, 
   @HeaderParam("Authorization") String authorization) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -936,6 +946,114 @@ public class FileController extends GcsUtil{
               String name = FilenameUtils.getName(blob.getName());
 
               ZipEntry zipEntry = new ZipEntry(fileType + '/' + name);
+              zipOut.putNextEntry(zipEntry);
+              byte[] byteArray = blob.getContent();
+              zipOut.write(byteArray);
+            }
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+      });
+
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    try {
+      zipOut.close();
+      fos.close();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+  
+
+    File zipFile = new File(zipfilename);
+    StreamingOutput stream = new StreamingOutput() {
+      @Override
+      public void write(OutputStream output) throws IOException {
+        try {
+            output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+      }
+    };
+
+    return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+        .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
+        .build();
+  }
+
+  @GET
+  @Path(value = "project/attachments/{task_id}/archived_scoring/{master_template_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DesignRecognitionAttachmentArchived(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("master_template_id") Integer masterTemplateId
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+
+    TransactionFetchResponse response = transactionFetchService.GetDRTransactionForProcessInstance(processInstanceId);
+
+    List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplateId);
+
+    GoogleCloudStorage googleCloudStorage;
+    try {
+      googleCloudStorage = new GoogleCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
+
+    for (Attachment attachment : attachments) {
+      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(googleCloudStorage, attachment.getLink()), attachment.getCriteriaCode()));
+    }
+
+    FileOutputStream fos;
+    ZipOutputStream zipOut;
+    String zipfilename = taskId + ".zip";
+    try {
+      fos = new FileOutputStream(zipfilename);
+      zipOut = new ZipOutputStream(fos);
+    } catch (FileNotFoundException e) {
+      logger.error(e.getMessage());
+      return Response.status(400, e.getMessage()).build();
+    }
+    try {
+      List<Future<Pair<Blob, String>>> futures = executor.invokeAll(listOfCallable);
+
+      futures.stream().forEach(f -> {
+          try {
+            Pair<Blob, String> result = f.get();
+            Blob blob = result.getLeft();
+            String criteriaCode = result.getRight();
+
+            if (blob != null) {
+              String name = FilenameUtils.getName(blob.getName());
+
+              ZipEntry zipEntry = new ZipEntry(criteriaCode + '/' + name);
               zipOut.putNextEntry(zipEntry);
               byte[] byteArray = blob.getContent();
               zipOut.write(byteArray);

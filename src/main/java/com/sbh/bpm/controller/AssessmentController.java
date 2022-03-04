@@ -1132,7 +1132,9 @@ public class AssessmentController extends GcsUtil {
     RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
     
+    //change later
     String username = "indofood1";
+    String role = "client";
 
     Task task;
     try {
@@ -1147,6 +1149,7 @@ public class AssessmentController extends GcsUtil {
     String processInstanceId = task.getProcessInstanceId();
     String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
 
+    DocumentFile documentFile = documentFileService.findById(documentId);
     List<Attachment> attachments = new ArrayList<Attachment>();
 
     try{
@@ -1169,12 +1172,12 @@ public class AssessmentController extends GcsUtil {
         
         Attachment attachment = new Attachment();
         attachment.setCreatedAt(new Date());
-        //change later
-        attachment.setRole("client");
+        attachment.setRole(role);
         attachment.setUploaderID(username);
         attachment.setFilename(filename);
         attachment.setLink(blobId.getName());
         attachment.setDocumentFileID(documentId);
+        attachment.setCriteriaCode(documentFile.getDocument().getCriteriaCode());
 
         attachments.add(attachment);
         filenames.add(attachment.getFilename());

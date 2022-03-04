@@ -181,16 +181,15 @@ class GcsUtil {
     if (meta.getFileName() == null) {
       return null;
     }
-
+    //change later
+    String role = "client";
     ProjectAttachment attachment = new ProjectAttachment();
-
 
     BlobId blobID = uploadToGCSService(is, meta, activityInstanceId, fileType);
 
     attachment.setFileType(fileType);
     attachment.setCreatedAt(new Date());
-    //change later
-    attachment.setRole("client");
+    attachment.setRole(role);
     attachment.setUploaderID(username);
 
     attachment.setFilename(meta.getFileName());
