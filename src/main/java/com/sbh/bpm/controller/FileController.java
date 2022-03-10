@@ -52,7 +52,6 @@ import com.sbh.bpm.service.ISequenceNumberService;
 import com.sbh.bpm.service.ITransactionFetchService;
 import com.sbh.bpm.service.SequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
-import com.sbh.bpm.service.TransactionFetchService.TransactionFetchResponse;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -1011,8 +1010,6 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
-
-    TransactionFetchResponse response = transactionFetchService.GetDRTransactionForProcessInstance(processInstanceId);
 
     List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplateId);
 
