@@ -163,7 +163,7 @@ Pabrik = Karyawan',false,NOW(),NOW(),'system'),
 4. Drainase ………….. 
 5. Lebar ………………. (1,2 - 1,6 M)
 6. Kanstin / Low Curb',false,NOW(),NOW(),'system'),
-(108, 5, 'ASD 4 - 1','Adanya tempat parkir sepeda yang aman sebanyak 1 unit parkir per 20 pengguna gedung, hingga maksimal 100 unit parkir sepeda.','score',1,'Jumlah okupan tetap : …………..
+(108, 50, 'ASD 4 - 1','Adanya tempat parkir sepeda yang aman sebanyak 1 unit parkir per 20 pengguna gedung, hingga maksimal 100 unit parkir sepeda.','score',1,'Jumlah okupan tetap : …………..
 Jumlah Rack Min : ……………..
 Office  = Karyawan
 mal = Karyawan

@@ -667,9 +667,9 @@ o Jika menyangkut revitalisasi area relatif kumuh maka perlu disampaikan juga bu
 (115, 76, 'IHC 2','Dokumen tender denah yang menunjukkan peletakkan tanda dilarang merokok di dalam proyek',NOW(),NOW(),'system'),
 (116, 76, 'IHC 2','Untuk Gedung dengan Area Merokok',NOW(),NOW(),'system'),
 (117, 76, 'IHC 2','Dokumen tender denah yang menunjukkan jarak area merokok terhadap pintu masuk, outdoor air intake, dan bukaan jendela (jika terdapat area merokok yang terpisah dari gedung)',NOW(),NOW(),'system'),
-(118, 77, 'IHC 4','Dokumen tender denah yang menunjukkan peletakan bukaan transparan',NOW(),NOW(),'system'),
-(119, 78, 'IHC 4','Dokumen tender detail bukaan transparan',NOW(),NOW(),'system'),
-(120, 79, 'IHC 4','Perhitungan persentase luas ruang aktif yang mendapat pemandangan luar secara langsung',NOW(),NOW(),'system'),
+(118, 80, 'IHC 4','Dokumen tender denah yang menunjukkan peletakan bukaan transparan',NOW(),NOW(),'system'),
+(119, 80, 'IHC 4','Dokumen tender detail bukaan transparan',NOW(),NOW(),'system'),
+(120, 80, 'IHC 4','Perhitungan persentase luas ruang aktif yang mendapat pemandangan luar secara langsung',NOW(),NOW(),'system'),
 (121, 82, 'IHC 6','Dokumen yang menunjukkan bahwa input data dalam perhitungan cooling load menggunakan suhu dan kelembaban relatif sesuai tolok ukur',NOW(),NOW(),'system'),
 (122, 84, 'BEM P','Surat pernyataan bahwa pemilik gedung akan melakukan pemisahan sampah berdasarkan organik, anorganik dan B3 dari dalam gedung sampai keluar lahan gedung.',NOW(),NOW(),'system'),
 (123, 84, 'BEM P','Draft SPO / dokumen perencanaan yang menunjukkan rencana pemisahan sampah dari dalam gedung ke luar lahan gedung.',NOW(),NOW(),'system'),
@@ -683,7 +683,6 @@ o Jika menyangkut revitalisasi area relatif kumuh maka perlu disampaikan juga bu
 (131, 90, 'BEM 4-1','Surat penunjukkan perorangan/tim sebagai penanggungjawab proses komisioning serta cakupan kerjaan yang sesuai dengan kebutuhan komisioning menurut GBC Indonesia, dan ditandatangani oleh pemilik gedung.',NOW(),NOW(),'system'),
 (132, 90, 'BEM 4-1','Dokumen perencanaan pelaksanaan TC berdasarkan panduan yang tentukan GBC Indonesia yang disesuaikan dengan Owners Project Requirements (OPR) , yang berisi definisi, overview, cakupan, tim dan tanggungjawab, prosedur, pelatihan, dokumentasi dan jadwal.',NOW(),NOW(),'system'),
 (133, 91, 'BEM 4-2','Gambar tender mekanikal elektrikal yang menunjukkan letak pemasangan peralatan measuring adjusting instrument.',NOW(),NOW(),'system');
-
 
 INSERT INTO `master_criteria_blockers`
 VALUES
