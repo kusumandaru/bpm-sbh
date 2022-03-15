@@ -51,6 +51,11 @@ public class MasterCriteriaService implements IMasterCriteriaService {
   }
 
   @Override
+  public List<MasterCriteria> findByMasterExerciseIDInAndActiveTrue(List<Integer> exerciseIds) {
+    return (List<MasterCriteria>) repository.findByMasterExerciseIDInAndActiveTrue(exerciseIds);
+  }
+
+  @Override
   public List<MasterCriteria> findByProjectAssessmentIDAndSelectedAndPrequisite(Integer projectAsessmentId, boolean selected) {
     List<CriteriaScoring> scorings = criteriaScoringRepository.findByProjectAssessmentIDAndSelected(projectAsessmentId, selected);
     List<Integer> masterCriteriaIds = scorings.stream().map(CriteriaScoring::getMasterCriteriaID).collect(Collectors.toList());

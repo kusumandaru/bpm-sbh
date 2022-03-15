@@ -41,6 +41,12 @@ public class  MasterDocument {
   @Setter
   private String criteriaCode;
 
+  @SerializedName("active")
+  @Column(name="active")
+  @Getter
+  @Setter
+  private Boolean active;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

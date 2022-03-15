@@ -41,6 +41,12 @@ public class MasterTemplate {
   @Setter
   private String projectVersion;
 
+  @SerializedName("active")
+  @Column(name="active")
+  @Getter
+  @Setter
+  private Boolean active;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

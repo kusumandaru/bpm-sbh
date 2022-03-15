@@ -32,4 +32,9 @@ public class MasterDocumentService implements IMasterDocumentService {
   public List<MasterDocument> findBymasterCriteriaID(Integer criteriaId) {
     return (List<MasterDocument>) repository.findBymasterCriteriaID(criteriaId);
   }
+
+  @Override
+  public List<MasterDocument> findBymasterCriteriaIDAndActiveTrue(Integer criteriaId) {
+    return (List<MasterDocument>) repository.findBymasterCriteriaIDAndActiveTrue(criteriaId);
+  }
 }

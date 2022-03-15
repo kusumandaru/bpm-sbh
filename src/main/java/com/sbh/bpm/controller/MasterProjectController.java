@@ -141,6 +141,7 @@ public class MasterProjectController extends GcsUtil{
     masterVendor.setVendorCode(vendor.getVendorCode());
     masterVendor.setDescription(vendor.getDescription());
     masterVendor.setVendorName(vendor.getVendorName());
+    masterVendor.setActive(vendor.getActive());
 
     masterVendor = masterVendorService.save(masterVendor);
 
@@ -207,6 +208,7 @@ public class MasterProjectController extends GcsUtil{
     masterTemplate.setMasterVendorID(template.getMasterVendorID());
     masterTemplate.setProjectType(template.getProjectType());
     masterTemplate.setProjectVersion(template.getProjectVersion());
+    masterTemplate.setActive(template.getActive());
 
     masterTemplate = masterTemplateService.save(masterTemplate);
 
@@ -266,7 +268,8 @@ public class MasterProjectController extends GcsUtil{
     MasterEvaluation masterEvaluation = masterEvaluationService.findById(evaluationId);
     masterEvaluation.setMasterTemplateID(evaluation.getMasterTemplateID());
     masterEvaluation.setCode(evaluation.getCode());
-    masterEvaluation.setName(evaluation.getName()); 
+    masterEvaluation.setName(evaluation.getName());
+    masterEvaluation.setActive(evaluation.getActive());
 
     masterEvaluation = masterEvaluationService.save(masterEvaluation);
 
@@ -310,7 +313,10 @@ public class MasterProjectController extends GcsUtil{
   @Consumes(MediaType.APPLICATION_JSON)
   public Response saveExercises(@HeaderParam("Authorization") String authorization,
                                 MasterExercise exercise) {
-    exercise.setCreatedAt(new Date());                  
+    exercise.setCreatedAt(new Date());   
+    if (exercise.getExerciseType().equals("prequisite")) {
+      exercise.setMaxScore(null);
+    }
     exercise = masterExerciseService.save(exercise);
 
     String json = new Gson().toJson(exercise);
@@ -328,7 +334,12 @@ public class MasterProjectController extends GcsUtil{
     masterExercise.setExerciseType(exercise.getExerciseType());
     masterExercise.setCode(exercise.getCode());
     masterExercise.setName(exercise.getName());
-    masterExercise.setMaxScore(exercise.getMaxScore());
+    if (masterExercise.getExerciseType().equals("prequisite")) {
+      masterExercise.setMaxScore(null);
+    } else {
+      masterExercise.setMaxScore(exercise.getMaxScore());
+    }
+    masterExercise.setActive(exercise.getActive());
 
     masterExercise = masterExerciseService.save(masterExercise);
 
@@ -372,7 +383,10 @@ public class MasterProjectController extends GcsUtil{
   @Consumes(MediaType.APPLICATION_JSON)
   public Response saveCriterias(@HeaderParam("Authorization") String authorization,
                                 MasterCriteria criteria) {
-    criteria.setCreatedAt(new Date());                  
+    criteria.setCreatedAt(new Date());
+    if (criteria.getExerciseType().equals("prequisite")) {
+      criteria.setScore(null);
+    }               
     criteria = masterCriteriaService.save(criteria);
 
     String json = new Gson().toJson(criteria);
@@ -390,9 +404,15 @@ public class MasterProjectController extends GcsUtil{
     masterCriteria.setExerciseType(criteria.getExerciseType());
     masterCriteria.setCode(criteria.getCode());
     masterCriteria.setDescription(criteria.getDescription());
+    if (masterCriteria.getExerciseType().equals("prequisite")) {
+      masterCriteria.setScore(null);
+    } else {
+      masterCriteria.setScore(criteria.getScore());
+    }
     masterCriteria.setScore(criteria.getScore());
     masterCriteria.setAdditionalNotes(criteria.getAdditionalNotes());
     masterCriteria.setNotAvailable(criteria.getNotAvailable());
+    masterCriteria.setActive(criteria.getActive());
 
     masterCriteria = masterCriteriaService.save(masterCriteria);
 
@@ -462,6 +482,7 @@ public class MasterProjectController extends GcsUtil{
     MasterCriteriaBlocker masterCriteriaBlocker = masterCriteriaBlockerService.findById(criteria_blockerId);
     masterCriteriaBlocker.setMasterCriteriaID(criteria_blocker.getMasterCriteriaID());
     masterCriteriaBlocker.setBlockerID(criteria_blocker.getBlockerID());
+    masterCriteriaBlocker.setActive(criteria_blocker.getActive());
 
     masterCriteriaBlocker = masterCriteriaBlockerService.save(masterCriteriaBlocker);
 
@@ -505,7 +526,9 @@ public class MasterProjectController extends GcsUtil{
   @Consumes(MediaType.APPLICATION_JSON)
   public Response saveDocuments(@HeaderParam("Authorization") String authorization,
                                 MasterDocument document) {
-    document.setCreatedAt(new Date());                  
+    document.setCreatedAt(new Date());
+    MasterCriteria criteria = masterCriteriaService.findById(document.getMasterCriteriaID());
+    document.setCriteriaCode(criteria.getCode());                
     document = masterDocumentService.save(document);
 
     String json = new Gson().toJson(document);
@@ -519,8 +542,11 @@ public class MasterProjectController extends GcsUtil{
   public Response editDocuments(@HeaderParam("Authorization") String authorization,
                                 MasterDocument document, @PathParam("documentId") Integer documentId) {
     MasterDocument masterDocument = masterDocumentService.findById(documentId);
+    MasterCriteria criteria = masterCriteriaService.findById(document.getMasterCriteriaID());
+    masterDocument.setCriteriaCode(criteria.getCode());    
     masterDocument.setMasterCriteriaID(document.getMasterCriteriaID());
     masterDocument.setName(document.getName());
+    masterDocument.setActive(document.getActive());
 
     masterDocument = masterDocumentService.save(masterDocument);
 
@@ -540,7 +566,7 @@ public class MasterProjectController extends GcsUtil{
       MasterCriteriaBlocker masterCriteriaBlocker = new MasterCriteriaBlocker();
       masterCriteriaBlocker.setMasterCriteriaID(criteriaId);
       masterCriteriaBlocker.setBlockerID(Integer.parseInt(blockerId));
-      masterCriteriaBlocker.setCreatedAt(new Date());                  
+      masterCriteriaBlocker.setCreatedAt(new Date());                
       masterCriteriaBlocker = masterCriteriaBlockerService.save(masterCriteriaBlocker);
     }
     
@@ -548,5 +574,4 @@ public class MasterProjectController extends GcsUtil{
     String json = new Gson().toJson(blockers);
     return Response.ok(json).build();
   }
-
 }

@@ -37,6 +37,12 @@ public class MasterCriteriaBlocker {
   @Setter
   private Integer blockerID;
 
+  @SerializedName("active")
+  @Column(name="active")
+  @Getter
+  @Setter
+  private Boolean active;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

@@ -15,6 +15,8 @@ public interface MasterEvaluationRepository extends CrudRepository<MasterEvaluat
   List<MasterEvaluation> findByMasterTemplateID(Integer templateId);
   @Query("select id FROM MasterEvaluation WHERE masterTemplateID = :templateId")
   List<Integer> getAllIdsByTemplateId(@Param("templateId") Integer templateId);
+  @Query("select id FROM MasterEvaluation WHERE active = TRUE AND masterTemplateID = :templateId")
+  List<Integer> getAllIdsByTemplateIdAndActiveTrue(@Param("templateId") Integer templateId);
   List<MasterEvaluation> findByMasterTemplateIDIn(List<Integer> masterTemplateIds);
 }
 
