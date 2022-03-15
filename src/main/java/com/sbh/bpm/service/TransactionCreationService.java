@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.CriteriaScoring;
@@ -129,9 +130,9 @@ public class TransactionCreationService implements ITransactionCreationService {
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 
-      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateId(masterTemplate.getId());
+      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(masterTemplate.getId());
 
-      List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDIn(evaluationIds);
+      List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
 
       List<ExerciseAssessment> assessments = new ArrayList<ExerciseAssessment>();
       for (MasterExercise exercise : masterExerciseList) {
@@ -147,20 +148,20 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessments.add(assessment);
       }
 
-      exerciseAssessmentService.saveAll(assessments);
-      assessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessment.getId());
+      Iterable<ExerciseAssessment>  exerciseAssessmentIterable = exerciseAssessmentService.saveAll(assessments);
+      assessments = StreamSupport.stream(exerciseAssessmentIterable.spliterator(), false).collect(Collectors.toList());
 
       List<Integer> exerciseIds = masterExerciseList.stream().map(MasterExercise::getId).collect(Collectors.toList());
 
-      List<MasterCriteria> masterCriteriaList = masterCriteriaService.findByMasterExerciseIDIn(exerciseIds);
+      List<MasterCriteria> masterCriteriaList = masterCriteriaService.findByMasterExerciseIDInAndActiveTrue(exerciseIds);
 
       List<CriteriaScoring> scorings = new ArrayList<CriteriaScoring>();
       for (MasterCriteria criteria : masterCriteriaList) {
 
-        ExerciseAssessment assmnt = assessments.stream().filter(assessment -> 
-        assessment.getMasterExerciseID() == criteria.getMasterExerciseID())
-                  .findFirst()
-                  .get();
+        ExerciseAssessment assmnt = assessments.stream()
+                                               .filter(assessment -> assessment.getMasterExerciseID() == criteria.getMasterExerciseID())
+                                               .findFirst()
+                                               .get();
         CriteriaScoring scoring = new CriteriaScoring();
         scoring.setExerciseAssessmentID(assmnt.getId());
         scoring.setMasterCriteriaID(criteria.getId());
@@ -179,7 +180,7 @@ public class TransactionCreationService implements ITransactionCreationService {
 
       List<DocumentFile> docFiles = new ArrayList<DocumentFile>();
       for (CriteriaScoring cs :  criteriaScorings) {
-        List<MasterDocument> masterDocuments = masterDocumentService.findBymasterCriteriaID(cs.getMasterCriteriaID());
+        List<MasterDocument> masterDocuments = masterDocumentService.findBymasterCriteriaIDAndActiveTrue(cs.getMasterCriteriaID());
         for (MasterDocument doc : masterDocuments) {
           DocumentFile docFile = new DocumentFile();
           docFile.setMasterDocumentID(doc.getId());
@@ -249,9 +250,9 @@ public class TransactionCreationService implements ITransactionCreationService {
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 
-      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateId(masterTemplate.getId());
+      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(masterTemplate.getId());
 
-      List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDIn(evaluationIds);
+      List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
 
       List<ExerciseAssessment> assessments = new ArrayList<ExerciseAssessment>();
       for (MasterExercise exercise : masterExerciseList) {
@@ -267,20 +268,20 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessments.add(assessment);
       }
 
-      exerciseAssessmentService.saveAll(assessments);
-      assessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessment.getId());
+      Iterable<ExerciseAssessment>  exerciseAssessmentIterable = exerciseAssessmentService.saveAll(assessments);
+      assessments = StreamSupport.stream(exerciseAssessmentIterable.spliterator(), false).collect(Collectors.toList());
 
       List<Integer> exerciseIds = masterExerciseList.stream().map(MasterExercise::getId).collect(Collectors.toList());
 
-      List<MasterCriteria> masterCriteriaList = masterCriteriaService.findByMasterExerciseIDIn(exerciseIds);
+      List<MasterCriteria> masterCriteriaList = masterCriteriaService.findByMasterExerciseIDInAndActiveTrue(exerciseIds);
 
       List<CriteriaScoring> scorings = new ArrayList<CriteriaScoring>();
       for (MasterCriteria criteria : masterCriteriaList) {
 
-        ExerciseAssessment assmnt = assessments.stream().filter(assessment -> 
-        assessment.getMasterExerciseID() == criteria.getMasterExerciseID())
-                  .findFirst()
-                  .get();
+        ExerciseAssessment assmnt = assessments.stream()
+                                               .filter(assessment -> assessment.getMasterExerciseID() == criteria.getMasterExerciseID())
+                                               .findFirst()
+                                               .get();
         CriteriaScoring scoring = new CriteriaScoring();
         scoring.setExerciseAssessmentID(assmnt.getId());
         scoring.setMasterCriteriaID(criteria.getId());
@@ -299,7 +300,7 @@ public class TransactionCreationService implements ITransactionCreationService {
 
       List<DocumentFile> docFiles = new ArrayList<DocumentFile>();
       for (CriteriaScoring cs :  criteriaScorings) {
-        List<MasterDocument> masterDocuments = masterDocumentService.findBymasterCriteriaID(cs.getMasterCriteriaID());
+        List<MasterDocument> masterDocuments = masterDocumentService.findBymasterCriteriaIDAndActiveTrue(cs.getMasterCriteriaID());
         for (MasterDocument doc : masterDocuments) {
           DocumentFile docFile = new DocumentFile();
           docFile.setMasterDocumentID(doc.getId());
@@ -334,7 +335,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     attachmentService.saveAll(attachments);
 
     Map<String, String> resultMap = new HashMap<String, String>();
-    resultMap.put("message", "ASttachment has been tagged");
+    resultMap.put("message", "Attachment has been tagged");
     return new TransactionCreationResponse(true, resultMap);
   }
 
@@ -346,7 +347,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     attachmentService.saveAll(attachments);
 
     Map<String, String> resultMap = new HashMap<String, String>();
-    resultMap.put("message", "ASttachment has been tagged");
+    resultMap.put("message", "Attachment has been tagged");
     return new TransactionCreationResponse(true, resultMap);
   }
   

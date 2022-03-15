@@ -8,6 +8,7 @@ public interface IMasterDocumentService {
 
   List<MasterDocument> findAll();
   List<MasterDocument> findBymasterCriteriaID(Integer criteriaId);
+  List<MasterDocument> findBymasterCriteriaIDAndActiveTrue(Integer criteriaId);
   MasterDocument findById(Integer masterDocumentId);
   MasterDocument save(MasterDocument masterDocument);
 }

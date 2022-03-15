@@ -13,5 +13,7 @@ public interface MasterCriteriaBlockerRepository extends CrudRepository<MasterCr
   List<MasterCriteriaBlocker> findBymasterCriteriaID(Integer criteriaId);
   List<MasterCriteriaBlocker> findBymasterCriteriaIDIn(List<Integer> criteriaIds);
   void deleteBymasterCriteriaID(Integer criteriaId);
+
+  // AndActiveTrue
 }
 

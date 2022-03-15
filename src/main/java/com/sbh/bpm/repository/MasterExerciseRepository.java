@@ -12,5 +12,6 @@ import org.springframework.stereotype.Repository;
 public interface MasterExerciseRepository extends CrudRepository<MasterExercise, Integer> {
   List<MasterExercise> findByMasterEvaluationID(Integer evaluationId);
   List<MasterExercise> findByMasterEvaluationIDIn(List<Integer> evaluationIds);
+  List<MasterExercise> findByMasterEvaluationIDInAndActiveTrue(List<Integer> evaluationIds);
 }
 

@@ -9,6 +9,7 @@ public interface IMasterExerciseService {
   List<MasterExercise> findAll();
   List<MasterExercise> findByMasterEvaluationID(Integer evaluationId);
   List<MasterExercise> findByMasterEvaluationIDIn(List<Integer> evaluationIds);
+  List<MasterExercise> findByMasterEvaluationIDInAndActiveTrue(List<Integer> evaluationIds);
   MasterExercise findById(Integer masterExerciseId);
   MasterExercise save(MasterExercise masterExercise);
 }

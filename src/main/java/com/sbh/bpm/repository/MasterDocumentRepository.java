@@ -11,5 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MasterDocumentRepository extends CrudRepository<MasterDocument, Integer> {
   List<MasterDocument> findBymasterCriteriaID(Integer criteriaId);
+  List<MasterDocument> findBymasterCriteriaIDAndActiveTrue(Integer criteriaId);
 }
 
