@@ -21,11 +21,11 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoogleCloudStorage {
-  private static final Logger logger = LogManager.getLogger(GoogleCloudStorage.class);
+  private static final Logger logger = LoggerFactory.getLogger(GoogleCloudStorage.class);
 
   private Storage storage;
   private Bucket bucket;

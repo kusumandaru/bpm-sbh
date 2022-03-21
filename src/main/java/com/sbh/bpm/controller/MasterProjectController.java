@@ -36,13 +36,13 @@ import com.sbh.bpm.service.IMasterLevelService;
 import com.sbh.bpm.service.IMasterTemplateService;
 import com.sbh.bpm.service.IMasterVendorService;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/master-project")
 public class MasterProjectController extends GcsUtil{
-  private static final Logger logger = LogManager.getLogger(MasterProjectController.class);
+  private static final Logger logger = LoggerFactory.getLogger(MasterProjectController.class);
 
   @Autowired
   private IMasterTemplateService masterTemplateService;
