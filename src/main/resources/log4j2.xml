@@ -6,17 +6,30 @@
         </Property>
     </Properties>
     <Appenders>
+        <Rollbar name="Rollbar">
+            <accessToken>057fe490e8244b2c81331b286c411824</accessToken>>
+            <environment>staging</environment>
+        </Rollbar>
         <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
             <PatternLayout pattern="${LOG_PATTERN}"/>
         </Console>
     </Appenders>
     <Loggers>
         <Logger name="com.example.log4j2demo" level="debug" additivity="false">
+            <AppenderRef ref="Rollbar" />
             <AppenderRef ref="ConsoleAppender" />
         </Logger>
 
         <Root level="info">
+            <AppenderRef ref="Rollbar" />
             <AppenderRef ref="ConsoleAppender" />
+        </Root>
+        <Root level="debug">
+            <AppenderRef ref="Rollbar" />
+        </Root>
+        <Root level="trace">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="Rollbar"/>
         </Root>
     </Loggers>
 </Configuration>

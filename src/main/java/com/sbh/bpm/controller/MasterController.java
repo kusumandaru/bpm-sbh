@@ -47,15 +47,15 @@ import com.sbh.bpm.service.IProvinceService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.CaseUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/master")
 public class MasterController extends GcsUtil{
-  private static final Logger logger = LogManager.getLogger(MasterController.class);
+  private static final Logger logger = LoggerFactory.getLogger(MasterController.class);
 
   @Autowired
   private IProvinceService provinceService;

@@ -16,14 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import freemarker.template.Configuration;
 
 @Service
 public class MailerService implements IMailerService {
-  private static final Logger logger = LogManager.getLogger(MailerService.class);
+  private static final Logger logger = LoggerFactory.getLogger(MailerService.class);
 
   @Autowired     
   Configuration fmConfiguration;

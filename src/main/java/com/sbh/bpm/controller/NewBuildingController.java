@@ -31,8 +31,6 @@ import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
@@ -43,11 +41,13 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
 public class NewBuildingController extends GcsUtil{
-  private static final Logger logger = LogManager.getLogger(NewBuildingController.class);
+  private static final Logger logger = LoggerFactory.getLogger(NewBuildingController.class);
   
   @Autowired
   private IProvinceService provinceService;

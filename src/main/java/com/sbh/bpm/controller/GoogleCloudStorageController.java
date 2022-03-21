@@ -15,14 +15,14 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.sbh.bpm.service.GoogleCloudStorage;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path(value = "/gcs")
 public class GoogleCloudStorageController {
-  private static final Logger logger = LogManager.getLogger(GoogleCloudStorageController.class);
+  private static final Logger logger = LoggerFactory.getLogger(GoogleCloudStorageController.class);
 
   @POST
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)

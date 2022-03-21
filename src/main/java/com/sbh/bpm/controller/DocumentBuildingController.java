@@ -19,13 +19,13 @@ import com.google.gson.Gson;
 import com.sbh.bpm.model.ProjectDocumentBuilding;
 import com.sbh.bpm.service.IProjectDocumentBuildingService;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
 public class DocumentBuildingController extends GcsUtil {
-  private static final Logger logger = LogManager.getLogger(DocumentBuildingController.class);
+  private static final Logger logger = LoggerFactory.getLogger(DocumentBuildingController.class);
 
   @Autowired
   private IProjectDocumentBuildingService projectDocumentBuildingService;
