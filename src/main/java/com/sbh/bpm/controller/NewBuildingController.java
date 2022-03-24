@@ -673,6 +673,112 @@ public class NewBuildingController extends GcsUtil{
     return Response.ok().build();
   }
 
+  @POST
+  @Path(value = "/on_site_verification_submission")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response OnSiteVerificationSubmission(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId,
+    @FormDataParam("approval_status") Boolean approvalStatus,
+    @FormDataParam("on_site_note") String onSiteNote
+
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "admin";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    String fileType = "on_site_verification_submission";
+ 
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setVariable(task.getId(), "on_site_note", onSiteNote);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.setVariable(task.getId(), "approved", approvalStatus);
+    taskService.setVariable(task.getId(), "on_site_approved", approvalStatus);
+
+    // taskService.claim(taskId, "admin");
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
+  @POST
+  @Path(value = "/on_site_revision_submission")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response OnSiteRevisionSubmission(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("files") FormDataBodyPart files,
+    @FormDataParam("task_id") String taskId,
+    @FormDataParam("on_site_client_revision_note") String onSiteClientRevisionNote
+
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    String fileType = "on_site_revision_submission";
+ 
+    try{
+      for(BodyPart part : files.getParent().getBodyParts()){
+        InputStream is = part.getEntityAs(InputStream.class);
+        ContentDisposition meta = part.getContentDisposition();
+
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+      }
+    } catch (Exception e) {
+      return Response.status(400, e.getMessage()).build();
+    }
+
+    taskService.setVariable(taskId, "on_site_client_revision_note", onSiteClientRevisionNote);
+    taskService.setVariable(task.getId(), "approved", null);
+    taskService.setVariable(task.getId(), "read", false);
+    taskService.complete(taskId);
+
+    return Response.ok().build();
+  }
+
   @GET
   @Path(value = "/project_attachments/{task_id}/file_type/{file_type}")
   @Produces(MediaType.APPLICATION_JSON)

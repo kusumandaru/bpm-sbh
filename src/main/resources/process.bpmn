@@ -29,10 +29,10 @@
       <bpmn:sequenceFlow id="register_rejected" name="Rejected" sourceRef="approval_check_building" targetRef="fill-registration-project">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:endEvent id="Event_0jwd3q7">
+      <bpmn:endEvent id="register-project-finish">
         <bpmn:incoming>register_approved</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:sequenceFlow id="register_approved" name="Approved" sourceRef="approval_check_building" targetRef="Event_0jwd3q7">
+      <bpmn:sequenceFlow id="register_approved" name="Approved" sourceRef="approval_check_building" targetRef="register-project-finish">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_0o3wm7i" sourceRef="fill-registration-project" targetRef="check-registration-project" />
@@ -77,10 +77,10 @@
       <bpmn:sequenceFlow id="document_rejected" name="Rejected" sourceRef="approval-document-building" targetRef="fill-document-building">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:endEvent id="Event_1si3czv">
+      <bpmn:endEvent id="document-building-finish">
         <bpmn:incoming>document_approved</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:sequenceFlow id="document_approved" name="Approved" sourceRef="approval-document-building" targetRef="Event_1si3czv">
+      <bpmn:sequenceFlow id="document_approved" name="Approved" sourceRef="approval-document-building" targetRef="document-building-finish">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
     </bpmn:subProcess>
@@ -105,47 +105,47 @@
         <bpmn:incoming>Flow_0jpohky</bpmn:incoming>
         <bpmn:outgoing>Flow_0ai6fjn</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:endEvent id="Event_00gyz1l">
+      <bpmn:endEvent id="agreement-finished">
         <bpmn:incoming>Flow_1gsiv5m</bpmn:incoming>
       </bpmn:endEvent>
       <bpmn:sequenceFlow id="Flow_0v37fp5" sourceRef="workshop" targetRef="second-payment" />
-      <bpmn:sequenceFlow id="Flow_0dddyq1" sourceRef="check-second-payment" targetRef="Gateway_0wmle59" />
+      <bpmn:sequenceFlow id="Flow_0dddyq1" sourceRef="check-second-payment" targetRef="approval-second-payment" />
       <bpmn:userTask id="first-payment" name="First Payment" camunda:assignee="${assignee}" camunda:candidateUsers="${assignee}">
         <bpmn:incoming>Flow_1n522ha</bpmn:incoming>
         <bpmn:incoming>first_payment_rejected</bpmn:incoming>
         <bpmn:outgoing>Flow_19bxu18</bpmn:outgoing>
       </bpmn:userTask>
       <bpmn:sequenceFlow id="Flow_19bxu18" sourceRef="first-payment" targetRef="check-first-payment" />
-      <bpmn:exclusiveGateway id="Gateway_03yzdwg" name="Approval Payment">
+      <bpmn:exclusiveGateway id="approval-first-payment" name="Approval Payment">
         <bpmn:incoming>Flow_07eal3m</bpmn:incoming>
         <bpmn:outgoing>first_payment_approved</bpmn:outgoing>
         <bpmn:outgoing>first_payment_rejected</bpmn:outgoing>
       </bpmn:exclusiveGateway>
-      <bpmn:sequenceFlow id="first_payment_approved" name="Approved" sourceRef="Gateway_03yzdwg" targetRef="workshop">
+      <bpmn:sequenceFlow id="first_payment_approved" name="Approved" sourceRef="approval-first-payment" targetRef="workshop">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${first_payment_paid==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="first_payment_rejected" name="Rejected" sourceRef="Gateway_03yzdwg" targetRef="first-payment">
+      <bpmn:sequenceFlow id="first_payment_rejected" name="Rejected" sourceRef="approval-first-payment" targetRef="first-payment">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${first_payment_paid==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:userTask id="check-first-payment" name="Check First Payment" camunda:candidateGroups="camunda-admin">
         <bpmn:incoming>Flow_19bxu18</bpmn:incoming>
         <bpmn:outgoing>Flow_07eal3m</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:sequenceFlow id="Flow_07eal3m" sourceRef="check-first-payment" targetRef="Gateway_03yzdwg" />
+      <bpmn:sequenceFlow id="Flow_07eal3m" sourceRef="check-first-payment" targetRef="approval-first-payment" />
       <bpmn:userTask id="check-second-payment" name="Check Second Payment" camunda:candidateGroups="camunda-admin">
         <bpmn:incoming>Flow_0ai6fjn</bpmn:incoming>
         <bpmn:outgoing>Flow_0dddyq1</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:exclusiveGateway id="Gateway_0wmle59" name="Approval Payment">
+      <bpmn:exclusiveGateway id="approval-second-payment" name="Approval Payment">
         <bpmn:incoming>Flow_0dddyq1</bpmn:incoming>
         <bpmn:outgoing>Flow_1gsiv5m</bpmn:outgoing>
         <bpmn:outgoing>Flow_0jpohky</bpmn:outgoing>
       </bpmn:exclusiveGateway>
       <bpmn:sequenceFlow id="Flow_0ai6fjn" sourceRef="second-payment" targetRef="check-second-payment" />
-      <bpmn:sequenceFlow id="Flow_1gsiv5m" name="Approved" sourceRef="Gateway_0wmle59" targetRef="Event_00gyz1l">
+      <bpmn:sequenceFlow id="Flow_1gsiv5m" name="Approved" sourceRef="approval-second-payment" targetRef="agreement-finished">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${second_payment_paid==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="Flow_0jpohky" name="Rejected" sourceRef="Gateway_0wmle59" targetRef="second-payment">
+      <bpmn:sequenceFlow id="Flow_0jpohky" name="Rejected" sourceRef="approval-second-payment" targetRef="second-payment">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${second_payment_paid==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
     </bpmn:subProcess>
@@ -164,7 +164,7 @@
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${design_recognition==true}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_08y09o4" sourceRef="design-recognition" targetRef="final-assessment" />
-    <bpmn:sequenceFlow id="Flow_1xqzjc6" sourceRef="final-assessment" targetRef="Event_19916hx" />
+    <bpmn:sequenceFlow id="Flow_1xqzjc6" sourceRef="final-assessment" targetRef="end-certification" />
     <bpmn:subProcess id="design-recognition" name="Design Recognition">
       <bpmn:incoming>Flow_1fcm3gp</bpmn:incoming>
       <bpmn:outgoing>Flow_08y09o4</bpmn:outgoing>
@@ -188,7 +188,7 @@
         <bpmn:incoming>Flow_0akfvel</bpmn:incoming>
         <bpmn:outgoing>Flow_1dqc9dt</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:sequenceFlow id="Flow_02k16cw" name="Approved" sourceRef="Gateway_0yryxaq" targetRef="design-recognition-review">
+      <bpmn:sequenceFlow id="Flow_02k16cw" name="Approved" sourceRef="approval-third-payment" targetRef="design-recognition-review">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${third_payment_paid==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:exclusiveGateway id="third_payment_paid" name="Third Payment Paid?">
@@ -202,16 +202,16 @@
       <bpmn:sequenceFlow id="Flow_0o1gt87" name="Yes" sourceRef="third_payment_paid" targetRef="design-recognition-review">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${third_payment_paid==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:exclusiveGateway id="Gateway_0v3tprs" name="Approval DR">
+      <bpmn:exclusiveGateway id="approval-dr" name="Approval DR">
         <bpmn:incoming>Flow_1fmr78h</bpmn:incoming>
         <bpmn:outgoing>Flow_0dtdx9v</bpmn:outgoing>
         <bpmn:outgoing>Flow_094wv6f</bpmn:outgoing>
       </bpmn:exclusiveGateway>
-      <bpmn:endEvent id="Event_143fyqz">
+      <bpmn:endEvent id="dr-finish">
         <bpmn:incoming>Flow_1pmguh8</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:sequenceFlow id="Flow_1pmguh8" sourceRef="design-recognition-letter" targetRef="Event_143fyqz" />
-      <bpmn:sequenceFlow id="Flow_0dtdx9v" name="Yes" sourceRef="Gateway_0v3tprs" targetRef="design-recognition-evaluation-assessment">
+      <bpmn:sequenceFlow id="Flow_1pmguh8" sourceRef="design-recognition-letter" targetRef="dr-finish" />
+      <bpmn:sequenceFlow id="Flow_0dtdx9v" name="Yes" sourceRef="approval-dr" targetRef="design-recognition-evaluation-assessment">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${dr_approved==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:userTask id="design-recognition-letter" name="Design Recognition Letter" camunda:assignee="${assignee}" camunda:candidateUsers="${assignee}">
@@ -224,16 +224,16 @@
         <bpmn:outgoing>Flow_1fz5p8p</bpmn:outgoing>
       </bpmn:userTask>
       <bpmn:sequenceFlow id="Flow_1fz5p8p" sourceRef="design-recognition-trial-revision" targetRef="design-recognition-revision-review" />
-      <bpmn:exclusiveGateway id="Gateway_06bka3r" name="Review Accepted">
+      <bpmn:exclusiveGateway id="approval-dr-revision" name="Review Accepted">
         <bpmn:incoming>Flow_1athduy</bpmn:incoming>
         <bpmn:outgoing>Flow_0779h4i</bpmn:outgoing>
         <bpmn:outgoing>Flow_07mm3pe</bpmn:outgoing>
       </bpmn:exclusiveGateway>
-      <bpmn:sequenceFlow id="Flow_1athduy" sourceRef="design-recognition-revision-review" targetRef="Gateway_06bka3r" />
-      <bpmn:sequenceFlow id="Flow_0779h4i" name="No" sourceRef="Gateway_06bka3r" targetRef="design-recognition-trial-revision">
+      <bpmn:sequenceFlow id="Flow_1athduy" sourceRef="design-recognition-revision-review" targetRef="approval-dr-revision" />
+      <bpmn:sequenceFlow id="Flow_0779h4i" name="No" sourceRef="approval-dr-revision" targetRef="design-recognition-trial-revision">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved_dr_review==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="Flow_07mm3pe" name="Yes" sourceRef="Gateway_06bka3r" targetRef="design-recognition-letter">
+      <bpmn:sequenceFlow id="Flow_07mm3pe" name="Yes" sourceRef="approval-dr-revision" targetRef="design-recognition-letter">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved_dr_review==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_1y47h58" sourceRef="design-recognition-evaluation-assessment" targetRef="design-recognition-trial-revision" />
@@ -241,18 +241,18 @@
         <bpmn:incoming>Flow_1dqc9dt</bpmn:incoming>
         <bpmn:outgoing>Flow_0p4xcc3</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:exclusiveGateway id="Gateway_0yryxaq" name="Approval Payment">
+      <bpmn:exclusiveGateway id="approval-third-payment" name="Approval Payment">
         <bpmn:incoming>Flow_0p4xcc3</bpmn:incoming>
         <bpmn:outgoing>Flow_02k16cw</bpmn:outgoing>
         <bpmn:outgoing>Flow_0akfvel</bpmn:outgoing>
       </bpmn:exclusiveGateway>
       <bpmn:sequenceFlow id="Flow_1dqc9dt" sourceRef="third-payment" targetRef="check-third-payment" />
-      <bpmn:sequenceFlow id="Flow_0p4xcc3" sourceRef="check-third-payment" targetRef="Gateway_0yryxaq" />
-      <bpmn:sequenceFlow id="Flow_0akfvel" name="Rejected" sourceRef="Gateway_0yryxaq" targetRef="third-payment">
+      <bpmn:sequenceFlow id="Flow_0p4xcc3" sourceRef="check-third-payment" targetRef="approval-third-payment" />
+      <bpmn:sequenceFlow id="Flow_0akfvel" name="Rejected" sourceRef="approval-third-payment" targetRef="third-payment">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${third_payment_paid==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="Flow_1fmr78h" sourceRef="design-recognition-review" targetRef="Gateway_0v3tprs" />
-      <bpmn:sequenceFlow id="Flow_094wv6f" name="No" sourceRef="Gateway_0v3tprs" targetRef="design-recognition-submission">
+      <bpmn:sequenceFlow id="Flow_1fmr78h" sourceRef="design-recognition-review" targetRef="approval-dr" />
+      <bpmn:sequenceFlow id="Flow_094wv6f" name="No" sourceRef="approval-dr" targetRef="design-recognition-submission">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${dr_approved==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:userTask id="design-recognition-evaluation-assessment" name="Design Recognition Evaluation Assessment" camunda:candidateGroups="camunda-admin">
@@ -304,25 +304,25 @@
         <bpmn:outgoing>Flow_0ci2znt</bpmn:outgoing>
       </bpmn:userTask>
       <bpmn:sequenceFlow id="Flow_0l461et" sourceRef="third-payment-fa" targetRef="check-third-payment-fa" />
-      <bpmn:exclusiveGateway id="Gateway_1heefv9" name="Approval Payment">
+      <bpmn:exclusiveGateway id="approval-third-payment-fa" name="Approval Payment">
         <bpmn:incoming>Flow_0ci2znt</bpmn:incoming>
         <bpmn:outgoing>Flow_12re811</bpmn:outgoing>
         <bpmn:outgoing>Flow_08t9fvz</bpmn:outgoing>
       </bpmn:exclusiveGateway>
-      <bpmn:sequenceFlow id="Flow_0ci2znt" sourceRef="check-third-payment-fa" targetRef="Gateway_1heefv9" />
-      <bpmn:sequenceFlow id="Flow_12re811" name="Rejected" sourceRef="Gateway_1heefv9" targetRef="third-payment-fa">
+      <bpmn:sequenceFlow id="Flow_0ci2znt" sourceRef="check-third-payment-fa" targetRef="approval-third-payment-fa" />
+      <bpmn:sequenceFlow id="Flow_12re811" name="Rejected" sourceRef="approval-third-payment-fa" targetRef="third-payment-fa">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${third_payment_paid==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="Flow_08t9fvz" name="Approved" sourceRef="Gateway_1heefv9" targetRef="final-assessment-review">
+      <bpmn:sequenceFlow id="Flow_08t9fvz" name="Approved" sourceRef="approval-third-payment-fa" targetRef="final-assessment-review">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${third_payment_paid==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:exclusiveGateway id="Gateway_1ihz4bw" name="Approval FA">
+      <bpmn:exclusiveGateway id="approval-fa" name="Approval FA">
         <bpmn:incoming>Flow_0ldc0hc</bpmn:incoming>
         <bpmn:outgoing>Flow_0kj0ob2</bpmn:outgoing>
         <bpmn:outgoing>Flow_0voxl0r</bpmn:outgoing>
       </bpmn:exclusiveGateway>
       <bpmn:userTask id="final-assessment-evaluation-assessment" name="Final Assessment Evaluation Assessment" camunda:candidateGroups="camunda-admin">
-        <bpmn:incoming>Flow_0kj0ob2</bpmn:incoming>
+        <bpmn:incoming>Flow_0tl6esp</bpmn:incoming>
         <bpmn:outgoing>Flow_1l7a1g7</bpmn:outgoing>
       </bpmn:userTask>
       <bpmn:userTask id="final-assessment-trial-revision" name="FA Revision Submission" camunda:assignee="${assignee}" camunda:candidateUsers="${assignee}">
@@ -334,7 +334,7 @@
         <bpmn:incoming>Flow_0ixbnj9</bpmn:incoming>
         <bpmn:outgoing>Flow_0u60kh6</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:exclusiveGateway id="Gateway_12w83mz" name="Review Accepted">
+      <bpmn:exclusiveGateway id="approval-fa-revision" name="Review Accepted">
         <bpmn:incoming>Flow_0u60kh6</bpmn:incoming>
         <bpmn:outgoing>Flow_0pa9xbk</bpmn:outgoing>
         <bpmn:outgoing>Flow_09y7d4w</bpmn:outgoing>
@@ -343,33 +343,55 @@
         <bpmn:incoming>Flow_09y7d4w</bpmn:incoming>
         <bpmn:outgoing>Flow_1yzitoy</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:endEvent id="Event_07d9qrw">
+      <bpmn:endEvent id="fa-finish">
         <bpmn:incoming>Flow_1yzitoy</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:sequenceFlow id="Flow_0kj0ob2" name="Yes" sourceRef="Gateway_1ihz4bw" targetRef="final-assessment-evaluation-assessment">
+      <bpmn:sequenceFlow id="Flow_0kj0ob2" name="Yes" sourceRef="approval-fa" targetRef="on-site-verification">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${fa_approved==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="Flow_0pa9xbk" name="No" sourceRef="Gateway_12w83mz" targetRef="final-assessment-trial-revision">
+      <bpmn:sequenceFlow id="Flow_0pa9xbk" name="No" sourceRef="approval-fa-revision" targetRef="final-assessment-trial-revision">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved_fa_review==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_0ixbnj9" sourceRef="final-assessment-trial-revision" targetRef="final-assessment-revision-review" />
-      <bpmn:sequenceFlow id="Flow_0u60kh6" sourceRef="final-assessment-revision-review" targetRef="Gateway_12w83mz" />
-      <bpmn:sequenceFlow id="Flow_09y7d4w" name="Yes" sourceRef="Gateway_12w83mz" targetRef="final-assessment-letter">
+      <bpmn:sequenceFlow id="Flow_0u60kh6" sourceRef="final-assessment-revision-review" targetRef="approval-fa-revision" />
+      <bpmn:sequenceFlow id="Flow_09y7d4w" name="Yes" sourceRef="approval-fa-revision" targetRef="final-assessment-letter">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved_fa_review==true}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="Flow_1yzitoy" sourceRef="final-assessment-letter" targetRef="Event_07d9qrw" />
-      <bpmn:sequenceFlow id="Flow_0ldc0hc" sourceRef="final-assessment-review" targetRef="Gateway_1ihz4bw" />
-      <bpmn:sequenceFlow id="Flow_0voxl0r" name="No" sourceRef="Gateway_1ihz4bw" targetRef="final-assessment-submission">
+      <bpmn:sequenceFlow id="Flow_1yzitoy" sourceRef="final-assessment-letter" targetRef="fa-finish" />
+      <bpmn:sequenceFlow id="Flow_0ldc0hc" sourceRef="final-assessment-review" targetRef="approval-fa" />
+      <bpmn:sequenceFlow id="Flow_0voxl0r" name="No" sourceRef="approval-fa" targetRef="final-assessment-submission">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${fa_approved==false}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_1l7a1g7" sourceRef="final-assessment-evaluation-assessment" targetRef="final-assessment-trial-revision" />
+      <bpmn:sequenceFlow id="Flow_1c3ojvc" sourceRef="on-site-verification" targetRef="approval-on-site" />
+      <bpmn:exclusiveGateway id="approval-on-site" name="Approval On Site">
+        <bpmn:incoming>Flow_1c3ojvc</bpmn:incoming>
+        <bpmn:outgoing>Flow_18c3rqw</bpmn:outgoing>
+        <bpmn:outgoing>Flow_0tl6esp</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="Flow_18c3rqw" name="No" sourceRef="approval-on-site" targetRef="on-site-revision-submission">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${on_site_approved==false}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_0k1imjh" sourceRef="on-site-revision-submission" targetRef="on-site-verification" />
+      <bpmn:sequenceFlow id="Flow_0tl6esp" name="Yes" sourceRef="approval-on-site" targetRef="final-assessment-evaluation-assessment">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${on_site_approved==true}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:userTask id="on-site-verification" name="On Site Verification" camunda:candidateGroups="camunda-admin">
+        <bpmn:incoming>Flow_0k1imjh</bpmn:incoming>
+        <bpmn:incoming>Flow_0kj0ob2</bpmn:incoming>
+        <bpmn:outgoing>Flow_1c3ojvc</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:userTask id="on-site-revision-submission" name="On Site Revision" camunda:assignee="${assignee}" camunda:candidateUsers="${assignee}">
+        <bpmn:incoming>Flow_18c3rqw</bpmn:incoming>
+        <bpmn:outgoing>Flow_0k1imjh</bpmn:outgoing>
+      </bpmn:userTask>
     </bpmn:subProcess>
     <bpmn:exclusiveGateway id="Gateway_04ufii7" name="need design recognition">
       <bpmn:incoming>Flow_1kmhenz</bpmn:incoming>
       <bpmn:outgoing>Flow_1fcm3gp</bpmn:outgoing>
       <bpmn:outgoing>Flow_0vrrko5</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:endEvent id="Event_19916hx" name="end certification">
+    <bpmn:endEvent id="end-certification" name="End of Certification">
       <bpmn:incoming>Flow_1xqzjc6</bpmn:incoming>
     </bpmn:endEvent>
   </bpmn:process>
@@ -379,7 +401,7 @@
         <dc:Bounds x="140" y="60" width="1370" height="1790" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1xqzjc6_di" bpmnElement="Flow_1xqzjc6">
-        <di:waypoint x="880" y="1750" />
+        <di:waypoint x="880" y="1770" />
         <di:waypoint x="880" y="1792" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_08y09o4_di" bpmnElement="Flow_08y09o4">
@@ -395,11 +417,11 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0vrrko5_di" bpmnElement="Flow_0vrrko5">
         <di:waypoint x="795" y="890" />
-        <di:waypoint x="230" y="890" />
-        <di:waypoint x="230" y="1500" />
-        <di:waypoint x="278" y="1500" />
+        <di:waypoint x="250" y="890" />
+        <di:waypoint x="250" y="1530" />
+        <di:waypoint x="278" y="1529" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="778" y="924" width="15" height="14" />
+          <dc:Bounds x="767" y="918" width="15" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1kmhenz_di" bpmnElement="Flow_1kmhenz">
@@ -464,7 +486,7 @@
           <dc:Bounds x="721" y="118" width="78" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0jwd3q7_di" bpmnElement="Event_0jwd3q7">
+      <bpmndi:BPMNShape id="Event_0jwd3q7_di" bpmnElement="register-project-finish">
         <dc:Bounds x="872" y="162" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0i9kd2o_di" bpmnElement="fill-registration-project">
@@ -516,7 +538,7 @@
           <dc:Bounds x="725" y="350" width="51" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1si3czv_di" bpmnElement="Event_1si3czv">
+      <bpmndi:BPMNShape id="Event_1si3czv_di" bpmnElement="document-building-finish">
         <dc:Bounds x="872" y="402" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0jc7r8d_di" bpmnElement="agreement-second-payment" isExpanded="true">
@@ -593,13 +615,13 @@
       <bpmndi:BPMNShape id="Activity_1lhui8d_di" bpmnElement="second-payment">
         <dc:Bounds x="1110" y="610" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_00gyz1l_di" bpmnElement="Event_00gyz1l">
+      <bpmndi:BPMNShape id="Event_00gyz1l_di" bpmnElement="agreement-finished">
         <dc:Bounds x="1002" y="732" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_08p9dqu_di" bpmnElement="first-payment">
         <dc:Bounds x="540" y="610" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_03yzdwg_di" bpmnElement="Gateway_03yzdwg" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_03yzdwg_di" bpmnElement="approval-first-payment" isMarkerVisible="true">
         <dc:Bounds x="825" y="625" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="805" y="603" width="90" height="14" />
@@ -611,7 +633,7 @@
       <bpmndi:BPMNShape id="Activity_1upxq2y_di" bpmnElement="check-second-payment">
         <dc:Bounds x="1250" y="710" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0wmle59_di" bpmnElement="Gateway_0wmle59" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_0wmle59_di" bpmnElement="approval-second-payment" isMarkerVisible="true">
         <dc:Bounds x="1135" y="725" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1115" y="783" width="90" height="14" />
@@ -748,13 +770,13 @@
           <dc:Bounds x="544" y="988" width="72" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0v3tprs_di" bpmnElement="Gateway_0v3tprs" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_0v3tprs_di" bpmnElement="approval-dr" isMarkerVisible="true">
         <dc:Bounds x="1195" y="1025" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1188" y="1013" width="63" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_143fyqz_di" bpmnElement="Event_143fyqz">
+      <bpmndi:BPMNShape id="Event_143fyqz_di" bpmnElement="dr-finish">
         <dc:Bounds x="772" y="1222" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0t6yu3o_di" bpmnElement="design-recognition-letter">
@@ -763,7 +785,7 @@
       <bpmndi:BPMNShape id="Activity_1abmrvr_di" bpmnElement="design-recognition-trial-revision">
         <dc:Bounds x="1310" y="1200" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_06bka3r_di" bpmnElement="Gateway_06bka3r" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_06bka3r_di" bpmnElement="approval-dr-revision" isMarkerVisible="true">
         <dc:Bounds x="985" y="1215" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="968" y="1185" width="85" height="14" />
@@ -772,7 +794,7 @@
       <bpmndi:BPMNShape id="Activity_1omy6il_di" bpmnElement="check-third-payment">
         <dc:Bounds x="810" y="1010" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0yryxaq_di" bpmnElement="Gateway_0yryxaq" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_0yryxaq_di" bpmnElement="approval-third-payment" isMarkerVisible="true">
         <dc:Bounds x="945" y="1025" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="925" y="1001" width="90" height="14" />
@@ -785,8 +807,37 @@
         <dc:Bounds x="1120" y="1200" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0tayah7_di" bpmnElement="final-assessment" isExpanded="true">
-        <dc:Bounds x="278" y="1340" width="1203" height="410" />
+        <dc:Bounds x="278" y="1340" width="1202" height="430" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0tl6esp_di" bpmnElement="Flow_0tl6esp">
+        <di:waypoint x="1440" y="1700" />
+        <di:waypoint x="1440" y="1740" />
+        <di:waypoint x="1121" y="1740" />
+        <di:waypoint x="1121" y="1720" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1191" y="1723" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0k1imjh_di" bpmnElement="Flow_0k1imjh">
+        <di:waypoint x="1340" y="1635" />
+        <di:waypoint x="1340" y="1500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18c3rqw_di" bpmnElement="Flow_18c3rqw">
+        <di:waypoint x="1415" y="1675" />
+        <di:waypoint x="1370" y="1675" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1392" y="1657" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c3ojvc_di" bpmnElement="Flow_1c3ojvc">
+        <di:waypoint x="1390" y="1460" />
+        <di:waypoint x="1440" y="1460" />
+        <di:waypoint x="1440" y="1650" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1l7a1g7_di" bpmnElement="Flow_1l7a1g7">
+        <di:waypoint x="1071" y="1675" />
+        <di:waypoint x="1040" y="1675" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0voxl0r_di" bpmnElement="Flow_0voxl0r">
         <di:waypoint x="1221" y="1485" />
         <di:waypoint x="1221" y="1570" />
@@ -801,43 +852,38 @@
         <di:waypoint x="1196" y="1460" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1yzitoy_di" bpmnElement="Flow_1yzitoy">
-        <di:waypoint x="841" y="1675" />
-        <di:waypoint x="809" y="1675" />
+        <di:waypoint x="531" y="1675" />
+        <di:waypoint x="476" y="1675" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_09y7d4w_di" bpmnElement="Flow_09y7d4w">
-        <di:waypoint x="986" y="1675" />
-        <di:waypoint x="941" y="1675" />
+        <di:waypoint x="676" y="1675" />
+        <di:waypoint x="631" y="1675" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="955" y="1657" width="18" height="14" />
+          <dc:Bounds x="645" y="1657" width="18" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0u60kh6_di" bpmnElement="Flow_0u60kh6">
-        <di:waypoint x="1121" y="1675" />
-        <di:waypoint x="1036" y="1675" />
+        <di:waypoint x="790" y="1675" />
+        <di:waypoint x="726" y="1675" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0ixbnj9_di" bpmnElement="Flow_0ixbnj9">
-        <di:waypoint x="1311" y="1675" />
-        <di:waypoint x="1221" y="1675" />
+        <di:waypoint x="940" y="1675" />
+        <di:waypoint x="890" y="1675" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0pa9xbk_di" bpmnElement="Flow_0pa9xbk">
-        <di:waypoint x="1011" y="1700" />
-        <di:waypoint x="1011" y="1725" />
-        <di:waypoint x="1441" y="1725" />
-        <di:waypoint x="1441" y="1675" />
-        <di:waypoint x="1411" y="1675" />
+        <di:waypoint x="701" y="1700" />
+        <di:waypoint x="701" y="1740" />
+        <di:waypoint x="970" y="1740" />
+        <di:waypoint x="970" y="1715" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1023" y="1707" width="15" height="14" />
+          <dc:Bounds x="706" y="1722" width="15" height="14" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1l7a1g7_di" bpmnElement="Flow_1l7a1g7">
-        <di:waypoint x="1361" y="1500" />
-        <di:waypoint x="1361" y="1635" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0kj0ob2_di" bpmnElement="Flow_0kj0ob2">
         <di:waypoint x="1246" y="1460" />
-        <di:waypoint x="1311" y="1460" />
+        <di:waypoint x="1290" y="1460" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1262" y="1442" width="18" height="14" />
+          <dc:Bounds x="1254" y="1442" width="18" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_08t9fvz_di" bpmnElement="Flow_08t9fvz">
@@ -909,38 +955,50 @@
       <bpmndi:BPMNShape id="Activity_1q7ky0a_di" bpmnElement="check-third-payment-fa">
         <dc:Bounds x="811" y="1420" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1heefv9_di" bpmnElement="Gateway_1heefv9" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_1heefv9_di" bpmnElement="approval-third-payment-fa" isMarkerVisible="true">
         <dc:Bounds x="946" y="1435" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="926" y="1411" width="90" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1ihz4bw_di" bpmnElement="Gateway_1ihz4bw" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_1ihz4bw_di" bpmnElement="approval-fa" isMarkerVisible="true">
         <dc:Bounds x="1196" y="1435" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1191" y="1423" width="60" height="14" />
+          <dc:Bounds x="1191" y="1411" width="60" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0xdnr48_di" bpmnElement="final-assessment-evaluation-assessment">
-        <dc:Bounds x="1311" y="1420" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1iy6iif_di" bpmnElement="final-assessment-trial-revision">
-        <dc:Bounds x="1311" y="1635" width="100" height="80" />
+        <dc:Bounds x="940" y="1635" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_053sbth_di" bpmnElement="final-assessment-revision-review">
-        <dc:Bounds x="1121" y="1635" width="100" height="80" />
+        <dc:Bounds x="790" y="1635" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_12w83mz_di" bpmnElement="Gateway_12w83mz" isMarkerVisible="true">
-        <dc:Bounds x="986" y="1650" width="50" height="50" />
+      <bpmndi:BPMNShape id="Gateway_12w83mz_di" bpmnElement="approval-fa-revision" isMarkerVisible="true">
+        <dc:Bounds x="676" y="1650" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="969" y="1620" width="85" height="14" />
+          <dc:Bounds x="659" y="1620" width="85" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0qvjyqx_di" bpmnElement="final-assessment-letter">
-        <dc:Bounds x="841" y="1635" width="100" height="80" />
+        <dc:Bounds x="531" y="1635" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_07d9qrw_di" bpmnElement="Event_07d9qrw">
-        <dc:Bounds x="773" y="1657" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_07d9qrw_di" bpmnElement="fa-finish">
+        <dc:Bounds x="440" y="1657" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0xdnr48_di" bpmnElement="final-assessment-evaluation-assessment">
+        <dc:Bounds x="1071" y="1635" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0y5i1ft_di" bpmnElement="approval-on-site" isMarkerVisible="true">
+        <dc:Bounds x="1415" y="1650" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1388" y="1623" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0wxmnjt_di" bpmnElement="on-site-verification">
+        <dc:Bounds x="1290" y="1420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lkqd3w_di" bpmnElement="on-site-revision-submission">
+        <dc:Bounds x="1270" y="1635" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_04ufii7_di" bpmnElement="Gateway_04ufii7" isMarkerVisible="true">
         <dc:Bounds x="795" y="865" width="50" height="50" />
@@ -948,10 +1006,10 @@
           <dc:Bounds x="855" y="876" width="60" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_19916hx_di" bpmnElement="Event_19916hx">
+      <bpmndi:BPMNShape id="Event_19916hx_di" bpmnElement="end-certification">
         <dc:Bounds x="862" y="1792" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="841" y="1835" width="78" height="14" />
+          <dc:Bounds x="910" y="1796" width="59" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
