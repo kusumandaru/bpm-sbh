@@ -431,8 +431,8 @@ public class NewBuildingController extends GcsUtil{
   @Produces(MediaType.APPLICATION_JSON)
   public Response Workshop(
     @HeaderParam("Authorization") String authorization,
-    @FormDataParam("attendance_document") InputStream attendanceDocument, 
-    @FormDataParam("attendance_document") FormDataContentDisposition attendanceDocumentFdcd,
+    @FormDataParam("workshop_attendance_document") InputStream workshopAttendanceDocument, 
+    @FormDataParam("workshop_attendance_document") FormDataContentDisposition workshopAttendanceDocumentFdcd,
     @FormDataParam("workshop_report_document") InputStream workshopReportDocument, 
     @FormDataParam("workshop_report_document") FormDataContentDisposition workshopReportDocumentFdcd,
     @FormDataParam("task_id") String taskId
@@ -459,7 +459,7 @@ public class NewBuildingController extends GcsUtil{
     //limit the number of actual threads
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<ProjectAttachment>> listOfCallable = Arrays.asList(
-      () -> SaveWithVersion(processInstanceId, activityInstanceId, attendanceDocument, attendanceDocumentFdcd, "attendance_document", username),
+      () -> SaveWithVersion(processInstanceId, activityInstanceId, workshopAttendanceDocument, workshopAttendanceDocumentFdcd, "workshop_attendance_document", username),
       () -> SaveWithVersion(processInstanceId, activityInstanceId, workshopReportDocument, workshopReportDocumentFdcd, "workshop_report_document", username)
     );
     try {
@@ -480,6 +480,58 @@ public class NewBuildingController extends GcsUtil{
 
     return Response.ok().build();
   }
+
+  @POST
+  @Path(value = "/sign_post")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response SignPost(
+    @HeaderParam("Authorization") String authorization,
+    @FormDataParam("sign_post") InputStream signPostDocument, 
+    @FormDataParam("sign_post") FormDataContentDisposition signPostDocumentFdcd,
+    @FormDataParam("approval_building_release") InputStream approvalBuildingReleaseDocument, 
+    @FormDataParam("approval_building_release") FormDataContentDisposition approvalBuildingReleaseDocumentDocumentFdcd,
+    @FormDataParam("task_id") String taskId
+  ) { 
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
+    
+    String username = "indofood1";
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
+
+    //limit the number of actual threads
+    ExecutorService executor = Executors.newCachedThreadPool();
+    List<Callable<ProjectAttachment>> listOfCallable = Arrays.asList(
+      () -> SaveWithVersion(processInstanceId, activityInstanceId, signPostDocument, signPostDocumentFdcd, "sign_post", username),
+      () -> SaveWithVersion(processInstanceId, activityInstanceId, approvalBuildingReleaseDocument, approvalBuildingReleaseDocumentDocumentFdcd, "approval_building_release", username)
+    );
+    try {
+      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+    } catch (InterruptedException e) {// thread was interrupted
+        logger.error(e.getMessage());
+        return Response.status(400, e.getMessage()).build();
+
+    } finally {
+        // shut down the executor manually
+        executor.shutdown();
+    }
+
+    return Response.ok().build();
+  }
+
 
   @POST
   @Path(value = "/dr_evaluation_assessment")
