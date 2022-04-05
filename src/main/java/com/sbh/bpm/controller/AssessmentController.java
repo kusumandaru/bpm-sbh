@@ -303,13 +303,22 @@ public class AssessmentController extends GcsUtil {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response DrReview(@HeaderParam("Authorization") String authorization,
                                 @PathParam("task_id") String taskId,
-                                @FormDataParam("approval_status") Boolean approvalStatus,
+                                @FormDataParam("approval_type") String approvalType,
                                 @FormDataParam("review_reason") String reviewReason) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
     Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
     String processInstanceId = task.getProcessInstanceId();
+
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "DR");
+    projectAssessments.forEach(p -> { 
+      p.setApprovalNote(reviewReason);
+      p.setApprovalStatus(approvalType);
+      projectAssessmentService.save(p);
+    });
+
+    boolean approvalStatus = !approvalType.equals("rejected");
     taskService.setVariable(taskId, "dr_approved", approvalStatus);
     taskService.setVariable(taskId, "approved", approvalStatus);
     taskService.setVariable(taskId, "review_reason", reviewReason);
@@ -762,13 +771,22 @@ public class AssessmentController extends GcsUtil {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response FaReview(@HeaderParam("Authorization") String authorization,
                                 @PathParam("task_id") String taskId,
-                                @FormDataParam("approval_status") Boolean approvalStatus,
+                                @FormDataParam("approval_type") String approvalType,
                                 @FormDataParam("review_reason") String reviewReason) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
     Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
     String processInstanceId = task.getProcessInstanceId();
+
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "DR");
+    projectAssessments.forEach(p -> { 
+      p.setApprovalNote(reviewReason);
+      p.setApprovalStatus(approvalType);
+      projectAssessmentService.save(p);
+    });
+
+    boolean approvalStatus = !approvalType.equals("rejected");
     taskService.setVariable(taskId, "fa_approved", approvalStatus);
     taskService.setVariable(taskId, "approved", approvalStatus);
     taskService.setVariable(taskId, "review_reason", reviewReason);
