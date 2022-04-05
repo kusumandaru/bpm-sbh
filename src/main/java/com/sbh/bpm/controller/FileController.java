@@ -55,6 +55,7 @@ import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.BpmPlatform;
@@ -1040,7 +1041,7 @@ public class FileController extends GcsUtil{
     }
     try {
       List<Future<Pair<Blob, String>>> futures = executor.invokeAll(listOfCallable);
-
+      List<String> filenames = new ArrayList<String>();
       futures.stream().forEach(f -> {
           try {
             Pair<Blob, String> result = f.get();
@@ -1049,8 +1050,12 @@ public class FileController extends GcsUtil{
 
             if (blob != null) {
               String name = FilenameUtils.getName(blob.getName());
-
-              ZipEntry zipEntry = new ZipEntry(criteriaCode + '/' + name);
+              String filename = criteriaCode + '/' + name;
+              if (ArrayUtils.contains(filenames.toArray(), filename)) {
+                return;
+              }
+              filenames.add(filename);
+              ZipEntry zipEntry = new ZipEntry(filename);
               zipOut.putNextEntry(zipEntry);
               byte[] byteArray = blob.getContent();
               zipOut.write(byteArray);

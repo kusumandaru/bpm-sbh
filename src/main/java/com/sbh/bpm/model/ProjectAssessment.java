@@ -12,6 +12,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.validation.constraints.Pattern;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -83,9 +84,23 @@ public class ProjectAssessment {
 
   @SerializedName("assessment_type")
   @Column(name="assessment_type")
+  @Pattern(regexp = "DR|FA", flags = Pattern.Flag.CASE_INSENSITIVE)
   @Getter
   @Setter
   private String assessmentType;
+
+  @SerializedName("approval_note")
+  @Column(name="approval_note", columnDefinition = "TEXT")
+  @Getter
+  @Setter
+  private String approvalNote;
+
+  @SerializedName("approval_status")
+  @Column(name="approval_status")
+  @Getter
+  @Setter
+  @Pattern(regexp = "approved|referenced|rejected", flags = Pattern.Flag.CASE_INSENSITIVE)
+  private String approvalStatus;
 
   @SerializedName("created_at")
   @Column(name="created_at")
