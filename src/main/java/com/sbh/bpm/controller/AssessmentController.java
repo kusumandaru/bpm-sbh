@@ -220,7 +220,7 @@ public class AssessmentController extends GcsUtil {
   @GET
   @Path(value = "/design_recognition/{task_id}/assessment_attachments")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response GetDRAttachmentAssessments(@HeaderParam("Authorization") String authorization, 
+  public Response GetDesignRecognitionAttachmentAssessments(@HeaderParam("Authorization") String authorization, 
     @PathParam("task_id") String taskId
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
