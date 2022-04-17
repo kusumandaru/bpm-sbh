@@ -314,8 +314,10 @@ public class NewBuildingController extends GcsUtil{
   @Produces(MediaType.APPLICATION_JSON)
   public Response SecondPaymentApproval(
     @HeaderParam("Authorization") String authorization,
-    @FormDataParam("scoring_form") InputStream scoringForm, 
-    @FormDataParam("scoring_form") FormDataContentDisposition scoringFormFdcd,
+    @FormDataParam("dr_scoring_form") InputStream drScoringForm, 
+    @FormDataParam("dr_scoring_form") FormDataContentDisposition drScoringFormFdcd,
+    @FormDataParam("fa_scoring_form") InputStream faScoringForm, 
+    @FormDataParam("fa_scoring_form") FormDataContentDisposition faScoringFormFdcd,
     @FormDataParam("approved") Boolean approved,
     @FormDataParam("task_id") String taskId
   ) { 
@@ -341,7 +343,8 @@ public class NewBuildingController extends GcsUtil{
     //limit the number of actual threads
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<ProjectAttachment>> listOfCallable = Arrays.asList(
-      () -> SaveWithVersion(processInstanceId, activityInstanceId, scoringForm, scoringFormFdcd, "scoring_form", username)
+      () -> SaveWithVersion(processInstanceId, activityInstanceId, drScoringForm, drScoringFormFdcd, "dr_scoring_form", username),
+      () -> SaveWithVersion(processInstanceId, activityInstanceId, faScoringForm, faScoringFormFdcd, "fa_scoring_form", username)
     );
     try {
       List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
