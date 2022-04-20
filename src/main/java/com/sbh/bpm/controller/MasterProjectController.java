@@ -334,6 +334,7 @@ public class MasterProjectController extends GcsUtil{
     masterExercise.setExerciseType(exercise.getExerciseType());
     masterExercise.setCode(exercise.getCode());
     masterExercise.setName(exercise.getName());
+    masterExercise.setScoreModifier(exercise.getScoreModifier());
     if (masterExercise.getExerciseType().equals("prequisite")) {
       masterExercise.setMaxScore(null);
     } else {

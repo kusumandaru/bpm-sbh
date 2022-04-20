@@ -19,18 +19,18 @@ public class ExerciseAssessmentService implements IExerciseAssessmentService {
   }
 
   @Override
-  public ExerciseAssessment findById(Integer criteriaScoringId) {
-    return repository.findById(criteriaScoringId).get();
+  public ExerciseAssessment findById(Integer exerciseAssessmentId) {
+    return repository.findById(exerciseAssessmentId).get();
   }
 
   @Override
-  public ExerciseAssessment save(ExerciseAssessment criteriaScoring) {
-    return repository.save(criteriaScoring);
+  public ExerciseAssessment save(ExerciseAssessment exerciseAssessment) {
+    return repository.save(exerciseAssessment);
   }
 
   @Override
-  public Iterable<ExerciseAssessment> saveAll(List<ExerciseAssessment> criteriaScorings) {
-    return repository.saveAll(criteriaScorings);
+  public Iterable<ExerciseAssessment> saveAll(List<ExerciseAssessment> exerciseAssessments) {
+    return repository.saveAll(exerciseAssessments);
   }
 
   @Override
