@@ -57,6 +57,12 @@ public class ExerciseAssessment {
   @Setter
   private Float submittedScore;
 
+  @SerializedName("score_modifier")
+  @Column(name="score_modifier")
+  @Getter
+  @Setter
+  private Float scoreModifier;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter

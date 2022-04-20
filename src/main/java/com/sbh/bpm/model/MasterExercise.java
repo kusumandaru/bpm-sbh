@@ -53,6 +53,12 @@ public class MasterExercise {
   @Setter
   private Integer maxScore;
 
+  @SerializedName("score_modifier")
+  @Column(name="score_modifier")
+  @Getter
+  @Setter
+  private Float scoreModifier;
+
   @SerializedName("active")
   @Column(name="active")
   @Getter
