@@ -177,12 +177,10 @@ class GcsUtil {
   }
 
   protected ProjectAttachment SaveWithVersion(String processInstanceId, String activityInstanceId, 
-            InputStream is, ContentDisposition meta, String fileType, String username) throws IOException {
+            InputStream is, ContentDisposition meta, String fileType, String username, String role) throws IOException {
     if (meta.getFileName() == null) {
       return null;
     }
-    //change later
-    String role = "client";
     ProjectAttachment attachment = new ProjectAttachment();
 
     BlobId blobID = uploadToGCSService(is, meta, activityInstanceId, fileType);

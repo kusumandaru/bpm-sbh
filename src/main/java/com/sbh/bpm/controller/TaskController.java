@@ -29,6 +29,7 @@ import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
+import com.sbh.bpm.service.IUserService;
 import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +37,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.identity.Tenant;
+import org.camunda.bpm.engine.identity.User;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -64,6 +67,9 @@ public class TaskController {
 
   @Autowired
   private IPdfGeneratorUtil pdfGeneratorUtil;
+
+  @Autowired
+  private IUserService userService;
 
   @GET
   @Path(value = "/tasks/admin")
@@ -135,16 +141,22 @@ public class TaskController {
   }
 
   @POST
-  @Path(value = "/tasks/pagi")
+  @Path(value = "/tasks/admin/pagi")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response PaginationTasks(@HeaderParam("Authorization") String authorization,
-                                  // @FormDataParam("page") @DefaultValue("0") Integer page,
-                                  // @FormDataParam("size") @DefaultValue("20") Integer size,
-                                  // @FormDataParam("filters") @DefaultValue("20") Object filters
+  public Response AdminPaginationTasks(@HeaderParam("Authorization") String authorization,
                                   PaginationRequest pagiRequest) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
+
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
     TaskQuery taskQuery = taskService.createTaskQuery();
     taskQuery = taskQuery.matchVariableValuesIgnoreCase();
@@ -188,22 +200,100 @@ public class TaskController {
     return Response.ok(json).build();
   }
 
-  @GET
-  @Path(value = "/variables/{taskId}")
+  @POST
+  @Path(value = "/tasks/client/pagi")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response Variable(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response ClientPaginationTasks(@HeaderParam("Authorization") String authorization,
+                                  PaginationRequest pagiRequest) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    Tenant tenant = userService.TenantFromUser(user);
+
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    taskQuery = taskQuery.or();
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getAssignee())) {
+      taskQuery = taskQuery.taskAssigneeLike("%"+pagiRequest.getFilter().getAssignee()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingTypeName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_type", pagiRequest.getFilter().getBuildingTypeName());
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_name", "%"+pagiRequest.getFilter().getBuildingName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getName())) {
+      taskQuery = taskQuery.taskNameLike("%"+pagiRequest.getFilter().getName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getCertificationType())) {
+      taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
+    }
+    taskQuery = taskQuery.endOr();
+    taskQuery = taskQuery.processVariableValueEquals("tenant", tenant.getId());
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+
+    List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
+    Long taskSize = taskQuery.count();
+
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      sbhTasks.add(sbhTask);
+    }
+
+    PaginationResult result = new PaginationResult(sbhTasks, taskSize);
+    String json = new Gson().toJson(result);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/variables/client/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ClientVariable(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    Tenant tnt = userService.TenantFromUser(user);
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
  
     Task task;
-    Map<String, Object> variableMap;
+    Map<String, Object> variableMap = new HashMap<String, Object>();
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       variableMap = taskService.getVariables(taskId);
     } catch (Exception e) {
       logger.error(e.getMessage());
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "task id not found");
+      map.put("message", "Project not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    if (!variableMap.get("tenant").equals(tnt.getId())) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Project not eligible to access for current user");
       String json = new Gson().toJson(map);
 
       return Response.status(400).entity(json).build();
@@ -212,7 +302,63 @@ public class TaskController {
     variableMap.put("task_id", task.getId());
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
-    variableMap.put("tenant_id", task.getTenantId());
+    variableMap.put("definition_key", task.getTaskDefinitionKey());
+    variableMap.put("task_name", task.getName());
+
+    if (variableMap.get("province") != null) {
+      String provinceId = String.valueOf(variableMap.get("province"));
+      Province province = provinceService.findById(Integer.parseInt(provinceId));
+      variableMap.put("province_name", province.getName());
+    }
+
+    if (variableMap.get("city") != null) {
+      String cityId = String.valueOf(variableMap.get("city"));
+      City city = cityService.findById(Integer.parseInt(cityId));
+      variableMap.put("city_name", city.getName());
+    }
+
+    try {
+      BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
+      variableMap.put("building_type_name", buildingType.getNameId());
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+
+    return Response.ok(variableMap).build();
+  }
+
+  @GET
+  @Path(value = "/variables/admin/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response AdminVariable(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+ 
+    Task task;
+    Map<String, Object> variableMap = new HashMap<String, Object>();
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      variableMap = taskService.getVariables(taskId);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Project not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    variableMap.put("task_id", task.getId());
+    variableMap.put("created_at", task.getCreateTime());
+    variableMap.put("due_date", task.getDueDate());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
     variableMap.put("task_name", task.getName());
 
@@ -321,6 +467,15 @@ public class TaskController {
     @FormDataParam("task_id") String taskId,
     @FormDataParam("rejected_reason") String rejectedReason
   ) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    Tenant tnt = userService.TenantFromUser(user);
+    
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -361,9 +516,7 @@ public class TaskController {
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
-    String tenant = taskService.getVariable(task.getId(), "tenant").toString();
     task.setAssignee(assignee);
-    task.setTenantId(tenant);
     taskService.claim(task.getId(), assignee);
 
     mailerService.SendRejectionEmail(rejectedReason);

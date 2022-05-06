@@ -124,6 +124,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
+      projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("DR");
       projectAssessment.setProposedLevelID(masterAdmin.getDefaultDRLevel());
@@ -142,6 +143,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessment.setSelected(false);
         assessment.setApprovedScore(0.0f);
         assessment.setSubmittedScore(0.0f);
+        assessment.setScoreModifier(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 
@@ -244,6 +246,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
+      projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("FA");
       projectAssessment.setProposedLevelID(masterAdmin.getDefaultFALevel());
@@ -262,6 +265,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessment.setSelected(false);
         assessment.setApprovedScore(0.0f);
         assessment.setSubmittedScore(0.0f);
+        assessment.setScoreModifier(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 

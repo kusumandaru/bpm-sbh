@@ -11,6 +11,7 @@ public class UserData {
     private String email;
     private String fullName;
     private String avatar;
+    private String tenant;
     private List<String> roles;
 
     public UserData() {

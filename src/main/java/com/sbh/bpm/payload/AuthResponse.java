@@ -12,12 +12,13 @@ public class AuthResponse {
     private String refreshToken;
     private UserData userData;
 
-    public AuthResponse(String accessToken, String refreshToken, String name, String email, List<String> roles) {
+    public AuthResponse(String accessToken, String refreshToken, String name, String email, String tenant, List<String> roles) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         UserData userData = new UserData();
         userData.setFullName(name);
         userData.setEmail(email);
+        userData.setTenant(tenant);
         userData.setRoles(roles);
         this.userData = userData;
     }
