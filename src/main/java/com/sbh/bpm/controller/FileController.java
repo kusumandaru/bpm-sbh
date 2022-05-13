@@ -40,6 +40,7 @@ import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICityService;
@@ -49,7 +50,7 @@ import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
-import com.sbh.bpm.service.ITransactionFetchService;
+import com.sbh.bpm.service.IUserService;
 import com.sbh.bpm.service.SequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
 
@@ -99,10 +100,10 @@ public class FileController extends GcsUtil{
   private IProjectAttachmentService projectAttachmentService;
 
   @Autowired
-  private ITransactionFetchService transactionFetchService;
+  private IAttachmentService attachmentService;
 
   @Autowired
-  private IAttachmentService attachmentService;
+  private IUserService userService;
 
   @Deprecated
   @GET
@@ -229,7 +230,6 @@ public class FileController extends GcsUtil{
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
     
     Task task;
     String processInstanceId;
@@ -264,6 +264,16 @@ public class FileController extends GcsUtil{
   @Path(value = "/eligibility_statement/{taskId}")
   @Produces({"application/pdf"})
   public javax.ws.rs.core.Response getEligibilityStatement(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -343,13 +353,10 @@ public class FileController extends GcsUtil{
   
       bytes = pdfGeneratorUtil.CreatePdf("eligibility-statement", variableMap);
 
-      // change later
-      String username = "indofood1";
-
       try {
         ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
         InputStream targetStream = new ByteArrayInputStream(bytes);
-        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username, role);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -363,120 +370,25 @@ public class FileController extends GcsUtil{
     return responseBuilder.build();
   }
 
-  @GET
-  @Path(value = "/registered_project/{taskId}")
-  @Produces({"application/pdf"})
-  public javax.ws.rs.core.Response getRegisteredProject(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {   
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    TaskService taskService = processEngine.getTaskService();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
-    
-    Task task;
-    String processInstanceId;
-    String activityInstanceId;
-    Map<String, Object> variableMap;
-    try {
-      variableMap = taskService.getVariables(taskId);
-      task = taskService.createTaskQuery().taskId(taskId).singleResult();
-      processInstanceId = task.getProcessInstanceId();
-      activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-    } catch (Exception e) {
-      Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "task id not found");
-      String json = new Gson().toJson(map);
-
-      return Response.status(400).entity(json).build();
-    }
-
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-
-    // remove later
-    String username = "indofood1";
-
-    String fileType = "registered_project";
-    String fileName = "registered_project.pdf";
-
-    ProjectAttachment attachment = projectAttachmentService.findTopByProcessInstanceIDAndFileTypeOrderByIdDesc(processInstanceId, fileType);
-    Pair<String, String> result;
-    byte[] bytes;
-    if (attachment != null) {
-      try {
-        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
-        bytes = googleCloudStorage.getContent(blob.getBlobId());
-      } catch (Exception e) {
-        result = null;
-        return Response.status(404, e.getMessage()).build();
-      }
-    } else {
-      int style = DateFormat.LONG;
-      //Also try with style = DateFormat.FULL and DateFormat.SHORT and DateFormat.MEDIUM
-      Date date = new Date();
-      DateFormat df;
-      Locale localeIndonesia = new Locale("id", "ID");
-      df = DateFormat.getDateInstance(style, localeIndonesia);
-      variableMap.put("printAt",df.format(date));
-  
-      if (variableMap.get("province") != null) {
-        String provinceId = String.valueOf(variableMap.get("province"));
-        Province province = provinceService.findById(Integer.parseInt(provinceId));
-        variableMap.put("province_name", province.getName());
-      }
-  
-      if (variableMap.get("city") != null) {
-        String cityId = String.valueOf(variableMap.get("city"));
-        City city = cityService.findById(Integer.parseInt(cityId));
-        variableMap.put("city_name", city.getName());
-      }
-  
-      variableMap.put("rpd_letter_number", sequenceNumberService.getNextNumber("RPD",  NUMBER_FORMAT.GENERAL));
-      variableMap.put("registered_project_number", sequenceNumberService.getNextNumber("RP/NB", NUMBER_FORMAT.REGISTERED));
-      variableMap.put("agreement_number", "002/Greenship.NB/SBH-02/IX/2021");
-
-      taskService.setVariable(task.getId(), "rpd_letter_number", variableMap.get("rpd_letter_number"));
-      taskService.setVariable(task.getId(), "registered_project_number", variableMap.get("registered_project_number"));
-
-      variableMap.put("manager_name", masterAdminService.findLast().getManagerName());
-      try {
-        Map<String, Object> maps = masterAdminService.getVariableMap();
-        result = GetUrlGcs(maps, "admin", "manager_signature");
-        variableMap.put("manager_signature", result.getValue());
-      } catch (IOException e) {
-        logger.error(e.getMessage());
-      }
-  
-      bytes = pdfGeneratorUtil.CreatePdf("registered-project", variableMap);
-
-      try {
-        ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
-        InputStream targetStream = new ByteArrayInputStream(bytes);
-        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
-      } catch (IOException e) {
-        logger.error(e.getMessage());
-        return Response.status(400, e.getMessage()).build();
-      }
-    }
-
-    /* Send the response as downloadable PDF */
-    javax.ws.rs.core.Response.ResponseBuilder responseBuilder = javax.ws.rs.core.Response.ok(bytes);
-    responseBuilder.type("application/pdf");
-    responseBuilder.header("Content-Disposition", "attachment; filename=registered-project.pdf");
-    return responseBuilder.build();
-  }
-
+  @Deprecated
   @GET
   @Path(value = "/design_recognition_statement/{taskId}")
   @Produces({"application/pdf"})
   public javax.ws.rs.core.Response geDesignRecognitionStatement(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+    
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     RuntimeService runtimeService = processEngine.getRuntimeService();
-    
+
     Task task;
     String processInstanceId;
     String activityInstanceId;
@@ -501,9 +413,6 @@ public class FileController extends GcsUtil{
       logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
-
-    // remove later
-    String username = "indofood1";
 
     String fileType = "design_recognition_statement";
     String fileName = "design_recognition_statement.pdf";
@@ -567,7 +476,7 @@ public class FileController extends GcsUtil{
       try {
         ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
         InputStream targetStream = new ByteArrayInputStream(bytes);
-        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username, role);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -585,10 +494,20 @@ public class FileController extends GcsUtil{
   @Path(value = "/design_recognition_result/{taskId}")
   @Produces({"application/pdf"})
   public javax.ws.rs.core.Response geDesignRecognitionResult(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     RuntimeService runtimeService = processEngine.getRuntimeService();
-    
+
     Task task;
     String processInstanceId;
     String activityInstanceId;
@@ -613,9 +532,6 @@ public class FileController extends GcsUtil{
       logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
-
-    // remove later
-    String username = "indofood1";
     
     String fileType = "design_recognition_result";
     String fileName = "design_recognition_result.pdf";
@@ -688,7 +604,7 @@ public class FileController extends GcsUtil{
       try {
         ContentDisposition meta = FormDataContentDisposition.name(fileName).fileName(fileName).build();
         InputStream targetStream = new ByteArrayInputStream(bytes);
-        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, targetStream, meta, fileType, username, role);
       } catch (IOException e) {
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -712,12 +628,19 @@ public class FileController extends GcsUtil{
     @FormDataParam("task_id") String taskId,
     @FormDataParam("file_type") String fileType
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
-    
-    // change later
-    String username = "indofood1";
 
     Task task;
     try {
@@ -742,7 +665,7 @@ public class FileController extends GcsUtil{
           continue;
         }
 
-        attachment = SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+        attachment = SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username, role);
         break;
       }
     } catch (Exception e) {
@@ -762,13 +685,10 @@ public class FileController extends GcsUtil{
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
-    
+
     Task task;
     String processInstanceId;
-    Map<String, Object> variableMap;
     try {
-      variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
     } catch (Exception e) {
@@ -867,9 +787,7 @@ public class FileController extends GcsUtil{
  
     Task task;
     String processInstanceId;
-    Map<String, Object> variableMap;
     try {
-      variableMap = taskService.getVariables(taskId);
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
       processInstanceId = task.getProcessInstanceId();
     } catch (Exception e) {

@@ -98,7 +98,6 @@ public class SbhTask {
     sbhTask.processInstanceId = cTask.getProcessInstanceId();
     sbhTask.createTime = cTask.getCreateTime();
     sbhTask.taskDefinitionKey = cTask.getTaskDefinitionKey();
-    sbhTask.tenantId = cTask.getTenantId();
 
     return sbhTask;
   }
@@ -107,10 +106,11 @@ public class SbhTask {
     sbhTask.buildingName =  String.valueOf(variableMap.get("building_name"));
     sbhTask.buildingType =  String.valueOf(variableMap.get("building_type"));
     sbhTask.certificationType =  String.valueOf(variableMap.get("certification_type"));
+    sbhTask.tenantId = String.valueOf(variableMap.get("tenant"));
     if (variableMap.get("read") != null) {
       sbhTask.read = ((Boolean) variableMap.get("read")).booleanValue();
     } else {
-      sbhTask.read = false;
+      sbhTask.read = false; 
     }
     switch(String.valueOf(variableMap.get("approved"))) {
       case "true":

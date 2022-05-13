@@ -35,13 +35,14 @@ import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.ProjectAssessment;
 import com.sbh.bpm.model.ProjectAttachment;
+import com.sbh.bpm.model.User;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICommentService;
 import com.sbh.bpm.service.ICriteriaScoringService;
 import com.sbh.bpm.service.IDocumentFileService;
 import com.sbh.bpm.service.IExerciseAssessmentService;
-import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterEvaluationService;
@@ -51,6 +52,7 @@ import com.sbh.bpm.service.IProjectAssessmentService;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.ITransactionFetchService;
+import com.sbh.bpm.service.IUserService;
 import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 import com.sbh.bpm.service.TransactionFetchService.TransactionFetchResponse;
 
@@ -115,7 +117,7 @@ public class AssessmentController extends GcsUtil {
   private IMasterLevelService masterLevelService;
 
   @Autowired
-  private IMasterAdminService masterAdminService;
+  private IUserService userService;
  
   @POST
   @Path(value = "/design_recognition")
@@ -125,10 +127,16 @@ public class AssessmentController extends GcsUtil {
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("task_id") String taskId
   ) { 
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
-    
-    String username = "indofood1";
 
     Task task;
     try {
@@ -156,8 +164,17 @@ public class AssessmentController extends GcsUtil {
     @HeaderParam("Authorization") String authorization,
     @PathParam("task_id") String taskId
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    String username = user.getUsername();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
 
     Task task;
@@ -171,15 +188,9 @@ public class AssessmentController extends GcsUtil {
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
-    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
-
     transactionCreationService.tagSubmittedAttachmentByAssessmentType(processInstanceId, "DR");
 
-    // change later
-    String username = "indofood1";
-    String tenant = "indofood";
-
-    task.setTenantId(tenant);
+    taskService.setVariable(taskId, "tenant", (user.getTenant().getId()));
     if (taskService.getVariable(taskId, "third_payment_paid") == null) {
       taskService.setVariable(taskId, "third_payment_paid", false);
     }
@@ -201,8 +212,14 @@ public class AssessmentController extends GcsUtil {
   ) { 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
-    
-    String username = "indofood1";
+
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -227,11 +244,17 @@ public class AssessmentController extends GcsUtil {
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetDesignRecognitionAttachmentAssessments(@HeaderParam("Authorization") String authorization, 
     @PathParam("task_id") String taskId
-  ) {
+  ) {   
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
-    
-    String username = "indofood1";
 
     Task task;
     try {
@@ -261,12 +284,20 @@ public class AssessmentController extends GcsUtil {
     @FormDataParam("files") FormDataBodyPart files,
     @PathParam("task_id") String taskId
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
-
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -289,7 +320,7 @@ public class AssessmentController extends GcsUtil {
         InputStream is = part.getEntityAs(InputStream.class);
         ContentDisposition meta = part.getContentDisposition();
 
-        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username, role);
       }
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
@@ -310,6 +341,14 @@ public class AssessmentController extends GcsUtil {
                                 @PathParam("task_id") String taskId,
                                 @FormDataParam("approval_type") String approvalType,
                                 @FormDataParam("review_reason") String reviewReason) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -336,9 +375,8 @@ public class AssessmentController extends GcsUtil {
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
-    String tenant = taskService.getVariable(task.getId(), "tenant").toString();
+
     task.setAssignee(assignee);
-    task.setTenantId(tenant);
     taskService.claim(task.getId(), assignee);
 
     return Response.ok().build();
@@ -354,10 +392,15 @@ public class AssessmentController extends GcsUtil {
     @FormDataParam("level_id") Integer levelId
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -370,7 +413,6 @@ public class AssessmentController extends GcsUtil {
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
-    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
 
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "DR");
     ProjectAssessment projectAssessment = projectAssessments.get(0);
@@ -391,7 +433,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -431,7 +479,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -478,7 +532,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -595,7 +655,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -623,8 +689,16 @@ public class AssessmentController extends GcsUtil {
     @HeaderParam("Authorization") String authorization,
     @PathParam("task_id") String taskId
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
 
     Task task;
@@ -638,15 +712,10 @@ public class AssessmentController extends GcsUtil {
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
-    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
 
     transactionCreationService.tagSubmittedAttachmentByAssessmentType(processInstanceId, "FA");
 
-    // change later
-    String username = "indofood1";
-    String tenant = "indofood";
-
-    task.setTenantId(tenant);
+    taskService.setVariable(taskId, "tenant", user.getTenant().getId());
     if (taskService.getVariable(taskId, "third_payment_paid") == null) {
       taskService.setVariable(taskId, "third_payment_paid", false);
     }
@@ -669,7 +738,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -698,7 +773,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -728,11 +809,19 @@ public class AssessmentController extends GcsUtil {
     @FormDataParam("files") FormDataBodyPart files,
     @PathParam("task_id") String taskId
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
-    
-    String username = "indofood1";
 
     Task task;
     try {
@@ -756,7 +845,7 @@ public class AssessmentController extends GcsUtil {
         InputStream is = part.getEntityAs(InputStream.class);
         ContentDisposition meta = part.getContentDisposition();
 
-        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username);
+        SaveWithVersion(processInstanceId, activityInstanceId, is, meta, fileType, username, role);
       }
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
@@ -778,6 +867,14 @@ public class AssessmentController extends GcsUtil {
                                 @PathParam("task_id") String taskId,
                                 @FormDataParam("approval_type") String approvalType,
                                 @FormDataParam("review_reason") String reviewReason) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+                      
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -804,9 +901,8 @@ public class AssessmentController extends GcsUtil {
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
-    String tenant = taskService.getVariable(task.getId(), "tenant").toString();
+
     task.setAssignee(assignee);
-    task.setTenantId(tenant);
     taskService.claim(task.getId(), assignee);
 
     return Response.ok().build();
@@ -822,10 +918,15 @@ public class AssessmentController extends GcsUtil {
     @FormDataParam("level_id") Integer levelId
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -838,7 +939,6 @@ public class AssessmentController extends GcsUtil {
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
-    String activityInstanceId = runtimeService.getActivityInstance(processInstanceId).getId();
 
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "FA");
     ProjectAssessment projectAssessment = projectAssessments.get(0);
@@ -859,7 +959,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -899,7 +1005,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -946,7 +1058,13 @@ public class AssessmentController extends GcsUtil {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     
-    String username = "indofood1";
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
     Task task;
     try {
@@ -1113,10 +1231,17 @@ public class AssessmentController extends GcsUtil {
     @PathParam("criteriaScoringId") Integer criteriaScoringId,
     Comment comment
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     comment.setCreatedAt(new Date());
-    //change later
-    comment.setRole("client");
-    comment.setUserID("indofood1");
+    comment.setRole(user.getGroup().getId());
+    comment.setUserID(user.getUsername());
     comment = commentService.save(comment);
 
     String json = new Gson().toJson(comment);
@@ -1157,13 +1282,19 @@ public class AssessmentController extends GcsUtil {
     @FormDataParam("document_id") Integer documentId
 
   ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "user not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
     TaskService taskService = processEngine.getTaskService();
-    
-    //change later
-    String username = "indofood1";
-    String role = "client";
 
     Task task;
     try {

@@ -97,7 +97,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     RuntimeService runtimeService = processEngine.getRuntimeService();
 
     try {
-      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+      runtimeService.getActivityInstance(processInstanceID).getId();
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
@@ -124,6 +124,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
+      projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("DR");
       projectAssessment.setProposedLevelID(masterAdmin.getDefaultDRLevel());
@@ -142,6 +143,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessment.setSelected(false);
         assessment.setApprovedScore(0.0f);
         assessment.setSubmittedScore(0.0f);
+        assessment.setScoreModifier(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 
@@ -192,7 +194,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         }
       }
 
-      Iterable<DocumentFile> documentFiles = documentFileService.saveAll(docFiles); 
+      documentFileService.saveAll(docFiles); 
     } catch(Exception ex) {
       transactionManager.rollback(transactionStatus);
 
@@ -216,7 +218,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     RuntimeService runtimeService = processEngine.getRuntimeService();
 
     try {
-      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+      runtimeService.getActivityInstance(processInstanceID).getId();
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
@@ -244,6 +246,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
+      projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("FA");
       projectAssessment.setProposedLevelID(masterAdmin.getDefaultFALevel());
@@ -262,6 +265,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessment.setSelected(false);
         assessment.setApprovedScore(0.0f);
         assessment.setSubmittedScore(0.0f);
+        assessment.setScoreModifier(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 
@@ -312,7 +316,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         }
       }
 
-      Iterable<DocumentFile> documentFiles = documentFileService.saveAll(docFiles);
+      documentFileService.saveAll(docFiles);
     } catch(Exception ex) {
       transactionManager.rollback(transactionStatus);
 

@@ -1,5 +1,7 @@
 package com.sbh.bpm.controller;
 
+import java.time.Instant;
+
 import javax.servlet.ServletException;
 import javax.validation.Valid;
 
@@ -9,6 +11,7 @@ import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.security.JwtUtil;
 
 import org.camunda.bpm.engine.IdentityService;
+import org.camunda.bpm.engine.impl.persistence.entity.TenantEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,16 +39,28 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) throws ServletException {
+        String tenantName = registerRequest.getTenantName().replaceAll(" ", "-");
+        String tenantId = tenantName.substring(0, Math.min(30, tenantName.length())).toLowerCase() + "-" + String.valueOf(Instant.now().toEpochMilli());
+
         UserEntity user = new UserEntity();
         user.setEmail(registerRequest.getEmail());
         user.setPassword(registerRequest.getPassword());
-        user.setId(registerRequest.getEmail());
-        user.setFirstName(registerRequest.getName());
+        user.setFirstName(registerRequest.getFirstName());
+        user.setLastName(registerRequest.getLastName());
+        String userId = String.valueOf(Instant.now().toEpochMilli());
+        user.setId(userId);
 
         identityService.saveUser(user);
         identityService.createMembership(user.getId(), "user");
+
+        TenantEntity tenant = new TenantEntity();
+        tenant.setName(registerRequest.getTenantName());
+        tenant.setId(tenantId);
+        identityService.saveTenant(tenant);
+
+        identityService.createTenantUserMembership(tenantId, user.getId());
         
-        AuthResponse response = jwtUtil.generateToken(registerRequest.getEmail(), registerRequest.getPassword());
+        AuthResponse response = jwtUtil.generateToken(userId, registerRequest.getPassword());
         return ResponseEntity.ok(response);
     }
 }

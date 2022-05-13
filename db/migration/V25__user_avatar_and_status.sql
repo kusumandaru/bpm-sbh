@@ -1,0 +1,3 @@
+ALTER TABLE `ACT_ID_USER`
+ADD (`ACTIVE_` boolean DEFAULT true,
+`AVATAR_URL_` varchar(255));
