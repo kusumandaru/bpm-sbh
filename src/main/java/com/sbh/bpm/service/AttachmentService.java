@@ -9,15 +9,11 @@ import com.sbh.bpm.repository.AttachmentRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 
 @Service
 public class AttachmentService implements IAttachmentService {
   @Autowired
   private AttachmentRepository repository;
-
-  @Autowired
-  private PlatformTransactionManager transactionManager;
 
   @Override
   public List<Attachment> findAll() {

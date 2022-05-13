@@ -23,22 +23,20 @@ import com.sbh.bpm.model.PaginationRequest;
 import com.sbh.bpm.model.PaginationResult;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.SbhTask;
+import com.sbh.bpm.model.User;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
-import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.IUserService;
-import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.identity.Tenant;
-import org.camunda.bpm.engine.identity.User;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -64,9 +62,6 @@ public class TaskController {
 
   @Autowired
   private ITransactionCreationService transactionCreationService;
-
-  @Autowired
-  private IPdfGeneratorUtil pdfGeneratorUtil;
 
   @Autowired
   private IUserService userService;
@@ -209,14 +204,13 @@ public class TaskController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Tenant tenant = userService.TenantFromUser(user);
 
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
     TaskQuery taskQuery = taskService.createTaskQuery();
@@ -239,7 +233,7 @@ public class TaskController {
       taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
     }
     taskQuery = taskQuery.endOr();
-    taskQuery = taskQuery.processVariableValueEquals("tenant", tenant.getId());
+    taskQuery = taskQuery.processVariableValueEquals("tenant", user.getTenant().getId());
     taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
@@ -265,14 +259,13 @@ public class TaskController {
   @Path(value = "/variables/client/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response ClientVariable(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Tenant tnt = userService.TenantFromUser(user);
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -291,7 +284,7 @@ public class TaskController {
       return Response.status(400).entity(json).build();
     }
 
-    if (!variableMap.get("tenant").equals(tnt.getId())) {
+    if (!variableMap.get("tenant").equals(user.getTenant().getId())) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "Project not eligible to access for current user");
       String json = new Gson().toJson(map);
@@ -421,10 +414,10 @@ public class TaskController {
         boolean designRecognition = (Boolean) taskService.getVariable(taskId, "design_recognition");
         if (designRecognition) {
           String processInstanceId = task.getProcessInstanceId();
-          TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+          transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
         } else {
           String processInstanceId = task.getProcessInstanceId();
-          TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
+          transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
         }
         break;
       case "check-third-payment":
@@ -438,7 +431,7 @@ public class TaskController {
         break;
       case "design-recognition-letter":
         String processInstanceId = task.getProcessInstanceId();
-        TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId);
+        transactionCreationService.createFATransactionForProcessInstance(processInstanceId);
         break;
       case "final-assessment-revision-review":
         taskService.setVariable(taskId, "approved_fa_review", true);
@@ -474,7 +467,6 @@ public class TaskController {
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Tenant tnt = userService.TenantFromUser(user);
     
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();

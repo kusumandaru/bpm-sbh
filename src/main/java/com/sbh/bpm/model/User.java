@@ -42,6 +42,18 @@ public class User {
   @Column(name="EMAIL_")
   private String email;
 
+  @Getter
+  @Setter
+  @SerializedName("active")
+  @Column(name="ACTIVE_")
+  private Boolean active;
+
+  @Getter
+  @Setter
+  @SerializedName("avatar_url")
+  @Column(name="AVATAR_URL_")
+  private String avatarUrl;
+
   public User() {
   }
 

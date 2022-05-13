@@ -8,13 +8,13 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.sbh.bpm.exception.BadRequestException;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.service.IUserService;
 
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
-import org.camunda.bpm.engine.identity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -41,16 +41,16 @@ public class JwtUtil {
                 
                 List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
                 List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
-                User user = identityService.createUserQuery().userId(username).singleResult();
-                String name = user.getFirstName() + " " + user.getLastName();
-                Tenant tnt = userService.TenantFromUser(user);
+                UserDetail user = userService.GetUserDetailFromId(username);
+                String name = user.getFullName();
+                Tenant tnt = user.getTenant();
                 String tenantName = "";
                 if (tnt != null) {
                     tenantName = tnt.getName();
                 }
                 // TODO: create token with groupIds and tenantIds
                 String accessToken =  JWT.create()
-                        .withSubject(user.getId())
+                        .withSubject(user.getUsername())
                         .withIssuedAt(new Date(System.currentTimeMillis()))
                         .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                         .sign(algorithm);

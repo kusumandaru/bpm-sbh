@@ -9,8 +9,10 @@ import java.util.Map;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.sbh.bpm.model.ProjectAttachment;
+import com.sbh.bpm.model.User;
 import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IProjectAttachmentService;
+import com.sbh.bpm.service.IUserService;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -23,6 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 class GcsUtil {
   @Autowired
   private IProjectAttachmentService projectAttachmentService;
+
+  @Autowired
+  private IUserService userService;
   
   protected Pair<String, String> UploadToGcs(
     String directory,
@@ -72,7 +77,7 @@ class GcsUtil {
   }
 
   protected BlobId UploadToGcs(
-    String activityInstanceId,
+    String directory,
     InputStream file, 
     String filename
   ) throws IOException {
@@ -80,7 +85,7 @@ class GcsUtil {
       GoogleCloudStorage googleCloudStorage;
       googleCloudStorage = new GoogleCloudStorage();
 
-      BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, filename, file);
+      BlobId blobId = googleCloudStorage.SaveObject(directory, filename, file);
 
       return blobId;
     } else {
@@ -196,6 +201,23 @@ class GcsUtil {
 
     attachment = projectAttachmentService.saveWithVersion(attachment, processInstanceId);
     return attachment;
+  }
+
+  protected boolean SaveAvatar(InputStream is, ContentDisposition meta, User user) throws IOException {
+    if (meta.getFileName() == null) {
+      return false;
+    }
+
+    String filename = meta.getFileName().replaceAll(" ", "_").toLowerCase();
+    String ext = FilenameUtils.getExtension(filename);
+    String name = FilenameUtils.getBaseName(filename);
+
+    String blobFilename = name + ext;
+    BlobId blobId = UploadToGcs("avatar/" + user.getId(), is, blobFilename);
+
+    user.setAvatarUrl(blobId.getName());
+    user = userService.Save(user);
+    return true;
   }
 
   private BlobId uploadToGCSService(InputStream is, ContentDisposition meta, String activityInstanceId, String fileType) throws IOException {

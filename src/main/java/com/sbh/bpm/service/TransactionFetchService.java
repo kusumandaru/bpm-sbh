@@ -35,12 +35,6 @@ import lombok.Setter;
 public class TransactionFetchService implements ITransactionFetchService {
 
   @Autowired
-  private IMasterAdminService masterAdminService;
-
-  @Autowired
-  private IMasterTemplateService masterTemplateService;
-
-  @Autowired
   private IMasterEvaluationService masterEvaluationService;
 
   @Autowired
@@ -48,9 +42,6 @@ public class TransactionFetchService implements ITransactionFetchService {
 
   @Autowired
   private IMasterCriteriaService masterCriteriaService;
-
-  @Autowired
-  private IMasterDocumentService masterDocumentService;
 
   @Autowired
   private IProjectAssessmentService projectAssessmentService;
@@ -103,7 +94,7 @@ public class TransactionFetchService implements ITransactionFetchService {
 
     List<ProjectAssessment> projectAssessments = new ArrayList<ProjectAssessment>();
     try {
-      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+      runtimeService.getActivityInstance(processInstanceID).getId();
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
@@ -178,7 +169,7 @@ public class TransactionFetchService implements ITransactionFetchService {
 
     List<ProjectAssessment> projectAssessments = new ArrayList<ProjectAssessment>();
     try {
-      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+      runtimeService.getActivityInstance(processInstanceID).getId();
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");

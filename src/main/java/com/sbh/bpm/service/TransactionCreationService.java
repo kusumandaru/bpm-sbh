@@ -97,7 +97,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     RuntimeService runtimeService = processEngine.getRuntimeService();
 
     try {
-      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+      runtimeService.getActivityInstance(processInstanceID).getId();
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
@@ -194,7 +194,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         }
       }
 
-      Iterable<DocumentFile> documentFiles = documentFileService.saveAll(docFiles); 
+      documentFileService.saveAll(docFiles); 
     } catch(Exception ex) {
       transactionManager.rollback(transactionStatus);
 
@@ -218,7 +218,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     RuntimeService runtimeService = processEngine.getRuntimeService();
 
     try {
-      String activityInstanceId = runtimeService.getActivityInstance(processInstanceID).getId();
+      runtimeService.getActivityInstance(processInstanceID).getId();
     } catch (Exception e) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "process instance not found");
@@ -316,7 +316,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         }
       }
 
-      Iterable<DocumentFile> documentFiles = documentFileService.saveAll(docFiles);
+      documentFileService.saveAll(docFiles);
     } catch(Exception ex) {
       transactionManager.rollback(transactionStatus);
 

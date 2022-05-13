@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -22,22 +21,16 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
-import com.sbh.bpm.model.Group;
 import com.sbh.bpm.model.ProjectAttachment;
-import com.sbh.bpm.service.IBuildingTypeService;
-import com.sbh.bpm.service.ICityService;
-import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.IProjectAttachmentService;
-import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.IUserService;
-import com.sbh.bpm.service.TransactionCreationService.TransactionCreationResponse;
 
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.identity.User;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -48,22 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-
 @Path(value = "/new-building")
 public class NewBuildingController extends GcsUtil{
   private static final Logger logger = LoggerFactory.getLogger(NewBuildingController.class);
-  
-  @Autowired
-  private IProvinceService provinceService;
-
-  @Autowired
-  private ICityService cityService;
-
-  @Autowired
-  private IBuildingTypeService buildingTypeService;
-
-  @Autowired
-  private IMailerService mailerService;
 
   @Autowired
   private ITransactionCreationService transactionCreationService;
@@ -96,16 +76,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("study_case_readiness") FormDataContentDisposition studyCaseReadinessFdcd,
     @FormDataParam("task_id") String taskId
   ) { 
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -136,7 +115,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, studyCaseReadiness, studyCaseReadinessFdcd, "study_case_readiness", username, role)
                 );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -171,16 +150,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("design_recognition") Boolean designRecognition,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -205,7 +183,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, agreementLetterDocument, agreementLetterDocumentFdcd, "agreement_letter_document", username, role)
     );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -236,16 +214,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("first_payment_document") FormDataContentDisposition firstPaymentDocumentFdcd,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -270,7 +247,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, firstPaymentDocument, firstPaymentDocumentFdcd, "first_payment_document", username, role)
     );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -298,16 +275,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("second_payment_document") FormDataContentDisposition secondPaymentDocumentFdcd,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -332,7 +308,7 @@ public class NewBuildingController extends GcsUtil{
                 () -> SaveWithVersion(processInstanceId, activityInstanceId, secondPaymentDocument, secondPaymentDocumentFdcd, "second_payment_document", username, role)
                 );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
 
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
@@ -364,16 +340,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("approved") Boolean approved,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -399,7 +374,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, faScoringForm, faScoringFormFdcd, "fa_scoring_form", username, role)
     );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -411,9 +386,9 @@ public class NewBuildingController extends GcsUtil{
 
     boolean designRecognition = (Boolean) taskService.getVariable(taskId, "design_recognition");
     if (designRecognition && approved) {
-      TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+      transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
     } else {
-      TransactionCreationResponse response = transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
+      transactionCreationService.createFATransactionForProcessInstance(processInstanceId); 
     }
 
     taskService.setVariable(taskId, "second_payment_paid", approved);
@@ -437,16 +412,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("third_payment_document") FormDataContentDisposition thirdPaymentDocumentFdcd,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -471,7 +445,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, thirdPaymentDocument, thirdPaymentDocumentFdcd, "third_payment_document", username, role)
     );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -501,16 +475,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("workshop_report_document") FormDataContentDisposition workshopReportDocumentFdcd,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -536,7 +509,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, workshopReportDocument, workshopReportDocumentFdcd, "workshop_report_document", username, role)
     );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -566,16 +539,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("approval_building_release") FormDataContentDisposition approvalBuildingReleaseDocumentDocumentFdcd,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -601,7 +573,7 @@ public class NewBuildingController extends GcsUtil{
       () -> SaveWithVersion(processInstanceId, activityInstanceId, approvalBuildingReleaseDocument, approvalBuildingReleaseDocumentDocumentFdcd, "approval_building_release", username, role)
     );
     try {
-      List<Future<ProjectAttachment>> futures = executor.invokeAll(listOfCallable);
+      executor.invokeAll(listOfCallable);
     } catch (InterruptedException e) {// thread was interrupted
         logger.error(e.getMessage());
         return Response.status(400, e.getMessage()).build();
@@ -624,16 +596,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("files") FormDataBodyPart files,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -681,16 +652,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("files") FormDataBodyPart files,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -738,16 +708,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("files") FormDataBodyPart files,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -795,16 +764,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("files") FormDataBodyPart files,
     @FormDataParam("task_id") String taskId
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -855,16 +823,15 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("on_site_note") String onSiteNote
 
   ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
     
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -918,17 +885,16 @@ public class NewBuildingController extends GcsUtil{
     @FormDataParam("on_site_client_revision_note") String onSiteClientRevisionNote
 
   ) { 
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
 
-    String username = user.getId();
-    String role = group.getId();
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();

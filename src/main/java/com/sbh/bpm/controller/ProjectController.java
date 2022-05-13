@@ -16,13 +16,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
-import com.sbh.bpm.model.Group;
-import com.sbh.bpm.model.ProjectAttachment;
-import com.sbh.bpm.service.IBuildingTypeService;
-import com.sbh.bpm.service.ICityService;
-import com.sbh.bpm.service.IMailerService;
-import com.sbh.bpm.service.IPdfGeneratorUtil;
-import com.sbh.bpm.service.IProvinceService;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.IUserService;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,8 +24,6 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.identity.Tenant;
-import org.camunda.bpm.engine.identity.User;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -46,22 +38,8 @@ public class ProjectController extends GcsUtil{
   private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
 
   @Autowired
-  private IProvinceService provinceService;
-
-  @Autowired
-  private ICityService cityService;
-
-  @Autowired
-  private IBuildingTypeService buildingTypeService;
-
-  @Autowired
-  private IMailerService mailerService;
-
-  @Autowired
   private IUserService userService;
 
-  @Autowired
-  private IPdfGeneratorUtil pdfGeneratorUtil;
 
   @POST
   @Path(value = "/create-project")
@@ -87,18 +65,15 @@ public class ProjectController extends GcsUtil{
     @FormDataParam("gross_floor_area") Integer grossFloorArea,
     @FormDataParam("design_recognition") Boolean designRecognition
     ) {   
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-
-    String username = user.getId();
-    String role = group.getId();
-    Tenant tnt = userService.TenantFromUser(user);
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -120,17 +95,15 @@ public class ProjectController extends GcsUtil{
     variables.put("gross_floor_area", grossFloorArea);
     variables.put("design_recognition", designRecognition);
     variables.put("assignee", username);
-    variables.put("tenant", tnt.getId());
+    variables.put("tenant", user.getTenant().getId());
     variables.put("approved", null);
 
     ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("new-building-process", variables);
     ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
     String activityInstanceId = activityInstance.getId();
 
-    ProjectAttachment attachment = new ProjectAttachment();
-
     try {
-      attachment = SaveWithVersion(processInstance.getId(), activityInstanceId, file, fileFdcd, "proof_of_payment", username, role);
+      SaveWithVersion(processInstance.getId(), activityInstanceId, file, fileFdcd, "proof_of_payment", username, role);
 
     } catch (IOException e) {
       logger.error(e.getMessage());
@@ -144,7 +117,7 @@ public class ProjectController extends GcsUtil{
     taskService.complete(task.getId());
 
     task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
-    taskService.setVariable(task.getId(), "tenant", tnt.getId());
+    taskService.setVariable(task.getId(), "tenant", user.getTenant().getId());
     taskService.addCandidateGroup(task.getId(), "admin");
 
     Map<String, String> map = new HashMap<String, String>();
@@ -182,17 +155,15 @@ public class ProjectController extends GcsUtil{
     @FormDataParam("gross_floor_area") Integer grossFloorArea,
     @FormDataParam("design_recognition") Boolean designRecognition
     ) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "user not found");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    Group group = userService.GroupFromUser(user);
-    String username = user.getId();
-    String role = group.getId();
-    Tenant tnt = userService.TenantFromUser(user);
+    String username = user.getUsername();
+    String role = user.getGroup().getId();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
@@ -247,7 +218,7 @@ public class ProjectController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
 
-    taskService.setVariable(task.getId(), "tenant", tnt.getId());
+    taskService.setVariable(task.getId(), "tenant", user.getTenant().getId());
     taskService.claim(task.getId(), username);
     taskService.setAssignee(task.getId(), username);
     taskService.complete(task.getId());

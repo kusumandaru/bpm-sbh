@@ -3,13 +3,15 @@ package com.sbh.bpm.service;
 import java.util.Base64;
 
 import com.sbh.bpm.model.Group;
+import com.sbh.bpm.model.User;
+import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.repository.GroupRepository;
+import com.sbh.bpm.repository.UserRepository;
 
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.identity.Tenant;
-import org.camunda.bpm.engine.identity.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -27,11 +29,11 @@ public class UserService implements IUserService{
   @Autowired
   private GroupRepository groupRepository;
 
+  @Autowired
+  private UserRepository userRepository;
+
   @Override
   public User GetUserFromAuthorization(String authorization) {
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    IdentityService identityService = processEngine.getIdentityService();
-
     String[] token = authorization.split(" ");
     String[] chunks = token[1].split("\\.");
     Base64.Decoder decoder = Base64.getUrlDecoder();
@@ -44,9 +46,35 @@ public class UserService implements IUserService{
       logger.error(e.getMessage());
     }
 
-    User user = identityService.createUserQuery().userId(sub).singleResult();
-
+    User user = userRepository.findById(sub).get();
     return user;
+  }
+
+  @Override
+  public UserDetail GetCompleteUserFromAuthorization(String authorization) {
+    String[] token = authorization.split(" ");
+    String[] chunks = token[1].split("\\.");
+    Base64.Decoder decoder = Base64.getUrlDecoder();
+    String payload = new String(decoder.decode(chunks[1]));
+    String sub = "";
+    try {
+      JSONObject payloadJson = new JSONObject(payload);
+      sub = payloadJson.getString("sub");
+    } catch (JSONException e) {
+      logger.error(e.getMessage());
+    }
+
+    return GetUserDetailFromId(sub);
+  }
+
+  @Override
+  public UserDetail GetUserDetailFromId(String id) {
+    User user = userRepository.findById(id).get();
+    Tenant tenant = TenantFromUser(user);
+    Group group = GroupFromUser(user);
+
+    UserDetail userDetail = UserDetail.CreateFromUser(user, tenant, group);
+    return userDetail;
   }
 
   @Override
@@ -62,5 +90,10 @@ public class UserService implements IUserService{
   public Group GroupFromUser(User user) {
     Group group = groupRepository.getGroupByUserId(user.getId());
     return group;
+  }
+
+  @Override
+  public User Save(User user) {
+    return userRepository.save(user);
   }
 }

@@ -11,6 +11,7 @@ import com.sbh.bpm.controller.MasterProjectController;
 import com.sbh.bpm.controller.NewBuildingController;
 import com.sbh.bpm.controller.ProjectController;
 import com.sbh.bpm.controller.TaskController;
+import com.sbh.bpm.controller.UserController;
 
 import org.camunda.bpm.spring.boot.starter.rest.CamundaJerseyResourceConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -31,5 +32,6 @@ public class JerseyConfig extends CamundaJerseyResourceConfig {
     register(ProjectController.class);
     register(TaskController.class);
     register(DocumentBuildingController.class);
+    register(UserController.class);
   }
 }
