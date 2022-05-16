@@ -1,5 +1,7 @@
 package com.sbh.bpm.model;
 
+import javax.persistence.Column;
+
 import com.google.gson.annotations.SerializedName;
 
 import org.camunda.bpm.engine.identity.Tenant;
@@ -36,6 +38,12 @@ public class UserDetail {
   @SerializedName("avatar_url")
   private String avatarUrl;
 
+  @Getter
+  @Setter
+  @SerializedName("tenant_owner")
+  @Column(name="TENANT_OWNER_")
+  private Boolean tenantOwner;
+
   @Getter @Setter
   private Group group;
 
@@ -51,6 +59,7 @@ public class UserDetail {
     userDetail.setFullName(user.getFirstName() + " " + user.getLastName());
     userDetail.setActive(user.getActive());
     userDetail.setAvatarUrl(user.getAvatarUrl());
+    userDetail.setTenantOwner(user.getTenantOwner());
     userDetail.setTenant(tenant);
     userDetail.setGroup(group);
 

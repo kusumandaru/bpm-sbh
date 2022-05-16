@@ -51,7 +51,7 @@ public class AuthController {
         user.setId(userId);
 
         identityService.saveUser(user);
-        identityService.createMembership(user.getId(), "user");
+        identityService.createMembership(user.getId(), "superuser");
 
         TenantEntity tenant = new TenantEntity();
         tenant.setName(registerRequest.getTenantName());

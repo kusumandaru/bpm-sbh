@@ -1,5 +1,7 @@
 package com.sbh.bpm.service;
 
+import java.util.List;
+
 import com.sbh.bpm.model.Group;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
@@ -13,4 +15,6 @@ public interface IUserService {
   Tenant TenantFromUser(User user);
   Group GroupFromUser(User user);
   User Save(User user);
+  User findById(String userId);
+  List<User> findByTenantId(String tenantId);
 }

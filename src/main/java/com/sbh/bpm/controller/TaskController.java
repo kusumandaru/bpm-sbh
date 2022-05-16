@@ -23,12 +23,14 @@ import com.sbh.bpm.model.PaginationRequest;
 import com.sbh.bpm.model.PaginationResult;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.SbhTask;
+import com.sbh.bpm.model.Tenant;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IProvinceService;
+import com.sbh.bpm.service.ITenantService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.IUserService;
 
@@ -65,6 +67,9 @@ public class TaskController {
 
   @Autowired
   private IUserService userService;
+
+  @Autowired
+  private ITenantService tenantService;
 
   @GET
   @Path(value = "/tasks/admin")
@@ -147,7 +152,7 @@ public class TaskController {
     User user = userService.GetUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -179,6 +184,7 @@ public class TaskController {
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<Tenant> tenants = tenantService.findAll();
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
@@ -187,6 +193,9 @@ public class TaskController {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
       }
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
       sbhTasks.add(sbhTask);
     }
 
@@ -207,7 +216,7 @@ public class TaskController {
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -262,7 +271,7 @@ public class TaskController {
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -327,7 +336,7 @@ public class TaskController {
     User user = userService.GetUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -463,7 +472,7 @@ public class TaskController {
     User user = userService.GetUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }

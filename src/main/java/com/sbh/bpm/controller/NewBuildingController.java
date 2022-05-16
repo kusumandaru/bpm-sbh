@@ -79,7 +79,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -153,7 +153,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -217,7 +217,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -278,7 +278,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -343,7 +343,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -415,7 +415,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -478,7 +478,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -542,7 +542,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -599,7 +599,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -655,7 +655,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -711,7 +711,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -767,7 +767,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -826,7 +826,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -888,7 +888,7 @@ public class NewBuildingController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }

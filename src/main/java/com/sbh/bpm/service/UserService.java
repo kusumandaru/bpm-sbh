@@ -1,6 +1,7 @@
 package com.sbh.bpm.service;
 
 import java.util.Base64;
+import java.util.List;
 
 import com.sbh.bpm.model.Group;
 import com.sbh.bpm.model.User;
@@ -96,4 +97,15 @@ public class UserService implements IUserService{
   public User Save(User user) {
     return userRepository.save(user);
   }
+
+  @Override
+  public User findById(String userId) {
+    return userRepository.findById(userId).get();
+  }
+
+  @Override
+  public List<User> findByTenantId(String tenantId) {
+    return userRepository.findByTenantId(tenantId);
+  }
+
 }

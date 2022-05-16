@@ -16,7 +16,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.UserDetail;
+import com.sbh.bpm.service.IProjectUserService;
 import com.sbh.bpm.service.IUserService;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +41,9 @@ public class ProjectController extends GcsUtil{
 
   @Autowired
   private IUserService userService;
+
+  @Autowired
+  private IProjectUserService projectUserService;
 
 
   @POST
@@ -68,7 +73,7 @@ public class ProjectController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -120,6 +125,9 @@ public class ProjectController extends GcsUtil{
     taskService.setVariable(task.getId(), "tenant", user.getTenant().getId());
     taskService.addCandidateGroup(task.getId(), "admin");
 
+    ProjectUser projectUser = new ProjectUser(user.getUsername(), user.getTenant().getId(), processInstance.getId(), null, true);
+    projectUserService.save(projectUser);
+
     Map<String, String> map = new HashMap<String, String>();
     map.put("process_definition_id", processInstance.getProcessDefinitionId());
     map.put("case_instance_id", processInstance.getCaseInstanceId());
@@ -158,7 +166,7 @@ public class ProjectController extends GcsUtil{
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }

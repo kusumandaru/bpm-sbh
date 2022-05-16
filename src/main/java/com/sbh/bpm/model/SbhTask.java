@@ -63,6 +63,10 @@ public class SbhTask {
   @Getter @Setter
   private String tenantId;
 
+  @SerializedName("tenant_name")
+  @Getter @Setter
+  private String tenantName;
+
   @SerializedName("certification_type")
   @Getter @Setter
   @Column(name="certification_type")
