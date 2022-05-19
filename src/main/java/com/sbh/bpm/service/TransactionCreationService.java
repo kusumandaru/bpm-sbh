@@ -324,7 +324,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       map.put("message", ex.getMessage());
 
       return new TransactionCreationResponse(false, map);
-  }
+    }
 
     Map<String, String> resultMap = new HashMap<String, String>();
     resultMap.put("message", "FA transaction has been created");

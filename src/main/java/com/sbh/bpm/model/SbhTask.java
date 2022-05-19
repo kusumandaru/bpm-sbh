@@ -91,6 +91,10 @@ public class SbhTask {
   @Column(name="status")
   private String status;
 
+  @Getter @Setter
+  @Column(name="assigned")
+  private Boolean assigned;
+
   public static SbhTask CreateFromTask(Task cTask) {
     SbhTask sbhTask = new SbhTask();
     sbhTask.id = cTask.getId();

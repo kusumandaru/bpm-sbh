@@ -6,12 +6,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PATCH;
@@ -23,10 +25,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.service.IUserService;
+import com.sbh.bpm.service.ProjectUserService;
 
 import org.apache.commons.io.FilenameUtils;
 import org.camunda.bpm.engine.IdentityService;
@@ -49,6 +53,9 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IdentityService identityService;
+
+  @Autowired
+  private ProjectUserService projectUserService;
 
   @GET
   @Path(value = "/profile")
@@ -282,4 +289,76 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
   
+  @GET
+  @Path(value = "/tenant_project_users")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetTenantProjectUser(
+    @HeaderParam("Authorization") String authorization
+    ) {
+      UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectUser> projectUsers = projectUserService.findByTenantId(user.getTenant().getId());
+
+      String json = new Gson().toJson(projectUsers);
+      return Response.status(200).entity(json).build();
+    }
+
+
+  @GET
+  @Path(value = "/project_users/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectUserByUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectUser> projectUsers = projectUserService.findByUserId(userId);
+
+      String json = new Gson().toJson(projectUsers);
+      return Response.status(200).entity(json).build();
+    }
+
+  @PATCH
+  @Path(value = "/project_users/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response SaveProjectUserByUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId,
+    @FormParam("project_ids") String projectIds
+    ) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectUser> projectUsers = new ArrayList<ProjectUser>();
+      try {
+        projectUsers = projectUserService.assignProjectUsers(userDetail, userId, projectIds);
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", e.getMessage());
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      String json = new Gson().toJson(projectUsers);
+      return Response.status(200).entity(json).build();
+    }
 }
