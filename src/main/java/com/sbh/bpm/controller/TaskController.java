@@ -21,14 +21,18 @@ import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.PaginationRequest;
 import com.sbh.bpm.model.PaginationResult;
+import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.SbhTask;
+import com.sbh.bpm.model.Tenant;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IProjectUserService;
 import com.sbh.bpm.service.IProvinceService;
+import com.sbh.bpm.service.ITenantService;
 import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.IUserService;
 
@@ -65,6 +69,12 @@ public class TaskController {
 
   @Autowired
   private IUserService userService;
+
+  @Autowired
+  private ITenantService tenantService;
+
+  @Autowired
+  private IProjectUserService projectUserService;
 
   @GET
   @Path(value = "/tasks/admin")
@@ -135,6 +145,50 @@ public class TaskController {
     return Response.ok(json).build();
   }
 
+  @GET
+  @Path(value = "/tasks/tenant/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response TenantTasks(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId
+    ) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    taskQuery = taskQuery.processVariableValueEquals("tenant", user.getTenant().getId());
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+    List<Task> tasks = taskQuery.list();
+
+    List<ProjectUser> projectUsers = projectUserService.findByUserId(userId);
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      final SbhTask innerTask = sbhTask;
+      Boolean assigned = projectUsers.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
+      sbhTask.setAssigned(assigned);
+      
+      sbhTasks.add(sbhTask);
+    }
+    String json = new Gson().toJson(sbhTasks);
+    return Response.ok(json).build();
+  }
+
   @POST
   @Path(value = "/tasks/admin/pagi")
   @Produces(MediaType.APPLICATION_JSON)
@@ -147,7 +201,7 @@ public class TaskController {
     User user = userService.GetUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -179,6 +233,7 @@ public class TaskController {
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<Tenant> tenants = tenantService.findAll();
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
@@ -187,6 +242,9 @@ public class TaskController {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
       }
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
       sbhTasks.add(sbhTask);
     }
 
@@ -201,16 +259,18 @@ public class TaskController {
   @Consumes(MediaType.APPLICATION_JSON)
   public Response ClientPaginationTasks(@HeaderParam("Authorization") String authorization,
                                   PaginationRequest pagiRequest) {
-    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-    TaskService taskService = processEngine.getTaskService();
-
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
+
+    List<ProjectUser> projectUsers = projectUserService.findByUserId(user.getUsername());
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
 
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
     TaskQuery taskQuery = taskService.createTaskQuery();
@@ -246,6 +306,9 @@ public class TaskController {
       if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
+        final SbhTask innerTask = sbhTask;
+        Boolean assigned = projectUsers.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
+        sbhTask.setAssigned(assigned);
       }
       sbhTasks.add(sbhTask);
     }
@@ -262,10 +325,11 @@ public class TaskController {
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
+    
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -279,6 +343,15 @@ public class TaskController {
       logger.error(e.getMessage());
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "Project not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    List<ProjectUser> projectUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getUsername(), task.getProcessInstanceId());
+    if (projectUsers.size() <= 0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "User not assigned or owned these project");
       String json = new Gson().toJson(map);
 
       return Response.status(400).entity(json).build();
@@ -327,7 +400,7 @@ public class TaskController {
     User user = userService.GetUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
@@ -463,7 +536,7 @@ public class TaskController {
     User user = userService.GetUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "user not found");
+      map.put("message", "login expired, please logout and relogin");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }

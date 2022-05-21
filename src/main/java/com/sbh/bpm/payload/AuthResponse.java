@@ -22,4 +22,8 @@ public class AuthResponse {
         userData.setRoles(roles);
         this.userData = userData;
     }
+
+    public AuthResponse() {
+        
+    }
 }

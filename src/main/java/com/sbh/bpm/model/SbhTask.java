@@ -63,6 +63,10 @@ public class SbhTask {
   @Getter @Setter
   private String tenantId;
 
+  @SerializedName("tenant_name")
+  @Getter @Setter
+  private String tenantName;
+
   @SerializedName("certification_type")
   @Getter @Setter
   @Column(name="certification_type")
@@ -86,6 +90,10 @@ public class SbhTask {
   @Getter @Setter
   @Column(name="status")
   private String status;
+
+  @Getter @Setter
+  @Column(name="assigned")
+  private Boolean assigned;
 
   public static SbhTask CreateFromTask(Task cTask) {
     SbhTask sbhTask = new SbhTask();

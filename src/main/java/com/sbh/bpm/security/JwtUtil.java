@@ -8,6 +8,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.sbh.bpm.exception.BadRequestException;
+import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.service.IUserService;
@@ -34,7 +35,12 @@ public class JwtUtil {
     @Value(value = "${JWT.expiryDuration}")
     private int jwtExpirationInMs;
 
-    public AuthResponse generateToken(String username, String password) {
+    public AuthResponse generateToken(String email, String password) {
+        User u = userService.FindByEmail(email);
+        if (u == null) {
+            throw new BadRequestException("Email or password is invalid");
+        }
+        String username = u.getId();
         if(isAuthenticated(username, password)) {
             try {
                 Algorithm algorithm = Algorithm.HMAC256(secret);

@@ -54,6 +54,12 @@ public class User {
   @Column(name="AVATAR_URL_")
   private String avatarUrl;
 
+  @Getter
+  @Setter
+  @SerializedName("tenant_owner")
+  @Column(name="TENANT_OWNER_")
+  private Boolean tenantOwner;
+
   public User() {
   }
 
