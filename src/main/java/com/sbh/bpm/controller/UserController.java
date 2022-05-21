@@ -238,7 +238,7 @@ public class UserController extends GcsUtil{
       identityService.saveUser(userEntity);
       identityService.createMembership(userEntity.getId(), registerRequest.getGroupId());
 
-      if (!registerRequest.getTenantId().isEmpty()) {
+      if (registerRequest.getTenantId() != null) {
         identityService.createTenantUserMembership(registerRequest.getTenantId(), userEntity.getId());
       }
       
