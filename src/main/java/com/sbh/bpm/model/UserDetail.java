@@ -50,6 +50,16 @@ public class UserDetail {
   @Getter @Setter
   private Tenant tenant;
 
+  @Getter
+  @Setter
+  @SerializedName("group_id")
+  private String groupId;
+
+  @Getter
+  @Setter
+  @SerializedName("tenant_id")
+  private String tenantId;
+
   public static UserDetail CreateFromUser(User user, Tenant tenant, Group group) {
     UserDetail userDetail = new UserDetail();
     userDetail.setUsername(user.getId());
@@ -62,6 +72,12 @@ public class UserDetail {
     userDetail.setTenantOwner(user.getTenantOwner());
     userDetail.setTenant(tenant);
     userDetail.setGroup(group);
+    if (group != null) {
+      userDetail.setGroupId(group.getId());
+    }
+    if (tenant != null) {
+      userDetail.setTenantId(tenant.getId());
+    }
 
     return userDetail;
   }

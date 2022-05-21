@@ -10,11 +10,15 @@ import org.camunda.bpm.engine.identity.Tenant;
 
 public interface IUserService {
   User GetUserFromAuthorization(String authorization);
+  User FindByEmail(String email);
   UserDetail GetCompleteUserFromAuthorization(String authorization);
   UserDetail GetUserDetailFromId(String id);
   Tenant TenantFromUser(User user);
   Group GroupFromUser(User user);
   User Save(User user);
   User findById(String userId);
+  UserDetail findByIdDetail(String userId);
   List<User> findByTenantId(String tenantId);
+  List<User> findAll();
+  List<UserDetail> findAllDetail();
 }

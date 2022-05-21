@@ -33,7 +33,7 @@ public class AuthController {
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<AuthResponse> credentials(@RequestBody AuthRequest loginRequest) {
-        AuthResponse response = jwtUtil.generateToken(loginRequest.getUsername(), loginRequest.getPassword());
+        AuthResponse response = jwtUtil.generateToken(loginRequest.getEmail(), loginRequest.getPassword());
         return ResponseEntity.ok(response);
     }
 
@@ -60,7 +60,7 @@ public class AuthController {
 
         identityService.createTenantUserMembership(tenantId, user.getId());
         
-        AuthResponse response = jwtUtil.generateToken(userId, registerRequest.getPassword());
+        AuthResponse response = jwtUtil.generateToken(user.getEmail(), registerRequest.getPassword());
         return ResponseEntity.ok(response);
     }
 }

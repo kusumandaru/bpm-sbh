@@ -2,6 +2,7 @@ package com.sbh.bpm.service;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.sbh.bpm.model.Group;
 import com.sbh.bpm.model.User;
@@ -106,6 +107,30 @@ public class UserService implements IUserService{
   @Override
   public List<User> findByTenantId(String tenantId) {
     return userRepository.findByTenantId(tenantId);
+  }
+
+  @Override
+  public List<User> findAll() {
+    return (List<User>) userRepository.findAll();
+  }
+
+  @Override
+  public List<UserDetail> findAllDetail() {
+    List<User> users = findAll();
+    List<UserDetail> userDetails = users.stream().map(user -> GetUserDetailFromId(user.getId())).collect(Collectors.toList());
+
+    return userDetails;
+  }
+
+  @Override
+  public UserDetail findByIdDetail(String userId) {
+    User user = findById(userId);
+    return GetUserDetailFromId(user.getId());
+  }
+
+  @Override
+  public User FindByEmail(String email) {
+    return userRepository.findByEmail(email);
   }
 
 }
