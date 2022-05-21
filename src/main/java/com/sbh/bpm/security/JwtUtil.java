@@ -37,6 +37,9 @@ public class JwtUtil {
 
     public AuthResponse generateToken(String email, String password) {
         User u = userService.FindByEmail(email);
+        if (u == null) {
+            throw new BadRequestException("Email or password is invalid");
+        }
         String username = u.getId();
         if(isAuthenticated(username, password)) {
             try {

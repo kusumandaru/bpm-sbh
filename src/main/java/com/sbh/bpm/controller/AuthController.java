@@ -14,6 +14,7 @@ import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.impl.persistence.entity.TenantEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,7 +34,12 @@ public class AuthController {
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<AuthResponse> credentials(@RequestBody AuthRequest loginRequest) {
-        AuthResponse response = jwtUtil.generateToken(loginRequest.getEmail(), loginRequest.getPassword());
+        AuthResponse response = new AuthResponse();
+        try {
+            response = jwtUtil.generateToken(loginRequest.getEmail(), loginRequest.getPassword());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
         return ResponseEntity.ok(response);
     }
 
