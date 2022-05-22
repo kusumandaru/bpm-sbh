@@ -227,6 +227,14 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
+      User existingUser = userService.FindByEmail(registerRequest.getEmail());
+      if (existingUser != null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Email already taken");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
       UserEntity userEntity = new UserEntity();
       userEntity.setEmail(registerRequest.getEmail());
       userEntity.setPassword(registerRequest.getPassword());
@@ -337,6 +345,14 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
+      User existingUser = userService.FindByEmail(user.getEmail());
+      if (existingUser != null && !existingUser.getEmail().equals(user.getEmail())) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Email already taken");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
       user.setActive(u.getActive());
       user.setEmail(u.getEmail());
       user.setFirstName(u.getFirstName());
@@ -394,6 +410,14 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
+      User existingUser = userService.FindByEmail(registerRequest.getEmail());
+      if (existingUser != null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Email already taken");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
       UserEntity userEntity = new UserEntity();
       userEntity.setEmail(registerRequest.getEmail());
       userEntity.setPassword(registerRequest.getPassword());
@@ -436,6 +460,14 @@ public class UserController extends GcsUtil{
       if (user == null || !tenant.getId().equals(userDetail.getTenant().getId())) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "selected user not valid");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      User existingUser = userService.FindByEmail(user.getEmail());
+      if (existingUser != null && !existingUser.getEmail().equals(user.getEmail())) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Email already taken");
         String json = new Gson().toJson(map);
         return Response.status(400).entity(json).build();
       }
@@ -572,24 +604,24 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
   
-    @GET
-    @Path(value = "/tenants")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response GetTenants(
-      @HeaderParam("Authorization") String authorization
-      ) {
-        User user = userService.GetUserFromAuthorization(authorization);
-        if (user == null) {
-          Map<String, String> map = new HashMap<String, String>();
-          map.put("message", "login expired, please logout and relogin");
-          String json = new Gson().toJson(map);
-          return Response.status(400).entity(json).build();
-        }
-  
-        ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-  
-        List<Tenant> tenants = processEngine.getIdentityService().createTenantQuery().list();
-        String json = new Gson().toJson(tenants);
-        return Response.status(200).entity(json).build();
+  @GET
+  @Path(value = "/tenants")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetTenants(
+    @HeaderParam("Authorization") String authorization
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
       }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+
+      List<Tenant> tenants = processEngine.getIdentityService().createTenantQuery().list();
+      String json = new Gson().toJson(tenants);
+      return Response.status(200).entity(json).build();
+    }
 }
