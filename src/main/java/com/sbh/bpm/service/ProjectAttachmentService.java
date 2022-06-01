@@ -14,6 +14,9 @@ public class ProjectAttachmentService implements IProjectAttachmentService {
   @Autowired
   private ProjectAttachmentRepository repository;
 
+  @Autowired
+  private IGoogleCloudStorage cloudStorage;
+
   @Override
   public List<ProjectAttachment> findAll() {
     return (List<ProjectAttachment>) repository.findAll();
@@ -59,13 +62,13 @@ public class ProjectAttachmentService implements IProjectAttachmentService {
   }
 
   @Override
-  public boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId) {
+  public boolean deleteById(Integer attachmentId) {
     ProjectAttachment attachment = findById(attachmentId);
 
     String attachmentLink = attachment.getLink();
-    Blob blob = googleCloudStorage.GetBlobByName(attachmentLink);
+    Blob blob = cloudStorage.GetBlobByName(attachmentLink);
     if (blob != null) {
-      googleCloudStorage.DeleteBlob(blob);
+      cloudStorage.DeleteBlob(blob);
     }
 
     repository.deleteById(attachmentId);

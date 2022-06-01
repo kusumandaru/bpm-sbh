@@ -38,7 +38,6 @@ import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.MasterAdmin;
 import com.sbh.bpm.model.Province;
-import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMasterAdminService;
@@ -371,19 +370,11 @@ public class MasterController extends GcsUtil{
   public Response GetRegisteredProjectAttachment(@HeaderParam("Authorization") String authorization) { 
     Map<String, Object> variableMap = masterAdminService.getVariableMap();
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Blob>> listOfCallable = Arrays.asList(
-                () -> GetBlobDirect(googleCloudStorage, variableMap, "admin", "first_attachment"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, "admin", "second_attachment"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, "admin", "third_attachment")
+                () -> GetBlobDirect(variableMap, "admin", "first_attachment"),
+                () -> GetBlobDirect(variableMap, "admin", "second_attachment"),
+                () -> GetBlobDirect(variableMap, "admin", "third_attachment")
                 );
 
     FileOutputStream fos;

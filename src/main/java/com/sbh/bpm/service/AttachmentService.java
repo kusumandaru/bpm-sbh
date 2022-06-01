@@ -1,5 +1,6 @@
 package com.sbh.bpm.service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -7,13 +8,20 @@ import com.google.cloud.storage.Blob;
 import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.repository.AttachmentRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AttachmentService implements IAttachmentService {
+  private static final Logger logger = LoggerFactory.getLogger(AttachmentService.class);
+
   @Autowired
   private AttachmentRepository repository;
+
+  @Autowired
+  private IGoogleCloudStorage cloudStorage;
 
   @Override
   public List<Attachment> findAll() {
@@ -46,16 +54,22 @@ public class AttachmentService implements IAttachmentService {
   }
 
   @Override
-  public boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId) {
+  public boolean deleteById( Integer attachmentId) {
     Attachment attachment = findById(attachmentId);
     if (!Objects.isNull(attachment.getSubmittedAt())) {
       return false;
     }
     
     String attachmentLink = attachment.getLink();
-    Blob blob = googleCloudStorage.GetBlobByName(attachmentLink);
+    
+    try {
+      cloudStorage.InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+    Blob blob = cloudStorage.GetBlobByName(attachmentLink);
     if (blob != null) {
-      googleCloudStorage.DeleteBlob(blob);
+      cloudStorage.DeleteBlob(blob);
     }
 
     repository.deleteById(attachmentId);

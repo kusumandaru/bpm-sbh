@@ -17,10 +17,13 @@ spring.jpa.properties.hibernate.jdbc.batch_size: 20
 spring.jpa.properties.hibernate.order_updates: true
 
 gcs:
-  bucket: bpm_sbh
-  project: bpm_sbh
-  json: bpm_sbh.json
-
+  bucket: bpm-sbh
+  project: bpm-sbh
+  json-file: bpm-sbh.json
+  client-account: sbh@bpm.iam.gserviceaccount.com
+  private-key: -----BEGIN PRIVATE KEY-----\x==\n-----END PRIVATE KEY-----\n
+  url: https://storage.googleapis.com
+  
 camunda.bpm:
   admin-user:
     id: admin

@@ -13,35 +13,36 @@ import javax.ws.rs.core.Response;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
-import com.sbh.bpm.service.GoogleCloudStorage;
+import com.sbh.bpm.service.IGoogleCloudStorage;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/gcs")
 public class GoogleCloudStorageController {
   private static final Logger logger = LoggerFactory.getLogger(GoogleCloudStorageController.class);
+
+  @Autowired
+  private IGoogleCloudStorage cloudStorage;
 
   @POST
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   @Produces(MediaType.APPLICATION_JSON)
   @Path(value = "/read")
 	public Response ReadGcsFile(@FormParam("file_name") String fileName) {    
-    GoogleCloudStorage googleCloudStorage;
+    // Get it by blob name
     try {
-      googleCloudStorage = new GoogleCloudStorage();
+      cloudStorage.InitCloudStorage();
     } catch (IOException e) {
       logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
     }
+    Blob blob = cloudStorage.GetBlobByName(fileName);
 
-    // Get it by blob name
-    Blob blob = googleCloudStorage.GetBlobByName(fileName);
-
-    googleCloudStorage.SetGcsSignUrl(blob);
-    String publicUrl = googleCloudStorage.GetSignedUrl();
+    cloudStorage.SetGcsSignUrl(blob);
+    String publicUrl = cloudStorage.GetSignedUrl();
     // String json = new Gson().toJson(value);
     return Response.ok(publicUrl).build();
 	}
@@ -51,15 +52,12 @@ public class GoogleCloudStorageController {
   @Produces(MediaType.APPLICATION_JSON)
   @Path(value = "/write")
 	public Response WriteGcsFile(@FormDataParam("file") InputStream file, @FormDataParam("file") FormDataContentDisposition fileFdcd) {    
-    GoogleCloudStorage googleCloudStorage;
     try {
-      googleCloudStorage = new GoogleCloudStorage();
+      cloudStorage.InitCloudStorage();
     } catch (IOException e) {
       logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
     }
-
-    BlobId blobId = googleCloudStorage.SaveObject("general", fileFdcd.getFileName(), file);
+    BlobId blobId = cloudStorage.SaveObject("general", fileFdcd.getFileName(), file);
     return Response.ok(blobId).build();
 	}
 }

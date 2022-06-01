@@ -41,9 +41,9 @@ import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.UserDetail;
-import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICityService;
+import com.sbh.bpm.service.IGoogleCloudStorage;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
@@ -105,6 +105,9 @@ public class FileController extends GcsUtil{
   @Autowired
   private IUserService userService;
 
+  @Autowired
+  private IGoogleCloudStorage cloudStorage;
+
   @Deprecated
   @GET
   @Path(value = "/archived_files/{taskId}")
@@ -128,24 +131,17 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
 
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Blob>> listOfCallable = Arrays.asList(
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "proof_of_payment"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "building_plan"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "rt_rw"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "upl_ukl"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "earthquake_resistance"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "disability_friendly"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "safety_and_fire_requirement"),
-                () -> GetBlobDirect(googleCloudStorage, variableMap, processInstanceId, "study_case_readiness")
+                () -> GetBlobDirect(variableMap, processInstanceId, "proof_of_payment"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "building_plan"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "rt_rw"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "upl_ukl"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "earthquake_resistance"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "disability_friendly"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "safety_and_fire_requirement"),
+                () -> GetBlobDirect(variableMap, processInstanceId, "study_case_readiness")
                 );
 
     FileOutputStream fos;
@@ -295,14 +291,6 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-
     String fileType = "eligibility_statement";
     String fileName = "eligibility_statement.pdf";
 
@@ -312,8 +300,8 @@ public class FileController extends GcsUtil{
 
     if (attachment != null) {
       try {
-        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
-        bytes = googleCloudStorage.getContent(blob.getBlobId());
+        Blob blob = GetBlob(attachment.getLink());
+        bytes = cloudStorage.GetContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
         return Response.status(404, e.getMessage()).build();
@@ -406,14 +394,6 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-
     String fileType = "design_recognition_statement";
     String fileName = "design_recognition_statement.pdf";
 
@@ -422,8 +402,8 @@ public class FileController extends GcsUtil{
     byte[] bytes;
     if (attachment != null) {
       try {
-        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
-        bytes = googleCloudStorage.getContent(blob.getBlobId());
+        Blob blob = GetBlob(attachment.getLink());
+        bytes = cloudStorage.GetContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
         return Response.status(404, e.getMessage()).build();
@@ -525,14 +505,6 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-    
     String fileType = "design_recognition_result";
     String fileName = "design_recognition_result.pdf";
 
@@ -541,8 +513,8 @@ public class FileController extends GcsUtil{
     byte[] bytes;
     if (attachment != null) {
       try {
-        Blob blob = GetBlob(googleCloudStorage, attachment.getLink());
-        bytes = googleCloudStorage.getContent(blob.getBlobId());
+        Blob blob = GetBlob(attachment.getLink());
+        bytes = cloudStorage.GetContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
         return Response.status(404, e.getMessage()).build();
@@ -825,20 +797,12 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-
     List<ProjectAttachment> projectAttachments = projectAttachmentService.findByProcessInstanceID(processInstanceId);
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
 
     for (ProjectAttachment projectAttachment : projectAttachments) {
-      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(googleCloudStorage, projectAttachment.getLink()), projectAttachment.getFileType()));
+      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(projectAttachment.getLink()), projectAttachment.getFileType()));
     }
 
     FileOutputStream fos;
@@ -932,19 +896,11 @@ public class FileController extends GcsUtil{
 
     List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplateId);
 
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-    
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
 
     for (Attachment attachment : attachments) {
-      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(googleCloudStorage, attachment.getLink()), attachment.getCriteriaCode()));
+      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(attachment.getLink()), attachment.getCriteriaCode()));
     }
 
     FileOutputStream fos;
