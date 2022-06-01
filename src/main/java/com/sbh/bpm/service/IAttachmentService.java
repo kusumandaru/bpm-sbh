@@ -12,7 +12,7 @@ public interface IAttachmentService {
   Iterable<Attachment> saveAll(List<Attachment> attachments);
   List<Attachment> findByDocumentFileID(Integer documentFileId);
   List<Attachment> findByDocumentFileIDIn(List<Integer> documentFileIds);
-  boolean deleteById(GoogleCloudStorage googleCloudStorage, Integer attachmentId);
+  boolean deleteById(Integer attachmentId);
   boolean existsAttachmentByFilenameAndDocumentFileID(String fileName, Integer documentId);
   List<Attachment> findByProcessInstanceIdAndMasterTemplateId(String processInstanceId, Integer masterTemplateId);
   List<Attachment> findByProcessInstanceIdAndAssessmentType(String processInstanceID, String assessmentType);

@@ -10,7 +10,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.User;
-import com.sbh.bpm.service.GoogleCloudStorage;
+import com.sbh.bpm.service.IGoogleCloudStorage;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IUserService;
 
@@ -28,7 +28,10 @@ class GcsUtil {
 
   @Autowired
   private IUserService userService;
-  
+
+  @Autowired
+  private IGoogleCloudStorage cloudStorage;
+
   protected Pair<String, String> UploadToGcs(
     String directory,
     InputStream file, 
@@ -39,10 +42,7 @@ class GcsUtil {
       String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
       String fileName = alias + "." + ext;
 
-      GoogleCloudStorage googleCloudStorage;
-      googleCloudStorage = new GoogleCloudStorage();
-
-      googleCloudStorage.SaveObject(directory, fileName, file);
+      cloudStorage.SaveObject(directory, fileName, file);
 
       Pair<String, String> variables = new ImmutablePair<>(alias, fileName);
       return variables;
@@ -63,10 +63,7 @@ class GcsUtil {
       String ext = FilenameUtils.getExtension(fileFdcd.getFileName());
       String fileName = alias + "." + ext;
 
-      GoogleCloudStorage googleCloudStorage;
-      googleCloudStorage = new GoogleCloudStorage();
-
-      BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, fileName, file);
+      BlobId blobId = cloudStorage.SaveObject(activityInstanceId, fileName, file);
       runtimeService.setVariable(processInstanceId, alias, fileName);
 
       Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
@@ -82,10 +79,7 @@ class GcsUtil {
     String filename
   ) throws IOException {
     if (filename != null) {
-      GoogleCloudStorage googleCloudStorage;
-      googleCloudStorage = new GoogleCloudStorage();
-
-      BlobId blobId = googleCloudStorage.SaveObject(directory, filename, file);
+      BlobId blobId = cloudStorage.SaveObject(directory, filename, file);
 
       return blobId;
     } else {
@@ -103,10 +97,7 @@ class GcsUtil {
       if (bytes != null  && bytes.length > 0) {
         String fileName = alias + "." + ext;
   
-        GoogleCloudStorage googleCloudStorage;
-        googleCloudStorage = new GoogleCloudStorage();
-  
-        BlobId blobId = googleCloudStorage.SaveObject(activityInstanceId, fileName, bytes);
+        BlobId blobId = cloudStorage.SaveObject(activityInstanceId, fileName, bytes);
         runtimeService.setVariable(processInstanceId, alias, fileName);
   
         Pair<String, BlobId> variables = new ImmutablePair<>(alias, blobId);
@@ -119,17 +110,14 @@ class GcsUtil {
   protected Pair<String, String> GetUrlGcs(Map<String, Object> variableMap, String directory, String filename) throws IOException {
     // Get it by blob name
     if (variableMap.get(filename) != null) {
-      GoogleCloudStorage googleCloudStorage;
-      googleCloudStorage = new GoogleCloudStorage();
-
-      Blob blob = GetBlob(googleCloudStorage, variableMap, directory, filename);
+      Blob blob = GetBlob(variableMap, directory, filename);
       if (blob == null) {
-        blob = GetBlob(googleCloudStorage, variableMap, filename);
+        blob = GetBlob(variableMap, filename);
       }
   
       if (blob != null) {
-        googleCloudStorage.SetGcsSignUrl(blob);
-        String publicUrl = googleCloudStorage.GetSignedUrl();
+        cloudStorage.SetGcsSignUrl(blob);
+        String publicUrl = cloudStorage.GetSignedUrl();
         Pair<String, String> variables = new ImmutablePair<>(filename, publicUrl);
         return variables;
       }
@@ -140,45 +128,42 @@ class GcsUtil {
 
   protected String GetUrlGcs (String pathname) throws IOException {
     // Get it by blob name
-    GoogleCloudStorage googleCloudStorage;
-    googleCloudStorage = new GoogleCloudStorage();
-
-    Blob blob = GetBlob(googleCloudStorage, pathname);
+    Blob blob = GetBlob(pathname);
 
     if (blob != null) {
-      googleCloudStorage.SetGcsSignUrl(blob);
-      String publicUrl = googleCloudStorage.GetSignedUrl();
+      cloudStorage.SetGcsSignUrl(blob);
+      String publicUrl = cloudStorage.GetSignedUrl();
       return publicUrl;
     }
   
     return null;
   }
 
-  protected Blob GetBlobDirect(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String directory, String filename) {
-    Blob blob = GetBlob(googleCloudStorage, variableMap, directory, filename);
+  protected Blob GetBlobDirect(Map<String, Object> variableMap, String directory, String filename) {
+    Blob blob = GetBlob(variableMap, directory, filename);
     if (blob == null) {
-      blob = GetBlob(googleCloudStorage, variableMap, filename);
+      blob = GetBlob(variableMap, filename);
     }
 
     return blob;
   }
 
-  protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String directory, String filename) {
+  protected Blob GetBlob(Map<String, Object> variableMap, String directory, String filename) {
     String path = String.valueOf(variableMap.get(filename));
-    return googleCloudStorage.GetBlobByName(directory + "/" + path);
+    return cloudStorage.GetBlobByName(directory + "/" + path);
   } 
 
-  protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, Map<String, Object> variableMap, String filename) {
+  protected Blob GetBlob(Map<String, Object> variableMap, String filename) {
     String path = String.valueOf(variableMap.get(filename));
-    return googleCloudStorage.GetBlobByName(path);
+    return cloudStorage.GetBlobByName(path);
   }
 
-  protected Blob GetBlob(GoogleCloudStorage googleCloudStorage, String pathname) {
-    return googleCloudStorage.GetBlobByName(pathname);
+  protected Blob GetBlob(String pathname) {
+    return cloudStorage.GetBlobByName(pathname);
   }
 
-  protected boolean DeleteBlob(GoogleCloudStorage googleCloudStorage, Blob blob) {
-    return googleCloudStorage.DeleteBlob(blob);
+  protected boolean DeleteBlob(Blob blob) {
+    return cloudStorage.DeleteBlob(blob);
   }
 
   protected ProjectAttachment SaveWithVersion(String processInstanceId, String activityInstanceId, 

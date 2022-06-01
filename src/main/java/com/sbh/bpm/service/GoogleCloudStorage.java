@@ -23,26 +23,41 @@ import com.google.common.io.Resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
-public class GoogleCloudStorage {
+@Service
+public class GoogleCloudStorage implements IGoogleCloudStorage {
   private static final Logger logger = LoggerFactory.getLogger(GoogleCloudStorage.class);
+  
+  @Value("${gcs.json-file}")
+  String gcsJsonFile;
 
+  @Value("${gcs.project}")
+  String gcsProject;
+
+  @Value("${gcs.bucket}")
+  String bucketName;
+  
   private Storage storage;
   private Bucket bucket;
-  private GCSSignUrl gcsSignUrl;
 
-  public GoogleCloudStorage() throws IOException{
+  @Autowired
+  private IGCSSignUrl gcsSignUrl;
+
+  public void InitCloudStorage() throws IOException{
     // Use this variation to read the Google authorization JSON from the resources directory with a path
     // and a project name.
     try {
-      URL url = Resources.getResource("bpm-sbh.json");
-      initGoogleCloudStorage(url.getPath(), "bpm_sbh");
+      URL url = Resources.getResource(gcsJsonFile);
+      initGoogleCloudStorage(url.getPath(), gcsProject);
     } catch (IOException e) {
       logger.error(e.getMessage());
     }
   
     // Bucket require globally unique names, so you'll probably need to change this
-    bucket = getBucket("bpm-sbh");
+    bucket = getBucket(bucketName);
   }
   
   
@@ -53,7 +68,7 @@ public class GoogleCloudStorage {
   }
   
   // Check for bucket existence and create if needed.
-  public Bucket getBucket(String bucketName) {
+  private Bucket getBucket(String bucketName) {
       bucket = storage.get(bucketName);
       if (bucket == null) {
           System.out.println("Creating new bucket.");
@@ -66,6 +81,7 @@ public class GoogleCloudStorage {
   public BlobId SaveObject(String directory, String blobName, InputStream stream) {
     byte[] targetArray = new byte[0];
     try {
+      InitCloudStorage();
       targetArray = ByteStreams.toByteArray(stream);
     } catch (IOException e) {
       logger.error(e.getMessage());
@@ -76,18 +92,33 @@ public class GoogleCloudStorage {
 
   // Save a byte array to a blob
   public BlobId SaveObject(String directory, String blobName, byte[] targetArray) {
+    try {
+      InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
     Blob blob = bucket.create(directory + "/" + blobName, targetArray);
     return blob.getBlobId();
   }
   
   // get a blob by id
-  public byte[] getContent(BlobId blobId) {
+  public byte[] GetContent(BlobId blobId) {
+    try {
+      InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
     Blob blob = storage.get(blobId);
     return blob.getContent();
   }
   
   // get a blob by name
   public Blob GetBlobByName(String name) {
+    try {
+      InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
     Page<Blob> blobs = bucket.list();
     for (Blob blob: blobs.getValues()) {
         if (name.equals(blob.getName())) {
@@ -102,12 +133,9 @@ public class GoogleCloudStorage {
     return blob.delete(BlobSourceOption.generationMatch());
   }
 
-  public GCSSignUrl SetGcsSignUrl(Blob blob) {
-    gcsSignUrl = new GCSSignUrl();
+  public void SetGcsSignUrl(Blob blob) {
     gcsSignUrl.SetBucket(blob.getBucket());
     gcsSignUrl.SetBlobName(blob.getName());
-
-    return gcsSignUrl;
   }
 
   public String GetSignedUrl() {
@@ -116,6 +144,11 @@ public class GoogleCloudStorage {
   
   // Update a blob
   public void UpdateObject(BlobId blobId, byte[] object) throws IOException {
+    try {
+      InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
     Blob blob = storage.get(blobId);
     if (blob != null) {
         WritableByteChannel channel = blob.writer();

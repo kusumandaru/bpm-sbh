@@ -37,7 +37,6 @@ import com.sbh.bpm.model.ProjectAssessment;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
-import com.sbh.bpm.service.GoogleCloudStorage;
 import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICommentService;
 import com.sbh.bpm.service.ICriteriaScoringService;
@@ -118,7 +117,7 @@ public class AssessmentController extends GcsUtil {
 
   @Autowired
   private IUserService userService;
- 
+
   @POST
   @Path(value = "/design_recognition")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -1365,14 +1364,7 @@ public class AssessmentController extends GcsUtil {
     @PathParam("attachmentId") Integer attachmentId
 
   ) {
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-    boolean status = attachmentService.deleteById(googleCloudStorage, attachmentId);
+    boolean status = attachmentService.deleteById(attachmentId);
     return Response.status(status ? 200 : 400).build();
   }
 
@@ -1637,14 +1629,7 @@ public class AssessmentController extends GcsUtil {
     @PathParam("attachment_id") Integer attachmentId
 
   ) {
-    GoogleCloudStorage googleCloudStorage;
-    try {
-      googleCloudStorage = new GoogleCloudStorage();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-    boolean status = projectAttachmentService.deleteById(googleCloudStorage, attachmentId);
+    boolean status = projectAttachmentService.deleteById(attachmentId);
     return Response.status(status ? 200 : 400).build();
   }
 
