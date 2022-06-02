@@ -32,6 +32,7 @@ import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.RegisterClientRequest;
 import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.service.IUserService;
+import com.sbh.bpm.service.PasswordValidator;
 import com.sbh.bpm.service.ProjectUserService;
 
 import org.apache.commons.io.FilenameUtils;
@@ -104,6 +105,55 @@ public class UserController extends GcsUtil{
     String json = new Gson().toJson(user);
     return Response.status(200).entity(json).build();
   }
+
+  @PATCH
+  @Path(value = "/profile/password")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response PasswordUpdate(
+    @HeaderParam("Authorization") String authorization,
+    @FormParam("new_password") String newPassword,
+    @FormParam("current_password") String currentPassword) {
+      if (newPassword.equals(currentPassword)) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "new password and recent password must be different");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+      
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      IdentityService identityService = processEngine.getIdentityService();
+
+      Boolean validPassword = identityService.checkPassword(user.getId(), currentPassword);
+      if (!validPassword) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "recent password not valid");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      if (!PasswordValidator.isValid(newPassword)) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "new password must be combination of Uppercase, lowercase, special character and minimum 8 digit");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      org.camunda.bpm.engine.identity.User updatedUser = processEngine.getIdentityService().createUserQuery().userId(user.getId()).singleResult();
+      updatedUser.setPassword(newPassword);
+      processEngine.getIdentityService().saveUser(updatedUser);
+
+      String json = new Gson().toJson(user);
+      return Response.status(200).entity(json).build();
+    }
 
   @POST
   @Path(value = "/profile/avatar")
@@ -203,7 +253,6 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
     
-
   @POST
   @Path(value = "/users")
   @Produces(MediaType.APPLICATION_JSON)
@@ -231,6 +280,13 @@ public class UserController extends GcsUtil{
       if (existingUser != null) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Email already taken");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      if (!PasswordValidator.isValid(registerRequest.getPassword())) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Password must be combination of Uppercase, lowercase, special character and minimum 8 digit");
         String json = new Gson().toJson(map);
         return Response.status(400).entity(json).build();
       }
@@ -414,6 +470,13 @@ public class UserController extends GcsUtil{
       if (existingUser != null) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Email already taken");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      if (!PasswordValidator.isValid(registerRequest.getPassword())) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Password must be combination of Uppercase, lowercase, special character and minimum 8 digit");
         String json = new Gson().toJson(map);
         return Response.status(400).entity(json).build();
       }
