@@ -1,0 +1,25 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ROLLBAR" class="com.rollbar.logback.RollbarAppender">
+        <accessToken>057fe490e8244b2c81331b286c411824</accessToken>
+        <environment>development</environment>
+        <language>java</language>                                  
+    </appender>
+
+    <logger name="com.sbh.bpm" level="warn" additivity="false">
+        <appender-ref ref="ROLLBAR" />
+    </logger>>
+
+    <root level="warn">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+</configuration>
