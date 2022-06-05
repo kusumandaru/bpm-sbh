@@ -6,4 +6,5 @@ import com.sbh.bpm.model.Tenant;
 
 public interface ITenantService {
   List<Tenant> findAll();
+  Long Count();
 }

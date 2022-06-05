@@ -133,4 +133,13 @@ public class UserService implements IUserService{
     return userRepository.findByEmail(email);
   }
 
+  @Override
+  public Long Count() {
+    return userRepository.count();
+  }
+
+  @Override
+  public Long CountByTenantId(String tenantId) {
+    return userRepository.countByTenantId(tenantId);
+  }
 }

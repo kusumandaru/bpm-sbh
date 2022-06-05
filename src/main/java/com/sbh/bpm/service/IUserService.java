@@ -21,4 +21,6 @@ public interface IUserService {
   List<User> findByTenantId(String tenantId);
   List<User> findAll();
   List<UserDetail> findAllDetail();
+  Long Count();
+  Long CountByTenantId(String tenantId);
 }
