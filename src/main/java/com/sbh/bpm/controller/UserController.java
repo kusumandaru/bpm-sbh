@@ -31,6 +31,7 @@ import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.RegisterClientRequest;
 import com.sbh.bpm.payload.RegisterRequest;
+import com.sbh.bpm.service.ITenantService;
 import com.sbh.bpm.service.IUserService;
 import com.sbh.bpm.service.PasswordValidator;
 import com.sbh.bpm.service.ProjectUserService;
@@ -57,6 +58,9 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IUserService userService;
+
+  @Autowired
+  private ITenantService tenantService;
 
   @Autowired
   private IdentityService identityService;
@@ -239,7 +243,7 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin"));
+      ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
       if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Only administrator permitted");
@@ -250,6 +254,53 @@ public class UserController extends GcsUtil{
       List<UserDetail> users = userService.findAllDetail();
 
       String json = new Gson().toJson(users);
+      return Response.status(200).entity(json).build();
+    }
+  
+  @GET
+  @Path(value = "/users/count")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CountAllUsers(
+    @HeaderParam("Authorization") String authorization) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Only administrator permitted");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+      
+      Long count = userService.Count();
+
+      String json = new Gson().toJson(count);
+      return Response.status(200).entity(json).build();
+    }
+  
+  @GET
+  @Path(value = "/tenants/count")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CountAllTenant(
+    @HeaderParam("Authorization") String authorization
+    ) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      Long count = tenantService.Count();
+
+      String json = new Gson().toJson(count);
       return Response.status(200).entity(json).build();
     }
     
@@ -448,6 +499,25 @@ public class UserController extends GcsUtil{
       List<User> users = userService.findByTenantId(userDetail.getTenant().getId());
 
       String json = new Gson().toJson(users);
+      return Response.status(200).entity(json).build();
+    }
+  
+  @GET
+  @Path(value = "/members/count")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CountMemberByTenant(
+    @HeaderParam("Authorization") String authorization) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      Long count = userService.CountByTenantId(userDetail.getTenant().getId());
+
+      String json = new Gson().toJson(count);
       return Response.status(200).entity(json).build();
     }
     

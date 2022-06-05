@@ -25,4 +25,9 @@ public class TenantService implements ITenantService{
   public List<Tenant> findAll() {
     return (List<Tenant>) tenantRepository.findAll();
   }
+
+  @Override
+  public Long Count() {
+    return tenantRepository.count();
+  }
 }

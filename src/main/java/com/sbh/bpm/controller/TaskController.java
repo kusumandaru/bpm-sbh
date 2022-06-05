@@ -13,8 +13,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import com.google.gson.Gson;
 import com.sbh.bpm.model.BuildingType;
@@ -41,6 +43,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.rest.dto.repository.ActivityStatisticsResultDto;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -75,6 +78,9 @@ public class TaskController {
 
   @Autowired
   private IProjectUserService projectUserService;
+
+  @Context
+  UriInfo uriInfo;
 
   @GET
   @Path(value = "/tasks/admin")
@@ -121,6 +127,47 @@ public class TaskController {
     String json = new Gson().toJson(sbhTasks);
     return Response.ok(json).build();
   }
+
+  @GET
+  @Path(value = "/tasks/statistics")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response StatisticTasks(@HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }   
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    taskQuery = taskQuery.processVariableValueEquals("tenant", user.getTenant().getId());
+    taskQuery = taskQuery.active().orderByTaskId().asc();
+    List<Task> tasks = taskQuery.list();
+
+    Map<String, Integer> map = new HashMap<String, Integer>(); 
+    tasks.stream().forEach(t -> {
+      if (!map.containsKey(t.getTaskDefinitionKey())) {
+        map.put(t.getTaskDefinitionKey(), 0);
+      }
+        
+      map.put(t.getTaskDefinitionKey(), map.get(t.getTaskDefinitionKey()) + 1);
+    });
+
+    List<ActivityStatisticsResultDto> dtoList =new ArrayList<ActivityStatisticsResultDto>();
+    map.forEach((k,v) -> {
+      ActivityStatisticsResultDto dto = new ActivityStatisticsResultDto();
+      dto.setId(k);
+      dto.setInstances(v);
+      dtoList.add(dto);
+    });
+    String json = new Gson().toJson(dtoList);
+    return Response.ok(json).build();
+  } 
 
   @GET
   @Path(value = "/tasks")
