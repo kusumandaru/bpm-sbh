@@ -193,7 +193,7 @@ public class MailerService implements IMailerService {
     body.put("subject", subject);
     body.put("reset_url", baseUrl+resetPasswordPath+passwordToken.getToken());
 
-    Content content = new Content("text/html", geContentFromTemplate(body, "email-register"));
+    Content content = new Content("text/html", geContentFromTemplate(body, "email-reset-password"));
     Mail mail = new Mail(from, subject, to, content);
 
     SendGrid sg = new SendGrid(sendgridKey);
