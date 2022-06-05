@@ -18,4 +18,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 
   @Query(value = "select count(*) FROM ACT_ID_USER as user JOIN ACT_ID_TENANT_MEMBER as tenant_member ON user.ID_ = tenant_member.USER_ID_ WHERE tenant_member.TENANT_ID_= :tenantId", nativeQuery = true)
   Long countByTenantId(String tenantId);
+
+  @Query(value = "select user.* FROM ACT_ID_USER as user JOIN password_tokens ON user.ID_ = password_tokens.user_id WHERE password_tokens.token= :token", nativeQuery = true)
+  User findByToken(String token);
 }

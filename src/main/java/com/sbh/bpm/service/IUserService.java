@@ -23,4 +23,5 @@ public interface IUserService {
   List<UserDetail> findAllDetail();
   Long Count();
   Long CountByTenantId(String tenantId);
+  UserDetail FindByToken(String token);
 }

@@ -142,4 +142,10 @@ public class UserService implements IUserService{
   public Long CountByTenantId(String tenantId) {
     return userRepository.countByTenantId(tenantId);
   }
+
+  @Override
+  public UserDetail FindByToken(String token) {
+    User user = userRepository.findByToken(token);
+    return GetUserDetailFromId(user.getId());
+  }
 }
