@@ -631,7 +631,7 @@ public class TaskController {
     task.setAssignee(assignee);
     taskService.claim(task.getId(), assignee);
 
-    mailerService.SendRejectionEmail(rejectedReason);
+    mailerService.SendRejectionEmail(rejectedReason, task);
 
     return Response.ok().build();
   }

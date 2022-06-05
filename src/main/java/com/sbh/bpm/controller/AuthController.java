@@ -5,10 +5,13 @@ import java.time.Instant;
 import javax.servlet.ServletException;
 import javax.validation.Valid;
 
+import com.sbh.bpm.model.User;
 import com.sbh.bpm.payload.AuthRequest;
 import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.security.JwtUtil;
+import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IUserService;
 
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.impl.persistence.entity.TenantEntity;
@@ -31,6 +34,12 @@ public class AuthController {
     @Autowired
     private IdentityService identityService;
 
+    @Autowired
+    private IMailerService mailerService;
+
+    @Autowired
+    private IUserService userService;
+
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<AuthResponse> credentials(@RequestBody AuthRequest loginRequest) {
@@ -45,6 +54,13 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) throws ServletException {
+        User existingUser = userService.FindByEmail(registerRequest.getEmail());
+        if (existingUser != null) {
+            AuthResponse response = new AuthResponse();
+            response.setError("Email already taken");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
         String tenantName = registerRequest.getTenantName().replaceAll(" ", "-");
         String tenantId = tenantName.substring(0, Math.min(30, tenantName.length())).toLowerCase() + "-" + String.valueOf(Instant.now().toEpochMilli());
 
@@ -65,6 +81,9 @@ public class AuthController {
         identityService.saveTenant(tenant);
 
         identityService.createTenantUserMembership(tenantId, user.getId());
+
+        User u = userService.findById(user.getId());
+        mailerService.SendRegisterEmail(u);
         
         AuthResponse response = jwtUtil.generateToken(user.getEmail(), registerRequest.getPassword());
         return ResponseEntity.ok(response);

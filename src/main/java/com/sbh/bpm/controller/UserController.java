@@ -26,15 +26,19 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.PasswordToken;
 import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.RegisterClientRequest;
 import com.sbh.bpm.payload.RegisterRequest;
+import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IPasswordTokenService;
+import com.sbh.bpm.service.IProjectUserService;
 import com.sbh.bpm.service.ITenantService;
 import com.sbh.bpm.service.IUserService;
+import com.sbh.bpm.service.PasswordGenerator;
 import com.sbh.bpm.service.PasswordValidator;
-import com.sbh.bpm.service.ProjectUserService;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -66,7 +70,13 @@ public class UserController extends GcsUtil{
   private IdentityService identityService;
 
   @Autowired
-  private ProjectUserService projectUserService;
+  private IProjectUserService projectUserService;
+
+  @Autowired
+  private IPasswordTokenService passwordTokenService;
+
+  @Autowired
+  private IMailerService mailerService;
 
   @GET
   @Path(value = "/profile")
@@ -151,9 +161,9 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      org.camunda.bpm.engine.identity.User updatedUser = processEngine.getIdentityService().createUserQuery().userId(user.getId()).singleResult();
+      org.camunda.bpm.engine.identity.User updatedUser = identityService.createUserQuery().userId(user.getId()).singleResult();
       updatedUser.setPassword(newPassword);
-      processEngine.getIdentityService().saveUser(updatedUser);
+      identityService.saveUser(updatedUser);
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
@@ -551,9 +561,10 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
+      String password = PasswordGenerator.generateStrongPassword();
       UserEntity userEntity = new UserEntity();
       userEntity.setEmail(registerRequest.getEmail());
-      userEntity.setPassword(registerRequest.getPassword());
+      userEntity.setPassword(password);
       userEntity.setFirstName(registerRequest.getFirstName());
       userEntity.setLastName(registerRequest.getLastName());
       String userId = String.valueOf(Instant.now().toEpochMilli());
@@ -567,6 +578,8 @@ public class UserController extends GcsUtil{
       User user = userService.findById(userEntity.getId());
       user.setTenantOwner(false);
       user = userService.Save(user);
+      
+      mailerService.SendUserCreationEmail(user, password);
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
@@ -755,6 +768,82 @@ public class UserController extends GcsUtil{
 
       List<Tenant> tenants = processEngine.getIdentityService().createTenantQuery().list();
       String json = new Gson().toJson(tenants);
+      return Response.status(200).entity(json).build();
+    }
+
+  @POST
+  @Path(value = "/reset_password")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response ResetPasswordInit(
+    @FormParam("email") String email) {
+      User user = userService.FindByEmail(email);;
+      if (user == null) {
+        return Response.status(200).build();
+      }
+      PasswordToken passwordToken = passwordTokenService.GenerateTokenByUserId(user.getId());
+      com.sendgrid.Response response = mailerService.SendResetPasswordEmail(user, passwordToken);
+
+      String json = new Gson().toJson(response);
+      return Response.status(200).entity(json).build();
+    }
+  
+  @GET
+  @Path(value = "/reset_password/{token}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CheckResetPassword(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("token") String token
+    ) {
+      String result = passwordTokenService.ValidatePasswordResetToken(token);
+      if(result != null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", result);
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      } else {
+        return Response.status(200).build();
+      }
+    }
+
+  @PATCH
+  @Path(value = "/reset_password")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response ResetPasswordUpdate(
+    @FormParam("password") String password,
+    @FormParam("token") String token) {
+      String result = passwordTokenService.ValidatePasswordResetToken(token);
+      if (result != null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", result);
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      UserDetail user = userService.FindByToken(token);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "User not found");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+      
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      IdentityService identityService = processEngine.getIdentityService();
+
+      if (!PasswordValidator.isValid(password)) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Password must be combination of Uppercase, lowercase, special character and minimum 8 digit");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      org.camunda.bpm.engine.identity.User updatedUser = identityService.createUserQuery().userId(user.getUsername()).singleResult();
+      updatedUser.setPassword(password);
+      identityService.saveUser(updatedUser);
+
+      String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
     }
 }

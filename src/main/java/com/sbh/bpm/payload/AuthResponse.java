@@ -11,6 +11,7 @@ public class AuthResponse {
     private String accessToken;
     private String refreshToken;
     private UserData userData;
+    private String error;
 
     public AuthResponse(String accessToken, String refreshToken, String name, String email, String tenant, List<String> roles) {
         this.accessToken = accessToken;
