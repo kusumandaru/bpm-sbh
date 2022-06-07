@@ -78,8 +78,7 @@ public class MailerService implements IMailerService {
     users.stream().forEach(user -> {
       Email to = new Email(user.getEmail());
       Map <String, Object> body = new ArrayMap <String, Object>();
-      body.put("firstName", user.getFirstName());
-      body.put("lastName", user.getLastName());
+      body.put("fullName", user.getFullName());
       body.put("admin", masterAdminService.findLast().getManagerName());
       body.put("rejectionNote", rejectionNote);
       body.put("subject", subject);
@@ -113,8 +112,7 @@ public class MailerService implements IMailerService {
 
     Email to = new Email(user.getEmail());
     Map <String, Object> body = new ArrayMap <String, Object>();
-    body.put("firstName", user.getFirstName());
-    body.put("lastName", user.getLastName());
+    body.put("fullName", user.getFullName());
     body.put("subject", subject);
     body.put("groupName", user.getGroup().getName());
 
@@ -152,8 +150,7 @@ public class MailerService implements IMailerService {
 
     Email to = new Email(user.getEmail());
     Map <String, Object> body = new ArrayMap <String, Object>();
-    body.put("firstName", user.getFirstName());
-    body.put("lastName", user.getLastName());
+    body.put("fullName", user.getFullName());
     body.put("subject", subject);
     body.put("groupName", user.getGroup().getName());
     body.put("password", password);

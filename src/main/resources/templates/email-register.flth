@@ -241,7 +241,7 @@ a[x-apple-data-detectors='true'] {
       <!-- start copy -->
       <tr>
         <td bgcolor="#ffffff" align="left" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
-          <h1 style="margin: 0 0 12px; font-size: 32px; font-weight: 400; line-height: 48px;">Selamat datang, ${firstName} ${lastName}</h1>
+          <h1 style="margin: 0 0 12px; font-size: 32px; font-weight: 400; line-height: 48px;">Selamat datang, ${fullName}</h1>
           <p style="margin: 0;">Proses sertifikasi greenship telah dapat dilakukan dengan transparan dan detail. Detail data anda adalah:.</p>
           <p style="margin: 0;">Tenant Name: ${tenantName}</p>
           <p style="margin: 0;">Role: ${groupName}</p>

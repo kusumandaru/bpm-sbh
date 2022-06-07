@@ -236,7 +236,7 @@ a[x-apple-data-detectors='true'] {
       <td style="overflow-wrap:break-word;word-break:break-word;padding:40px 40px 30px;font-family:'Lato',sans-serif;" align="left">
         
   <div style="line-height: 140%; text-align: left; word-wrap: break-word;">
-    <p style="font-size: 12px; line-height: 140%;"><span style="font-size: 14px; line-height: 25.2px; color: #666666;">Yth ${firstName} ${lastName},</span></p>
+    <p style="font-size: 12px; line-height: 140%;"><span style="font-size: 14px; line-height: 25.2px; color: #666666;">Yth ${fullName},</span></p>
     <p style="font-size: 12px; line-height: 140%;"><span style="font-size: 14px; line-height: 25.2px; color: #666666;">Berikut terlampir hasil verifikasi dokumen Sertifikasi Greenship NB proyek Alfa Tower,</span></p>
     <p style="font-size: 12px; line-height: 140%;"><span style="font-size: 14px; line-height: 25.2px; color: #666666;">dari hasil verifikasi ini masih ada dokumen yang harus diperbaiki dan dilengkapi kembali untuk dapat mencapai target maksimal.</span></p>
     <p style="font-size: 12px; line-height: 140%;"><span style="font-size: 14px; line-height: 25.2px; color: #666666;">Catatan: ${rejectionNote} </span></p>

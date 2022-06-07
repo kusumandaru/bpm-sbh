@@ -60,6 +60,10 @@ public class User {
   @Column(name="TENANT_OWNER_")
   private Boolean tenantOwner;
 
+  public String getFullName() {
+    return firstName + " " + lastName;
+  }
+
   public User() {
   }
 
