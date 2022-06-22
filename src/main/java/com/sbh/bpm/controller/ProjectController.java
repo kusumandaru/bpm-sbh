@@ -16,8 +16,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.MasterCertificationType;
 import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.UserDetail;
+import com.sbh.bpm.service.IMasterCertificationTypeService;
 import com.sbh.bpm.service.IProjectUserService;
 import com.sbh.bpm.service.IUserService;
 
@@ -45,6 +47,9 @@ public class ProjectController extends GcsUtil{
   @Autowired
   private IProjectUserService projectUserService;
 
+  @Autowired
+  private IMasterCertificationTypeService masterCertificationTypeService;
+
 
   @POST
   @Path(value = "/create-project")
@@ -54,7 +59,7 @@ public class ProjectController extends GcsUtil{
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("file") InputStream file, 
     @FormDataParam("file") FormDataContentDisposition fileFdcd,
-    @FormDataParam("certification_type") String certificationType,
+    @FormDataParam("certification_type_id") Integer certificationTypeId,
     @FormDataParam("building_type") String buildingType,
     @FormDataParam("building_name") String buildingName,
     @FormDataParam("owner") String owner,
@@ -83,8 +88,10 @@ public class ProjectController extends GcsUtil{
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
 
+    MasterCertificationType certificationType = masterCertificationTypeService.findById(certificationTypeId);
     Map<String, Object> variables = new HashMap<String,Object>();
-    variables.put("certification_type", certificationType);
+    variables.put("certification_type", certificationType.getCertificationName());
+    variables.put("certification_type_id", certificationType.getId());
     variables.put("building_type", buildingType);
     variables.put("building_name", buildingName);
     variables.put("owner", owner);
@@ -147,7 +154,7 @@ public class ProjectController extends GcsUtil{
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("file") InputStream file, 
     @FormDataParam("file") FormDataContentDisposition fileFdcd,
-    @FormDataParam("certification_type") String certificationType,
+    @FormDataParam("certification_type_id") Integer certificationTypeId,
     @FormDataParam("building_type") String buildingType,
     @FormDataParam("building_name") String buildingName,
     @FormDataParam("owner") String owner,
@@ -192,9 +199,10 @@ public class ProjectController extends GcsUtil{
 
       return Response.status(400).entity(json).build();
     }
-
-    Map<String, String> variables = new HashMap<String,String>();
-    variables.put("certification_type", certificationType);
+    MasterCertificationType certificationType = masterCertificationTypeService.findById(certificationTypeId);
+    Map<String, Object> variables = new HashMap<String, Object>();
+    variables.put("certification_type", certificationType.getCertificationName());
+    variables.put("certification_type_id", certificationType.getId());
     variables.put("building_type", buildingType);
     variables.put("building_name", buildingName);
     variables.put("owner", owner);
@@ -208,8 +216,8 @@ public class ProjectController extends GcsUtil{
     variables.put("faximile", faximile);
     variables.put("postal_code", postalCode);
 
-    for (Map.Entry<String, String> variable : variables.entrySet()) {
-      if (!StringUtils.isEmpty(variable.getValue())) {
+    for (Map.Entry<String, Object> variable : variables.entrySet()) {
+      if (!StringUtils.isEmpty(variable.getValue().toString())) {
         taskService.setVariable(task.getId(), variable.getKey(), variable.getValue());
       }
     }

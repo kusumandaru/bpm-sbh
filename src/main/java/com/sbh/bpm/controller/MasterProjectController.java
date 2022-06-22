@@ -2,7 +2,9 @@ package com.sbh.bpm.controller;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -19,6 +21,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.MasterCertificationType;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterDocument;
@@ -27,6 +30,8 @@ import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.MasterVendor;
+import com.sbh.bpm.model.ProjectAssessment;
+import com.sbh.bpm.service.IMasterCertificationTypeService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterDocumentService;
@@ -35,7 +40,12 @@ import com.sbh.bpm.service.IMasterExerciseService;
 import com.sbh.bpm.service.IMasterLevelService;
 import com.sbh.bpm.service.IMasterTemplateService;
 import com.sbh.bpm.service.IMasterVendorService;
+import com.sbh.bpm.service.IProjectAssessmentService;
 
+import org.camunda.bpm.BpmPlatform;
+import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.task.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +59,9 @@ public class MasterProjectController extends GcsUtil{
 
   @Autowired
   private IMasterVendorService masterVendorService;
+
+  @Autowired
+  private IMasterCertificationTypeService masterCertificationTypeService;
 
   @Autowired
   private IMasterCriteriaService masterCriteriaService;
@@ -68,11 +81,46 @@ public class MasterProjectController extends GcsUtil{
   @Autowired
   private IMasterLevelService masterLevelService;
 
+  @Autowired
+  private IProjectAssessmentService projectAssessmentService;
+
   @GET
   @Path(value = "/levels")
   @Produces(MediaType.APPLICATION_JSON)
   public Response allMasterLevel(@HeaderParam("Authorization") String authorization) {      
     List<MasterLevel> level = (List<MasterLevel>) masterLevelService.findAll();
+
+    String json = new Gson().toJson(level);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/levels/{task_id}/task/{assessment_type}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response allMasterLevelByTaskId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("task_id") String taskId,
+    @PathParam("assessment_type") String assessmentType
+    ) {  
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String processInstanceId = task.getProcessInstanceId();
+
+    List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, assessmentType);
+    ProjectAssessment projectAssessment = projectAssessments.get(0);
+
+    List<MasterLevel> level = (List<MasterLevel>) masterLevelService.findByMasterTemplateID(projectAssessment.getMasterTemplateID());
 
     String json = new Gson().toJson(level);
     return Response.ok(json).build();
@@ -97,6 +145,25 @@ public class MasterProjectController extends GcsUtil{
     String json = new Gson().toJson(level);
     return Response.ok(json).build();
   }
+
+  @PATCH
+  @Path(value = "/levels/{levelId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response editLevels(@HeaderParam("Authorization") String authorization,
+                                MasterLevel level, @PathParam("levelId") Integer levelId) {
+    MasterLevel masterLevel = masterLevelService.findById(levelId);
+    masterLevel.setMasterTemplateID(level.getMasterTemplateID());
+    masterLevel.setName(level.getName());
+    masterLevel.setMinimumScore(level.getMinimumScore());
+    masterLevel.setPercentage(level.getPercentage());
+    masterLevel.setActive(level.getActive());
+    masterLevel = masterLevelService.save(masterLevel);
+
+    String json = new Gson().toJson(masterLevel);
+    return Response.ok(json).build();
+  }
+
 
   @GET
   @Path(value = "/vendors")
@@ -154,6 +221,83 @@ public class MasterProjectController extends GcsUtil{
   @Produces(MediaType.APPLICATION_JSON)
   public Response allTemplatesByVendor(@HeaderParam("Authorization") String authorization, @PathParam("vendor_id") Integer vendorID) { 
     List<MasterTemplate> templates = (List<MasterTemplate>) masterTemplateService.findByMasterVendorID(vendorID);
+
+    String json = new Gson().toJson(templates);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/vendors/{vendor_id}/certification_types")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response AllCertificationTypesByVendor(@HeaderParam("Authorization") String authorization, @PathParam("vendor_id") Integer vendorID) { 
+    List<MasterCertificationType> templates = (List<MasterCertificationType>) masterCertificationTypeService.findByMasterVendorID(vendorID);
+
+    String json = new Gson().toJson(templates);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/certification_types")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response AllMasterCertificationType(@HeaderParam("Authorization") String authorization, @Context UriInfo info) {
+    String certificationCode = info.getQueryParameters().getFirst("certidication_code");
+    List<MasterCertificationType> certificationTypes = new ArrayList<>();
+    if (certificationCode != null && !certificationCode.isEmpty()) {
+      certificationTypes = (List<MasterCertificationType>) masterCertificationTypeService.findByCertificationCode(certificationCode);
+    } else {
+      certificationTypes = (List<MasterCertificationType>) masterCertificationTypeService.findAll();
+    }
+
+    String json = new Gson().toJson(certificationTypes);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/certification_types/{certificationTypeId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetMasterCertificationType(@HeaderParam("Authorization") String authorization, @PathParam("certificationTypeId") Integer certificationTypeId) {      
+    MasterCertificationType certificationType = masterCertificationTypeService.findById(certificationTypeId);
+
+    String json = new Gson().toJson(certificationType);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/certification_types")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response SaveCertificationTypes(@HeaderParam("Authorization") String authorization,
+                                MasterCertificationType certificationType) {
+    certificationType.setCreatedAt(new Date());                  
+    certificationType = masterCertificationTypeService.save(certificationType);
+
+    String json = new Gson().toJson(certificationType);
+    return Response.ok(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/certification_types/{certificationTypeId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response EditCertificationTypes(@HeaderParam("Authorization") String authorization,
+                                MasterCertificationType certificationType, @PathParam("certificationTypeId") Integer certificationTypeId) {
+    MasterCertificationType masterCertificationType = masterCertificationTypeService.findById(certificationTypeId);
+    masterCertificationType.setMasterVendorID(certificationType.getMasterVendorID());
+    masterCertificationType.setCertificationCode(certificationType.getCertificationCode());
+    masterCertificationType.setCertificationName(certificationType.getCertificationName());
+    masterCertificationType.setActive(certificationType.getActive());
+
+    masterCertificationType = masterCertificationTypeService.save(masterCertificationType);
+
+    String json = new Gson().toJson(masterCertificationType);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/certification_types/{certification_type_id}/templates")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response AllTemplatesByCertificationType(@HeaderParam("Authorization") String authorization, @PathParam("certification_type_id") Integer certificationTypeID) { 
+    List<MasterTemplate> templates = (List<MasterTemplate>) masterTemplateService.findByMasterCertificationTypeID(certificationTypeID);
 
     String json = new Gson().toJson(templates);
     return Response.ok(json).build();
@@ -223,6 +367,16 @@ public class MasterProjectController extends GcsUtil{
     List<MasterEvaluation> evaluations = (List<MasterEvaluation>) masterEvaluationService.findByMasterTemplateID(templateID);
 
     String json = new Gson().toJson(evaluations);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/templates/{template_id}/levels")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response allLevelsByExercise(@HeaderParam("Authorization") String authorization, @PathParam("template_id") Integer templateID) { 
+    List<MasterLevel> levels = (List<MasterLevel>) masterLevelService.findByMasterTemplateID(templateID);
+
+    String json = new Gson().toJson(levels);
     return Response.ok(json).build();
   }
 

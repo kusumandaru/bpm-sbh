@@ -32,4 +32,30 @@ public class MasterLevelService implements IMasterLevelService {
   public MasterLevel findFirstByOrderByMinimumScoreAsc() {
     return repository.findFirstByOrderByMinimumScoreAsc();
   }
+
+  @Override
+  public MasterLevel findFirstByMasterTemplateIDOrderByMinimumScoreAsc(Integer templateId) {
+    return repository.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(templateId);
+  }
+
+  @Override
+  public List<MasterLevel> findByMasterTemplateID(Integer templateId) {
+    return (List<MasterLevel>) repository.findByMasterTemplateID(templateId);
+  }
+
+  @Override
+  public List<Integer> getAllIdsByTemplateId(Integer templateId) {
+    return (List<Integer>) repository.getAllIdsByTemplateId(templateId);
+  }
+
+  @Override
+  public List<Integer> getAllIdsByTemplateIdAndActiveTrue(Integer templateId) {
+    return (List<Integer>) repository.getAllIdsByTemplateIdAndActiveTrue(templateId);
+  }
+
+  @Override
+  public List<MasterLevel> findByMasterTemplateIDIn(List<Integer> masterTemplateIds) {
+    return (List<MasterLevel>) repository.findByMasterTemplateIDIn(masterTemplateIds);
+
+  }
 }

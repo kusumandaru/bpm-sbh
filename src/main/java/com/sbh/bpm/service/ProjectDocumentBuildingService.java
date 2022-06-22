@@ -29,18 +29,18 @@ public class ProjectDocumentBuildingService implements IProjectDocumentBuildingS
   }
 
   @Override
-  public List<ProjectDocumentBuilding> findByMasterTemplateID(Integer masterTemplateID) {
-    return repository.findByMasterTemplateID(masterTemplateID);
+  public List<ProjectDocumentBuilding> findByMasterCertificationTypeID(Integer masterCertificationTypeID) {
+    return repository.findByMasterCertificationTypeID(masterCertificationTypeID);
   }
 
   @Override
-  public ProjectDocumentBuilding findByMasterTemplateIDAndId(Integer masterTemplateID, Integer attachmentId) {
-    return repository.findByMasterTemplateIDAndId(masterTemplateID, attachmentId);
+  public ProjectDocumentBuilding findByMasterCertificationTypeIDAndId(Integer masterCertificationTypeID, Integer attachmentId) {
+    return repository.findByMasterCertificationTypeIDAndId(masterCertificationTypeID, attachmentId);
   }
 
   @Override
-  public List<ProjectDocumentBuilding> findByMasterTemplateIDAndActiveTrue(Integer masterTemplateID) {
-    return repository.findByMasterTemplateIDAndActiveTrue(masterTemplateID);
+  public List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndActiveTrue(Integer masterCertificationTypeID) {
+    return repository.findByMasterCertificationTypeIDAndActiveTrue(masterCertificationTypeID);
   }
 
   @Override
@@ -48,5 +48,4 @@ public class ProjectDocumentBuildingService implements IProjectDocumentBuildingS
     repository.deleteById(attachmentId);
     return !repository.existsById(attachmentId);
   }
-
 }
