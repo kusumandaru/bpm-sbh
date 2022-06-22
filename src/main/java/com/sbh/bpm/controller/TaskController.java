@@ -1,12 +1,19 @@
 package com.sbh.bpm.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -41,9 +48,15 @@ import com.sbh.bpm.service.IUserService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.camunda.bpm.BpmPlatform;
+import org.camunda.bpm.engine.AuthorizationException;
+import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.rest.dto.repository.ActivityStatisticsResultDto;
+import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -633,6 +646,203 @@ public class TaskController {
 
     mailerService.SendRejectionEmail(rejectedReason, task);
 
+    return Response.ok().build();
+  }
+
+  @DELETE
+  @Path(value = "/tasks/{taskId}/reason/{reason}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DeleteTask(
+    @PathParam("taskId") String taskId, 
+    @PathParam("reason") String reason,
+    @HeaderParam("Authorization") String authorization) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("camunda-admin"));
+    if (!adminRoles.stream().anyMatch(role -> role.equals(user.getGroup().getId()))) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Only super administrator permitted");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+    
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+ 
+    Task task;
+    Map<String, Object> variableMap = new HashMap<String, Object>();
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+      variableMap = taskService.getVariables(taskId);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Project not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    String processInstanceId = task.getProcessInstanceId();
+
+    try {
+      runtimeService.deleteProcessInstance(processInstanceId, reason);
+    } catch (AuthorizationException e) {
+      logger.error(e.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "User not authorized to delete this project");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    } catch (ProcessEngineException e) {
+      logger.error(e.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Selected project not found to delete");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    return Response.ok(variableMap).build();
+  }
+
+  @GET
+  @Path(value = "/tasks/history/{task_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response PreviousToCurrentTask(
+    @PathParam("task_id") String taskId,
+    @HeaderParam("Authorization") String authorization
+  ) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    HistoryService historyService = processEngine.getHistoryService();
+
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Project not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    List<HistoricActivityInstance> histories = historyService.createHistoricActivityInstanceQuery().
+                                                              activityType("userTask").
+                                                              processInstanceId(task.getProcessInstanceId()).
+                                                              orderByHistoricActivityInstanceStartTime().desc().
+                                                              list();
+
+    histories = histories.stream().
+    filter(distinctByKey(s -> Arrays.asList(s.getActivityId()))).
+    collect(Collectors.toList());
+    return Response.ok(histories).build();
+  }
+
+  public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    return t -> seen.add(keyExtractor.apply(t));
+}
+
+
+
+  @POST
+  @Path(value = "/tasks/rollback")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response RollbackTask(
+    @FormDataParam("task_id") String taskId, 
+    @FormDataParam("started_activity_id") String startedActivityId,
+    @FormDataParam("ancestor_activity_instance_id") String ancestorActivityInstanceId,
+    @HeaderParam("Authorization") String authorization
+  ) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    HistoryService historyService = processEngine.getHistoryService();
+ 
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Project not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    // runtimeService.createProcessInstanceModification(task.getProcessInstanceId()).cancelAllForActivity(startedActivityId);
+
+    // List<HistoricActivityInstance> histories = historyService.createHistoricActivityInstanceQuery().
+    //           processInstanceId(task.getProcessInstanceId()).
+    //           orderByHistoricActivityInstanceStartTime().desc().
+    //           list();
+    // for(HistoricActivityInstance activity : histories) {
+    //   activity.getActivityId()
+    // }
+
+    // runtimeService.suspendProcessInstanceById(task.getProcessInstanceId());
+    // taskService.deleteTask(task.getId());
+    // runtimeService.activateProcessInstanceById(task.getProcessInstanceId());
+
+    // taskService.deleteTask(task.getId());
+    // ProcessInstanceModificationInstantiationBuilder process = runtimeService.createProcessInstanceModification(task.getProcessInstanceId())
+    //               .startBeforeActivity(startedActivityId);
+
+    // List<HistoricActivityInstance> histories = historyService.createHistoricActivityInstanceQuery().
+    //               processInstanceId(task.getProcessInstanceId()).
+    //               activityType("userTask").
+    //               orderByHistoricActivityInstanceStartTime().desc().
+    //               list();
+    // HistoricActivityInstance selectedInstance = histories.stream().filter(history -> history.getActivityId().equals(startedActivityId)).findFirst().get();
+    
+    ActivityInstance activityInstance = runtimeService.getActivityInstance(task.getProcessInstanceId());
+    ActivityInstance[] activityInstances = activityInstance.getChildActivityInstances();
+
+    runtimeService.createProcessInstanceModification(task.getProcessInstanceId()).
+    cancelActivityInstance(activityInstances[0].getId()).
+    startBeforeActivity(startedActivityId).
+    execute();
+
+    // ProcessInstanceModificationBuilder process = runtimeService.createProcessInstanceModification(task.getProcessInstanceId());
+              
+    // for(HistoricActivityInstance activity : histories) {
+    //   if (activity.getActivityId().equals(startedActivityId)) {
+    //     process.cancelActivityInstance(activityId)
+    //     break;
+    //   } else {
+    //     process.cancelAllForActivity(activity.getActivityId());
+    //   }
+    // }
+
+  
     return Response.ok().build();
   }
 

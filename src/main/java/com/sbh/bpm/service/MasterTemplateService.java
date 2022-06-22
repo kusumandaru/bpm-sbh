@@ -34,6 +34,11 @@ public class MasterTemplateService implements IMasterTemplateService {
   }
 
   @Override
+  public List<MasterTemplate> findByMasterCertificationTypeID(Integer masterCertificationTypeId) {
+    return (List<MasterTemplate>) repository.findByMasterCertificationTypeID(masterCertificationTypeId);
+  }
+
+  @Override
   public List<MasterTemplate> findByProjectType(String projectType) {
     return (List<MasterTemplate>) repository.findByProjectType(projectType);
   }

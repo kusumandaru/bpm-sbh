@@ -12,16 +12,18 @@ import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
-import com.sbh.bpm.model.MasterAdmin;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterDocument;
 import com.sbh.bpm.model.MasterExercise;
+import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.ProjectAssessment;
 
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -36,9 +38,6 @@ import lombok.Setter;
 @Service
 @Transactional
 public class TransactionCreationService implements ITransactionCreationService {
-
-  @Autowired
-  private IMasterAdminService masterAdminService;
 
   @Autowired
   private IMasterTemplateService masterTemplateService;
@@ -56,6 +55,9 @@ public class TransactionCreationService implements ITransactionCreationService {
   private IMasterDocumentService masterDocumentService;
 
   @Autowired
+  private IMasterLevelService masterLevelService;
+
+  @Autowired
   private IProjectAssessmentService projectAssessmentService;
 
   @Autowired
@@ -69,6 +71,9 @@ public class TransactionCreationService implements ITransactionCreationService {
 
   @Autowired
   private IAttachmentService attachmentService;
+
+  @Autowired
+  private IMasterCertificationTypeService masterCertificationTypeService;
 
   @Autowired
   private PlatformTransactionManager transactionManager;
@@ -95,6 +100,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
 
     try {
       runtimeService.getActivityInstance(processInstanceID).getId();
@@ -113,8 +119,13 @@ public class TransactionCreationService implements ITransactionCreationService {
     }
 
     try {
-      MasterAdmin masterAdmin = masterAdminService.findLast();
-      MasterTemplate masterTemplate = masterTemplateService.findById(masterAdmin.getDrTemplateID());
+      Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).orderByTaskCreateTime().desc().singleResult();
+      Integer certificationTypeId = (Integer) taskService.getVariable(task.getId(), "certification_type_id");
+      //TODO: create if certifitionType ID null
+      List<MasterTemplate> masterTemplates = masterTemplateService.findByMasterCertificationTypeID(certificationTypeId);
+      MasterTemplate template = masterTemplates.stream().filter(t -> t.getProjectType().equals("design_recognition")).findFirst().get();
+      MasterTemplate masterTemplate = masterTemplateService.findById(template.getId());
+      MasterLevel masterLevel = masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(template.getId());
       Date newDate = new Date();
 
       ProjectAssessment projectAssessment = new ProjectAssessment();
@@ -127,7 +138,8 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("DR");
-      projectAssessment.setProposedLevelID(masterAdmin.getDefaultDRLevel());
+
+      projectAssessment.setProposedLevelID(masterLevel.getId());
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 
@@ -216,6 +228,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     RuntimeService runtimeService = processEngine.getRuntimeService();
+    TaskService taskService = processEngine.getTaskService();
 
     try {
       runtimeService.getActivityInstance(processInstanceID).getId();
@@ -235,8 +248,12 @@ public class TransactionCreationService implements ITransactionCreationService {
     }
 
     try {
-      MasterAdmin masterAdmin = masterAdminService.findLast();
-      MasterTemplate masterTemplate = masterTemplateService.findById(masterAdmin.getFaTemplateID());
+      Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).orderByTaskCreateTime().desc().singleResult();
+      Integer certificationTypeId = (Integer) taskService.getVariable(task.getId(), "certification_type_id");
+      List<MasterTemplate> masterTemplates = masterTemplateService.findByMasterCertificationTypeID(certificationTypeId);
+      MasterTemplate template = masterTemplates.stream().filter(t -> t.getProjectType().equals("final_assessment")).findFirst().get();
+      MasterTemplate masterTemplate = masterTemplateService.findById(template.getId());
+      MasterLevel masterLevel = masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(template.getId());
       Date newDate = new Date();
 
       ProjectAssessment projectAssessment = new ProjectAssessment();
@@ -249,7 +266,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("FA");
-      projectAssessment.setProposedLevelID(masterAdmin.getDefaultFALevel());
+      projectAssessment.setProposedLevelID(masterLevel.getId());
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 

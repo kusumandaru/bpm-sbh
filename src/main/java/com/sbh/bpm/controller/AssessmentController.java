@@ -500,7 +500,7 @@ public class AssessmentController extends GcsUtil {
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
-    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByOrderByMinimumScoreAsc();
+    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(projectAssessment.getMasterTemplateID());
     Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore() + projectAssessment.getScoreModifier()) >= minimumLevel.getMinimumScore();
   
     List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
@@ -554,12 +554,18 @@ public class AssessmentController extends GcsUtil {
     ProjectAssessment projectAssessment = projectAssessments.get(0);
     
     List<CriteriaScoring> underReviewScorings = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(projectAssessment.getId(), Arrays.asList(2));
-    List<MasterCriteria> masterCriterias = underReviewScorings.stream().map(CriteriaScoring::getCriteria).collect(Collectors.toList());
-    List<String> criteriaCodes = masterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
+    List<MasterCriteria> underReviewMasterCriterias = underReviewScorings.stream().map(CriteriaScoring::getCriteria).collect(Collectors.toList());
+    List<String> underReviewCriteriaCodes = underReviewMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
+
+    List<CriteriaScoring> rejectedReviewScorings = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(projectAssessment.getId(), Arrays.asList(3));
+    List<MasterCriteria> rejectedMasterCriterias = rejectedReviewScorings.stream().map(CriteriaScoring::getCriteria).collect(Collectors.toList());
+    List<String> rejectedCriteriaCodes = rejectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
 
     Map<String, Object> map = new HashMap<String, Object>();
     map.put("eligible", underReviewScorings.isEmpty());
-    map.put("criteria_codes", criteriaCodes);
+    map.put("criteria_codes", underReviewCriteriaCodes);
+    map.put("eligible_approved", underReviewScorings.isEmpty() && rejectedCriteriaCodes.isEmpty());
+    map.put("rejected_criteria_codes", rejectedCriteriaCodes);
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
@@ -1026,7 +1032,7 @@ public class AssessmentController extends GcsUtil {
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "FA");
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
-    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByOrderByMinimumScoreAsc();
+    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(projectAssessment.getMasterTemplateID());
     Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore() + projectAssessment.getScoreModifier()) >= minimumLevel.getMinimumScore();
   
     List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
@@ -1081,11 +1087,17 @@ public class AssessmentController extends GcsUtil {
     
     List<CriteriaScoring> underReviewScorings = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(projectAssessment.getId(), Arrays.asList(2));
     List<MasterCriteria> masterCriterias = underReviewScorings.stream().map(CriteriaScoring::getCriteria).collect(Collectors.toList());
-    List<String> criteriaCodes = masterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
+    List<String> underReviewCriteriaCodes = masterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
+
+    List<CriteriaScoring> rejectedReviewScorings = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(projectAssessment.getId(), Arrays.asList(3));
+    List<MasterCriteria> rejectedMasterCriterias = rejectedReviewScorings.stream().map(CriteriaScoring::getCriteria).collect(Collectors.toList());
+    List<String> rejectedCriteriaCodes = rejectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
 
     Map<String, Object> map = new HashMap<String, Object>();
     map.put("eligible", underReviewScorings.isEmpty());
-    map.put("criteria_codes", criteriaCodes);
+    map.put("criteria_codes", underReviewCriteriaCodes);
+    map.put("eligible_approved", underReviewScorings.isEmpty() && rejectedCriteriaCodes.isEmpty());
+    map.put("rejected_criteria_codes", rejectedCriteriaCodes);
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();

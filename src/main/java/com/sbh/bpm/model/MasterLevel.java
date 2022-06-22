@@ -23,6 +23,12 @@ public class MasterLevel {
   @Setter
   private Integer id;
 
+  @SerializedName("master_template_id")
+  @Column(name="master_template_id")
+  @Getter
+  @Setter
+  private Integer masterTemplateID;
+
   @SerializedName("name")
   @Column(name="name")
   @Getter

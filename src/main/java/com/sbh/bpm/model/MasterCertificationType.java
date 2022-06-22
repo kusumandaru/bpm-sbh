@@ -15,49 +15,31 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "project_document_buildings")
-public class ProjectDocumentBuilding {
+@Table(name = "master_certification_types")
+public class MasterCertificationType {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter
   @Setter
   private Integer id;
 
-  @SerializedName("master_certification_type_id")
-  @Column(name="master_certification_type_id")
+  @SerializedName("master_vendor_id")
+  @Column(name="master_vendor_id")
   @Getter
   @Setter
-  private Integer masterCertificationTypeID;
+  private Integer masterVendorID;
 
-  @SerializedName("name")
-  @Column(name="name")
+  @SerializedName("certification_code")
+  @Column(name="certification_code")
   @Getter
   @Setter
-  private String name;
+  private String certificationCode;
 
-  @SerializedName("code")
-  @Column(name="code")
+  @SerializedName("certification_name")
+  @Column(name="certification_name")
   @Getter
   @Setter
-  private String code;
-
-  @SerializedName("placeholder")
-  @Column(name="placeholder")
-  @Getter
-  @Setter
-  private String placeholder;
-
-  @SerializedName("object_type")
-  @Column(name="object_type")
-  @Getter
-  @Setter
-  private String objectType;
-
-  @SerializedName("mandatory")
-  @Column(name="mandatory")
-  @Getter
-  @Setter
-  private Boolean mandatory;
+  private String certificationName;
 
   @SerializedName("active")
   @Column(name="active")
@@ -75,7 +57,7 @@ public class ProjectDocumentBuilding {
   @Column(name="updated_at")
   @Getter
   @Setter
-  private Date updatedAt; 
+  private Date updatedAt;
 
   @SerializedName("created_by")
   @Column(name="created_by")
@@ -84,11 +66,13 @@ public class ProjectDocumentBuilding {
   private String createdBy;
 
 
-  public ProjectDocumentBuilding() {
+  public MasterCertificationType() {
   }
 
-  public ProjectDocumentBuilding(Integer id, Integer masterCertificationTypeID) {
+  public MasterCertificationType(Integer id, Integer masterVendorID, String certificationCode, String certificationName) {
     this.id = id;
-    this.masterCertificationTypeID = masterCertificationTypeID;
+    this.masterVendorID = masterVendorID;
+    this.certificationCode = certificationCode;
+    this.certificationName = certificationName;
   }
 }

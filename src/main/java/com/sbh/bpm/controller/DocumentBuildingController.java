@@ -53,36 +53,48 @@ public class DocumentBuildingController extends GcsUtil {
   }
 
   @GET
-  @Path(value = "/project/active_document_buildings/{master_template_id}")
+  @Path(value = "/project/active_document_buildings/{master_certification_type_id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetActiveDocumentBuilding(@HeaderParam("Authorization") String authorization, 
-    @PathParam("master_template_id") Integer masterTemplateID
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
   ) {
-    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterTemplateIDAndActiveTrue(masterTemplateID);
+    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterCertificationTypeIDAndActiveTrue(masterCertificationTypeID);
 
     String json = new Gson().toJson(documentBuildings);
     return Response.status(200).entity(json).build();
   }
 
   @GET
-  @Path(value = "/project/document_buildings/{master_template_id}/master_template")
+  @Path(value = "/project/document_buildings/{master_certification_type_id}/master_certification_type")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response GetDocumentBuildingByMasterTemplate(@HeaderParam("Authorization") String authorization, 
-    @PathParam("master_template_id") Integer masterTemplateID
+  public Response GetDocumentBuildingByMasterCertificationType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
   ) {
-    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterTemplateID(masterTemplateID);
+    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterCertificationTypeID(masterCertificationTypeID);
 
     String json = new Gson().toJson(documentBuildings);
     return Response.status(200).entity(json).build();
   }
 
   @GET
-  @Path(value = "/project/active_document_buildings/{master_template_id}/master_template")
+  @Path(value = "/project/active_document_buildings/{master_certification_type_id}/master_certification_type")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response GetActiveDocumentBuildingByMasterTemplate(@HeaderParam("Authorization") String authorization, 
-    @PathParam("master_template_id") Integer masterTemplateID
+  public Response GetActiveDocumentBuildingByMasterCertificationType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
   ) {
-    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterTemplateIDAndActiveTrue(masterTemplateID);
+    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterCertificationTypeIDAndActiveTrue(masterCertificationTypeID);
+
+    String json = new Gson().toJson(documentBuildings);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/project/active_document_buildings/{certification_type_id}/certification_type")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActiveDocumentBuildingByCertificationType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("certification_type_id") Integer certificationTypeID
+  ) {
+    List<ProjectDocumentBuilding> documentBuildings = projectDocumentBuildingService.findByMasterCertificationTypeIDAndActiveTrue(certificationTypeID);
 
     String json = new Gson().toJson(documentBuildings);
     return Response.status(200).entity(json).build();

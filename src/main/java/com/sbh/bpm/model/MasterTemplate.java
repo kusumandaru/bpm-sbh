@@ -29,6 +29,12 @@ public class MasterTemplate {
   @Setter
   private Integer masterVendorID;
 
+  @SerializedName("master_certification_type_id")
+  @Column(name="master_certification_type_id")
+  @Getter
+  @Setter
+  private Integer masterCertificationTypeID;
+
   @SerializedName("project_type")
   @Column(name="project_type")
   @Getter

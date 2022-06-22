@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MasterTemplateRepository extends CrudRepository<MasterTemplate, Integer> {
   List<MasterTemplate> findByMasterVendorID(Integer vendorId);
+  List<MasterTemplate> findByMasterCertificationTypeID(Integer certificationTypeId);
   List<MasterTemplate> findByProjectType(String projectTypes);
 }
 

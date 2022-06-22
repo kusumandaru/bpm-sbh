@@ -9,8 +9,8 @@ public interface IProjectDocumentBuildingService {
   List<ProjectDocumentBuilding> findAll();
   ProjectDocumentBuilding findById(Integer projectDocumentBuildingId);
   ProjectDocumentBuilding save(ProjectDocumentBuilding projectDocumentBuilding);
-  List<ProjectDocumentBuilding> findByMasterTemplateID(Integer masterTemplateID);
-  ProjectDocumentBuilding findByMasterTemplateIDAndId(Integer masterTemplateID, Integer documentBuildingId);
-  List<ProjectDocumentBuilding> findByMasterTemplateIDAndActiveTrue(Integer masterTemplateID);
+  List<ProjectDocumentBuilding> findByMasterCertificationTypeID(Integer masterCertificationTypeID);
+  ProjectDocumentBuilding findByMasterCertificationTypeIDAndId(Integer masterCertificationTypeID, Integer documentBuildingId);
+  List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndActiveTrue(Integer masterCertificationTypeID);
   boolean deleteById(Integer attachmentId);
 }
