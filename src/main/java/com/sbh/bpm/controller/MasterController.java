@@ -356,7 +356,7 @@ public class MasterController extends GcsUtil{
       result = GetUrlGcs(variableMap, "admin", fileName);
     } catch (IOException e) {
       result = null;
-      return Response.status(404).build();
+      return Response.status(400).build();
     }
 
     Map<String, String> map = new HashMap<String, String>();

@@ -31,6 +31,7 @@ import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.PaginationRequest;
 import com.sbh.bpm.model.PaginationResult;
 import com.sbh.bpm.model.ProjectUser;
+import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.SbhTask;
 import com.sbh.bpm.model.Tenant;
@@ -40,6 +41,7 @@ import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IProjectUserService;
+import com.sbh.bpm.service.IProjectVerificatorService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ITenantService;
 import com.sbh.bpm.service.ITransactionCreationService;
@@ -92,6 +94,9 @@ public class TaskController {
   @Autowired
   private IProjectUserService projectUserService;
 
+  @Autowired
+  private IProjectVerificatorService projectVerificatorService;
+
   @Context
   UriInfo uriInfo;
 
@@ -112,6 +117,49 @@ public class TaskController {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
       }
+      sbhTasks.add(sbhTask);
+    }
+    String json = new Gson().toJson(sbhTasks);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/tasks/admin/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response AdminTasksByUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId
+    ) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    List<Task> tasks = taskService.createTaskQuery().active().orderByTaskCreateTime().desc().list();
+    List<Tenant> tenants = tenantService.findAll();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(userId);
+
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
+      final SbhTask innerTask = sbhTask;
+      Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
+      sbhTask.setAssigned(assigned);
+      
       sbhTasks.add(sbhTask);
     }
     String json = new Gson().toJson(sbhTasks);
@@ -249,6 +297,7 @@ public class TaskController {
     return Response.ok(json).build();
   }
 
+  
   @POST
   @Path(value = "/tasks/admin/pagi")
   @Produces(MediaType.APPLICATION_JSON)
@@ -258,7 +307,7 @@ public class TaskController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "login expired, please logout and relogin");
@@ -293,6 +342,7 @@ public class TaskController {
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
     List<Tenant> tenants = tenantService.findAll();
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -305,6 +355,14 @@ public class TaskController {
       String tenantId = sbhTask.getTenantId();
       Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
       sbhTask.setTenantName(selectedTenant.getName());
+      final SbhTask innerTask = sbhTask;
+      if (user.getGroupId().equals("verificator")) {
+        Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
+        sbhTask.setAssigned(assigned);
+      } else {
+        sbhTask.setAssigned(true);
+      }
+
       sbhTasks.add(sbhTask);
     }
 
@@ -457,7 +515,7 @@ public class TaskController {
   @Path(value = "/variables/admin/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response AdminVariable(@PathParam("taskId") String taskId, @HeaderParam("Authorization") String authorization) {
-    User user = userService.GetUserFromAuthorization(authorization);
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "login expired, please logout and relogin");
@@ -480,6 +538,25 @@ public class TaskController {
       String json = new Gson().toJson(map);
 
       return Response.status(400).entity(json).build();
+    }
+
+    ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
+    if (!adminRoles.stream().anyMatch(role -> role.equals(user.getGroup().getId()))) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Only administrator permitted");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    if (user.getGroupId().equals("verificator")) {
+      List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserIdAndProcessInstanceID(user.getId(), task.getProcessInstanceId());
+      if (projectVerificators.size() <= 0) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Verificator not assigned or owned these project");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
     }
 
     variableMap.put("task_id", task.getId());
