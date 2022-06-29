@@ -119,6 +119,7 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
     } catch (IOException e) {
       logger.error(e.getMessage());
     }
+
     Page<Blob> blobs = bucket.list();
     for (Blob blob: blobs.getValues()) {
         if (name.equals(blob.getName())) {

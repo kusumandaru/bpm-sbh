@@ -2,6 +2,8 @@ package com.sbh.bpm.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,6 +84,15 @@ public class ProjectController extends GcsUtil{
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
+
+    ArrayList<String> Roles = new ArrayList<String>(Arrays.asList("user", "superuser"));
+    if (!Roles.stream().anyMatch(role -> role.equals(user.getGroup().getId()))) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "User not permitted to create project");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     String username = user.getUsername();
     String role = user.getGroup().getId();
 
@@ -177,6 +188,15 @@ public class ProjectController extends GcsUtil{
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
+
+    ArrayList<String> Roles = new ArrayList<String>(Arrays.asList("user", "superuser"));
+    if (!Roles.stream().anyMatch(role -> role.equals(user.getGroup().getId()))) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "User not permitted to update` project");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     String username = user.getUsername();
     String role = user.getGroup().getId();
 

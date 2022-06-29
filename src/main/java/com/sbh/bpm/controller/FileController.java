@@ -247,7 +247,7 @@ public class FileController extends GcsUtil{
       result = GetUrlGcs(variableMap, processInstanceId, fileName);
     } catch (IOException e) {
       result = null;
-      return Response.status(404).build();
+      return Response.status(400).build();
     }
 
     Map<String, String> map = new HashMap<String, String>();
@@ -304,7 +304,7 @@ public class FileController extends GcsUtil{
         bytes = cloudStorage.GetContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
-        return Response.status(404, e.getMessage()).build();
+        return Response.status(400, e.getMessage()).build();
       }
     } else {
       int style = DateFormat.LONG;
@@ -406,7 +406,7 @@ public class FileController extends GcsUtil{
         bytes = cloudStorage.GetContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
-        return Response.status(404, e.getMessage()).build();
+        return Response.status(400, e.getMessage()).build();
       }
     } else {
       int style = DateFormat.LONG;
@@ -517,7 +517,7 @@ public class FileController extends GcsUtil{
         bytes = cloudStorage.GetContent(blob.getBlobId());
       } catch (Exception e) {
         result = null;
-        return Response.status(404, e.getMessage()).build();
+        return Response.status(400, e.getMessage()).build();
       }
     } else {
       int style = DateFormat.LONG;
@@ -677,7 +677,7 @@ public class FileController extends GcsUtil{
     try {
       result = GetUrlGcs(attachment.getLink());
     } catch (IOException e) {
-      return Response.status(404).build();
+      return Response.status(400).build();
     }
 
     Map<String, String> map = new HashMap<String, String>();

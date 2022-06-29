@@ -30,7 +30,7 @@ class GcsUtil {
   private IUserService userService;
 
   @Autowired
-  private IGoogleCloudStorage cloudStorage;
+private IGoogleCloudStorage cloudStorage;
 
   protected Pair<String, String> UploadToGcs(
     String directory,

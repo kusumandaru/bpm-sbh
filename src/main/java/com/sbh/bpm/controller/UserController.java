@@ -28,6 +28,7 @@ import javax.ws.rs.core.Response;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.PasswordToken;
 import com.sbh.bpm.model.ProjectUser;
+import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.payload.RegisterClientRequest;
@@ -35,6 +36,7 @@ import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IPasswordTokenService;
 import com.sbh.bpm.service.IProjectUserService;
+import com.sbh.bpm.service.IProjectVerificatorService;
 import com.sbh.bpm.service.ITenantService;
 import com.sbh.bpm.service.IUserService;
 import com.sbh.bpm.service.PasswordGenerator;
@@ -71,6 +73,9 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IProjectUserService projectUserService;
+
+  @Autowired
+  private IProjectVerificatorService projectVerificatorService;
 
   @Autowired
   private IPasswordTokenService passwordTokenService;
@@ -230,7 +235,7 @@ public class UserController extends GcsUtil{
     try {
       result = GetUrlGcs(user.getAvatarUrl());
     } catch (IOException e) {
-      return Response.status(404).build();
+      return Response.status(400).build();
     }
 
     Map<String, String> map = new HashMap<String, String>();
@@ -644,9 +649,8 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      User user = userService.findById(userId);
-      Tenant tenant = userService.TenantFromUser(user);
-      if (user == null || !tenant.getId().equals(userDetail.getTenant().getId())) {
+      UserDetail user = userService.GetUserDetailFromId(userId);
+      if (user == null || !user.getTenant().getId().equals(userDetail.getTenant().getId())) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "selected user not valid");
         String json = new Gson().toJson(map);
@@ -729,6 +733,58 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @GET
+  @Path(value = "/project_verificators/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectVerificatorByUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(userId);
+
+      String json = new Gson().toJson(projectVerificators);
+      return Response.status(200).entity(json).build();
+    }
+
+  @PATCH
+  @Path(value = "/project_verificators/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response SaveProjectVerificatorByUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId,
+    @FormParam("project_ids") String projectIds
+    ) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectVerificator> projectVerificators = new ArrayList<ProjectVerificator>();
+      try {
+        projectVerificators = projectVerificatorService.assignProjectVerificators(userDetail, userId, projectIds);
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", e.getMessage());
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      String json = new Gson().toJson(projectVerificators);
+      return Response.status(200).entity(json).build();
+    }
+  
   @GET
   @Path(value = "/groups")
   @Produces(MediaType.APPLICATION_JSON)

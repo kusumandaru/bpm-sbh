@@ -11,6 +11,9 @@ import lombok.Setter;
 
 public class UserDetail {
   @Getter @Setter
+  private String id;
+
+  @Getter @Setter
   private String username;
 
   @SerializedName("first_name")
@@ -62,6 +65,7 @@ public class UserDetail {
 
   public static UserDetail CreateFromUser(User user, Tenant tenant, Group group) {
     UserDetail userDetail = new UserDetail();
+    userDetail.setId(user.getId());
     userDetail.setUsername(user.getId());
     userDetail.setEmail(user.getEmail());
     userDetail.setFirstName(user.getFirstName());
