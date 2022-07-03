@@ -55,6 +55,10 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import net.coobird.thumbnailator.Thumbnails;
 
@@ -82,6 +86,9 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IMailerService mailerService;
+
+  @Autowired
+  private PlatformTransactionManager transactionManager;
 
   @GET
   @Path(value = "/profile")
@@ -475,24 +482,38 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      user.setActive(u.getActive());
-      user.setEmail(u.getEmail());
-      user.setFirstName(u.getFirstName());
-      user.setLastName(u.getLastName());
-      user.setTenantOwner(u.getTenantOwner());
-      user = userService.Save(user);
+      TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+      TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
 
-      com.sbh.bpm.model.Group groupUser = userService.GroupFromUser(user);
-      if (groupUser != null && !groupUser.getId().equals(u.getGroupId())) {
-        identityService.deleteMembership(user.getId(), groupUser.getId());
-        identityService.createMembership(user.getId(), u.getGroupId());
-      }
-
-      Tenant tenantUser = userService.TenantFromUser(user);
-      if (tenantUser != null && !tenantUser.getId().equals(u.getTenantId())) {
-        identityService.deleteTenantUserMembership(tenantUser.getId(), user.getId());
-        identityService.createTenantUserMembership(u.getTenantId(), user.getId());
-      }
+      try {
+        user.setActive(u.getActive());
+        user.setEmail(u.getEmail());
+        user.setFirstName(u.getFirstName());
+        user.setLastName(u.getLastName());
+        user.setTenantOwner(u.getTenantOwner());
+        user = userService.Save(user);
+  
+        com.sbh.bpm.model.Group groupUser = userService.GroupFromUser(user);
+        if (groupUser != null && !groupUser.getId().equals(u.getGroupId())) {
+          identityService.deleteMembership(user.getId(), groupUser.getId());
+          identityService.createMembership(user.getId(), u.getGroupId());
+        }
+  
+        Tenant tenantUser = userService.TenantFromUser(user);
+        if (tenantUser != null && !tenantUser.getId().equals(u.getTenantId())) {
+          identityService.deleteTenantUserMembership(tenantUser.getId(), user.getId());
+          identityService.createTenantUserMembership(u.getTenantId(), user.getId());
+        }
+      } catch(Exception ex) {
+          transactionManager.rollback(transactionStatus);
+    
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", ex.getMessage());
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+        transactionManager.commit(transactionStatus);
+     
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
@@ -597,7 +618,7 @@ public class UserController extends GcsUtil{
   public Response MemberUpdate(
     @HeaderParam("Authorization") String authorization,
     @PathParam("user_id") String userId,
-    User u) {
+    UserDetail u) {
       UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
       if (userDetail == null) {
         Map<String, String> map = new HashMap<String, String>();
@@ -615,6 +636,14 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
+      List<Group> groups = identityService.createGroupQuery().list();
+      if (!StringUtils.isEmpty(u.getGroupId()) && !groups.stream().anyMatch(group -> group.getId().equals(u.getGroupId()))) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "selected group not valid");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
       User existingUser = userService.FindByEmail(user.getEmail());
       if (existingUser != null && !existingUser.getEmail().equals(user.getEmail())) {
         Map<String, String> map = new HashMap<String, String>();
@@ -623,12 +652,31 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      user.setActive(u.getActive());
-      user.setEmail(u.getEmail());
-      user.setFirstName(u.getFirstName());
-      user.setLastName(u.getLastName());
-      user.setTenantOwner(u.getTenantOwner());
-      user = userService.Save(user);
+      TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+      TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
+
+      try {
+        user.setActive(u.getActive());
+        user.setEmail(u.getEmail());
+        user.setFirstName(u.getFirstName());
+        user.setLastName(u.getLastName());
+        user.setTenantOwner(u.getTenantOwner());
+        user = userService.Save(user);
+  
+        com.sbh.bpm.model.Group groupUser = userService.GroupFromUser(user);
+        if (groupUser != null && !groupUser.getId().equals(u.getGroupId())) {
+          identityService.deleteMembership(user.getId(), groupUser.getId());
+          identityService.createMembership(user.getId(), u.getGroupId());
+        }
+      } catch(Exception ex) {
+        transactionManager.rollback(transactionStatus);
+  
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", ex.getMessage());
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+    }
+      transactionManager.commit(transactionStatus);
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
@@ -807,6 +855,28 @@ public class UserController extends GcsUtil{
     }
   
   @GET
+  @Path(value = "/groups/client")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetGroupsClientOnly(
+    @HeaderParam("Authorization") String authorization
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+
+      String[] ids = new String[]{"owner", "superuser", "viewer", "user"};
+      List<Group> groups = processEngine.getIdentityService().createGroupQuery().groupIdIn(ids).list();
+      String json = new Gson().toJson(groups);
+      return Response.status(200).entity(json).build();
+    }
+  
+  @GET
   @Path(value = "/tenants")
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetTenants(
@@ -827,6 +897,27 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @GET
+  @Path(value = "/tenants/{id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetTenantById(
+    @PathParam("id") String tenantId
+    ) {
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+
+      Tenant tenant = processEngine.getIdentityService().createTenantQuery().tenantId(tenantId).singleResult();
+
+      if (tenant == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Invitation not valid");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      String json = new Gson().toJson(tenant);
+      return Response.status(200).entity(json).build();
+    }
+  
   @POST
   @Path(value = "/reset_password")
   @Produces(MediaType.APPLICATION_JSON)

@@ -19,6 +19,10 @@ import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,6 +43,9 @@ public class AuthController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @PostMapping("/login")
     @ResponseBody
@@ -64,27 +71,81 @@ public class AuthController {
         String tenantName = registerRequest.getTenantName().replaceAll(" ", "-");
         String tenantId = tenantName.substring(0, Math.min(30, tenantName.length())).toLowerCase() + "-" + String.valueOf(Instant.now().toEpochMilli());
 
+        TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         UserEntity user = new UserEntity();
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(registerRequest.getPassword());
-        user.setFirstName(registerRequest.getFirstName());
-        user.setLastName(registerRequest.getLastName());
-        String userId = String.valueOf(Instant.now().toEpochMilli());
-        user.setId(userId);
 
-        identityService.saveUser(user);
-        identityService.createMembership(user.getId(), "superuser");
-
-        TenantEntity tenant = new TenantEntity();
-        tenant.setName(registerRequest.getTenantName());
-        tenant.setId(tenantId);
-        identityService.saveTenant(tenant);
-
-        identityService.createTenantUserMembership(tenantId, user.getId());
-
-        User u = userService.findById(user.getId());
-        mailerService.SendRegisterEmail(u);
+        try {
+            user.setEmail(registerRequest.getEmail());
+            user.setPassword(registerRequest.getPassword());
+            user.setFirstName(registerRequest.getFirstName());
+            user.setLastName(registerRequest.getLastName());
+            String userId = String.valueOf(Instant.now().toEpochMilli());
+            user.setId(userId);
+    
+            identityService.saveUser(user);
+            identityService.createMembership(user.getId(), "superuser");
+    
+            TenantEntity tenant = new TenantEntity();
+            tenant.setName(registerRequest.getTenantName());
+            tenant.setId(tenantId);
+            identityService.saveTenant(tenant);
+    
+            identityService.createTenantUserMembership(tenantId, user.getId());
+    
+            User u = userService.findById(user.getId());
+            mailerService.SendRegisterEmail(u);
+        } catch(Exception ex) {
+            transactionManager.rollback(transactionStatus);
+      
+            AuthResponse response = new AuthResponse();
+            response.setError(ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
         
+        AuthResponse response = jwtUtil.generateToken(user.getEmail(), registerRequest.getPassword());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/invitation")
+    public ResponseEntity<AuthResponse> invitation(@Valid @RequestBody RegisterRequest registerRequest) throws ServletException {
+        User existingUser = userService.FindByEmail(registerRequest.getEmail());
+        if (existingUser != null) {
+            AuthResponse response = new AuthResponse();
+            response.setError("Email already taken");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
+        UserEntity user = new UserEntity();
+        
+        try {
+            user.setEmail(registerRequest.getEmail());
+            user.setPassword(registerRequest.getPassword());
+            user.setFirstName(registerRequest.getFirstName());
+            user.setLastName(registerRequest.getLastName());
+            String userId = String.valueOf(Instant.now().toEpochMilli());
+            user.setId(userId);
+
+            identityService.saveUser(user);
+            identityService.createMembership(user.getId(), "user");
+
+            identityService.createTenantUserMembership(registerRequest.getTenantId(), user.getId());
+
+            User u = userService.findById(user.getId());
+            u.setTenantOwner(false);
+            u = userService.Save(u);
+
+            mailerService.SendRegisterEmail(u);
+        } catch(Exception ex) {
+            transactionManager.rollback(transactionStatus);
+      
+            AuthResponse response = new AuthResponse();
+            response.setError(ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        transactionManager.commit(transactionStatus);
         AuthResponse response = jwtUtil.generateToken(user.getEmail(), registerRequest.getPassword());
         return ResponseEntity.ok(response);
     }
