@@ -5,6 +5,7 @@ import java.util.List;
 import com.sbh.bpm.model.Group;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
+import com.sbh.bpm.payload.RegisterRequest;
 
 import org.camunda.bpm.engine.identity.Tenant;
 
@@ -24,4 +25,8 @@ public interface IUserService {
   Long Count();
   Long CountByTenantId(String tenantId);
   UserDetail FindByToken(String token);
+  User UpdateUser(User user, UserDetail u) throws Exception;
+  User UpdateMember(User user, UserDetail u) throws Exception;
+  User RegisterUser(RegisterRequest registerRequest, String tenantId) throws Exception;
+  User InvitationUser(RegisterRequest registerRequest) throws Exception;
 }
