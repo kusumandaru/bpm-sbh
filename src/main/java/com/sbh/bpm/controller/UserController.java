@@ -512,8 +512,6 @@ public class UserController extends GcsUtil{
           String json = new Gson().toJson(map);
           return Response.status(400).entity(json).build();
         }
-        transactionManager.commit(transactionStatus);
-     
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
@@ -676,7 +674,6 @@ public class UserController extends GcsUtil{
         String json = new Gson().toJson(map);
         return Response.status(400).entity(json).build();
     }
-      transactionManager.commit(transactionStatus);
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
