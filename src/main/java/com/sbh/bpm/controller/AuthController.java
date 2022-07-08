@@ -145,7 +145,7 @@ public class AuthController {
             response.setError(ex.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        transactionManager.commit(transactionStatus);
+
         AuthResponse response = jwtUtil.generateToken(user.getEmail(), registerRequest.getPassword());
         return ResponseEntity.ok(response);
     }
