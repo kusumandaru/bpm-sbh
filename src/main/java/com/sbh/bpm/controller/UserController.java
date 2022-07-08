@@ -55,10 +55,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import net.coobird.thumbnailator.Thumbnails;
 
@@ -86,9 +82,6 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IMailerService mailerService;
-
-  @Autowired
-  private PlatformTransactionManager transactionManager;
 
   @GET
   @Path(value = "/profile")
@@ -482,36 +475,15 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
-      TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
-
       try {
-        user.setActive(u.getActive());
-        user.setEmail(u.getEmail());
-        user.setFirstName(u.getFirstName());
-        user.setLastName(u.getLastName());
-        user.setTenantOwner(u.getTenantOwner());
-        user = userService.Save(user);
-  
-        com.sbh.bpm.model.Group groupUser = userService.GroupFromUser(user);
-        if (groupUser != null && !groupUser.getId().equals(u.getGroupId())) {
-          identityService.deleteMembership(user.getId(), groupUser.getId());
-          identityService.createMembership(user.getId(), u.getGroupId());
-        }
-  
-        Tenant tenantUser = userService.TenantFromUser(user);
-        if (tenantUser != null && !tenantUser.getId().equals(u.getTenantId())) {
-          identityService.deleteTenantUserMembership(tenantUser.getId(), user.getId());
-          identityService.createTenantUserMembership(u.getTenantId(), user.getId());
-        }
-      } catch(Exception ex) {
-          transactionManager.rollback(transactionStatus);
-    
-          Map<String, String> map = new HashMap<String, String>();
-          map.put("message", ex.getMessage());
-          String json = new Gson().toJson(map);
-          return Response.status(400).entity(json).build();
-        }
+      user = userService.UpdateUser(user, u);
+
+    } catch(Exception ex) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", ex.getMessage());
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
@@ -650,25 +622,9 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
-      TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
-      TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
-
       try {
-        user.setActive(u.getActive());
-        user.setEmail(u.getEmail());
-        user.setFirstName(u.getFirstName());
-        user.setLastName(u.getLastName());
-        user.setTenantOwner(u.getTenantOwner());
-        user = userService.Save(user);
-  
-        com.sbh.bpm.model.Group groupUser = userService.GroupFromUser(user);
-        if (groupUser != null && !groupUser.getId().equals(u.getGroupId())) {
-          identityService.deleteMembership(user.getId(), groupUser.getId());
-          identityService.createMembership(user.getId(), u.getGroupId());
-        }
+        user = userService.UpdateMember(user, u);
       } catch(Exception ex) {
-        transactionManager.rollback(transactionStatus);
-  
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", ex.getMessage());
         String json = new Gson().toJson(map);
