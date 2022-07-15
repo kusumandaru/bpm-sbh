@@ -14,4 +14,5 @@ public interface IMasterCriteriaService {
   MasterCriteria findById(Integer masterCriteriaID);
   MasterCriteria save(MasterCriteria masterCriteria);
   List<MasterCriteria> findByProjectAssessmentIDAndSelectedAndPrequisite(Integer projectAsessmentId, boolean selected);
+  boolean deleteById(Integer criteriaId);
 }

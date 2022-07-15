@@ -44,4 +44,10 @@ public class MasterCriteriaBlockerService implements IMasterCriteriaBlockerServi
   public void deleteBymasterCriteriaID(Integer criteriaId) {
     repository.deleteBymasterCriteriaID(criteriaId);
   }
+
+  @Override
+  public boolean deleteById(Integer criteriaBlockerId) {
+    repository.deleteById(criteriaBlockerId);
+    return !repository.existsById(criteriaBlockerId);
+  }
 }

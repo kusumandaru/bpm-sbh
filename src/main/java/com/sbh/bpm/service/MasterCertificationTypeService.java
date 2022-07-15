@@ -37,4 +37,10 @@ public class MasterCertificationTypeService implements IMasterCertificationTypeS
   public List<MasterCertificationType> findByCertificationCode(String certificationCode) {
     return (List<MasterCertificationType>) repository.findByCertificationCode(certificationCode);
   }
+
+  @Override
+  public boolean deleteById(Integer certificationTypeId) {
+    repository.deleteById(certificationTypeId);
+    return !repository.existsById(certificationTypeId);
+  }
 }

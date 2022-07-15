@@ -48,4 +48,10 @@ public class MasterEvaluationService implements IMasterEvaluationService {
     return (List<MasterEvaluation>) repository.findByMasterTemplateIDIn(masterTemplateIds);
 
   }
+
+  @Override
+  public boolean deleteById(Integer evaluationId) {
+    repository.deleteById(evaluationId);
+    return !repository.existsById(evaluationId);
+  }
 }

@@ -54,7 +54,9 @@
         <span>dari </span>
         <span>
           <span th:text="${owner}"></span>
-        <span> untuk pendaftaran Sertifikasi Greenship <i>New Building</i> Proyek Gedung </span>
+        <span> untuk pendaftaran Sertifikasi Greenship </span>
+          <i><span th:text="${certification_type}"></span></i>
+        <span> Proyek Gedung </span>
         <span th:text="${building_name}"></span>
         <span> berupa </span>
         <span>:</span>
@@ -86,7 +88,9 @@
         <span> Proyek Gedung </span>
         <span th:text="${building_name}"></span>
         <span> sudah mencapai status <i>eligible</i> atau memenuhi syarat untuk </span>
-        <span>ikut serta dalam proses Sertifikasi Greenship <i>New Building</i>. </span>
+        <span>ikut serta dalam proses Sertifikasi Greenship <i>
+          <span th:text="${certification_type}"></span>
+        </i>. </span>
         <span>Dokumen yang masih dalam pengurusan dan sertifikat laik fungsi harap di lengkapi sebelum sidang final, </span>
         <span> dengan status tersebut maka selanjutnya PT. Sertifikasi Bangunan Hijau akan melakukan proses sebagai berikut:</span>
       </p>

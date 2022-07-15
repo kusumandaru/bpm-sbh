@@ -9,4 +9,5 @@ public interface IMasterVendorService {
   List<MasterVendor> findAll();
   MasterVendor findById(Integer masterVendorId);
   MasterVendor save(MasterVendor masterVendor);
+  boolean deleteById(Integer vendorId);
 }

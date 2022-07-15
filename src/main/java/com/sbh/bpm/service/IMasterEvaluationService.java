@@ -13,4 +13,5 @@ public interface IMasterEvaluationService {
   MasterEvaluation findById(Integer masterEvaluationId);
   MasterEvaluation save(MasterEvaluation masterEvaluation);
   List<MasterEvaluation> findByMasterTemplateIDIn(List<Integer> masterTemplateIds);
+  boolean deleteById(Integer evaluationId);
 }

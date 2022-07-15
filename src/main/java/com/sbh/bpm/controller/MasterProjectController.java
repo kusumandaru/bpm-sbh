@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -94,6 +95,31 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
+  @POST
+  @Path(value = "/levels")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response saveLevels(@HeaderParam("Authorization") String authorization,
+                                MasterLevel level) {
+    level.setCreatedAt(new Date());                  
+    level = masterLevelService.save(level);
+
+    String json = new Gson().toJson(level);
+    return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/levels/{level_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response MasterLevelDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("level_id") Integer levelId
+
+  ) {
+    boolean status = masterLevelService.deleteById(levelId);
+    return Response.status(status ? 200 : 400).build();
+  }
+
   @GET
   @Path(value = "/levels/{task_id}/task/{assessment_type}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -164,7 +190,6 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
-
   @GET
   @Path(value = "/vendors")
   @Produces(MediaType.APPLICATION_JSON)
@@ -183,6 +208,26 @@ public class MasterProjectController extends GcsUtil{
 
     String json = new Gson().toJson(vendor);
     return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/vendors/{vendor_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response VendorDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("vendor_id") Integer vendorId
+  ) {
+    List<MasterCertificationType> templates = (List<MasterCertificationType>) masterCertificationTypeService.findByMasterVendorID(vendorId);
+    if(templates.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any certification type refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    boolean status = masterVendorService.deleteById(vendorId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @POST
@@ -262,6 +307,26 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
+  @DELETE
+  @Path(value = "/certification_types/{certification_type_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CertificationTypeDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("certification_type_id") Integer certificationTypeId
+  ) {
+    List<MasterTemplate> templates = (List<MasterTemplate>) masterTemplateService.findByMasterCertificationTypeID(certificationTypeId);
+    if(templates.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master template refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    
+    boolean status = masterCertificationTypeService.deleteById(certificationTypeId);
+    return Response.status(status ? 200 : 400).build();
+  }
+
   @POST
   @Path(value = "/certification_types")
   @Produces(MediaType.APPLICATION_JSON)
@@ -327,6 +392,35 @@ public class MasterProjectController extends GcsUtil{
 
     String json = new Gson().toJson(template);
     return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/templates/{template_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response TemplateDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("template_id") Integer templateId
+  ) {
+    List<MasterEvaluation> evaluations = (List<MasterEvaluation>) masterEvaluationService.findByMasterTemplateID(templateId);
+    if(evaluations.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master evaluation refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+
+    List<MasterLevel> levels = (List<MasterLevel>) masterLevelService.findByMasterTemplateID(templateId);
+    if(levels.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master level refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    
+    boolean status = masterTemplateService.deleteById(templateId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @POST
@@ -400,6 +494,26 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
+  @DELETE
+  @Path(value = "/evaluations/{evaluation_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response EvaluationDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("evaluation_id") Integer evaluationId
+  ) {
+    List<MasterExercise> exercises = (List<MasterExercise>) masterExerciseService.findByMasterEvaluationID(evaluationId);
+    if(exercises.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master exercise refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    
+    boolean status = masterEvaluationService.deleteById(evaluationId);
+    return Response.status(status ? 200 : 400).build();
+  }
+
   @POST
   @Path(value = "/evaluations")
   @Produces(MediaType.APPLICATION_JSON)
@@ -459,6 +573,26 @@ public class MasterProjectController extends GcsUtil{
 
     String json = new Gson().toJson(exercise);
     return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/exercises/{exercise_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ExerciseDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("exercise_id") Integer exerciseId
+  ) {
+    List<MasterCriteria> criterias = (List<MasterCriteria>) masterCriteriaService.findByMasterExerciseID(exerciseId);
+    if(criterias.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master criteria refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    
+    boolean status = masterExerciseService.deleteById(exerciseId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @POST
@@ -530,6 +664,31 @@ public class MasterProjectController extends GcsUtil{
 
     String json = new Gson().toJson(criteria);
     return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/criterias/{criteria_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CriteriaDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("criteria_id") Integer criteriaId
+  ) {
+    List<MasterCriteriaBlocker> blockers = (List<MasterCriteriaBlocker>) masterCriteriaBlockerService.findBymasterCriteriaID(criteriaId);
+    if(blockers.size()>0) {
+      return Response.status(400, "Cannot delete, there is any master blocker refer this subject, delete them first").build();
+    }
+
+    List<MasterDocument> documents = (List<MasterDocument>) masterDocumentService.findBymasterCriteriaID(criteriaId);
+    if(documents.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master document refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    
+    boolean status = masterCriteriaService.deleteById(criteriaId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @POST
@@ -615,6 +774,17 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
+  @DELETE
+  @Path(value =  "/criteria_blockers/{criteria_blocker_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response CriteriaBlockerDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("criteria_blocker_id") Integer criteriaBlockerId
+  ) {    
+    boolean status = masterCriteriaBlockerService.deleteById(criteriaBlockerId);
+    return Response.status(status ? 200 : 400).build();
+  }
+
   @POST
   @Path(value = "/criteria_blockers")
   @Produces(MediaType.APPLICATION_JSON)
@@ -673,6 +843,17 @@ public class MasterProjectController extends GcsUtil{
 
     String json = new Gson().toJson(document);
     return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/documents/{document_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DocumentDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("document_id") Integer documentId
+  ) {    
+    boolean status = masterDocumentService.deleteById(documentId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @POST

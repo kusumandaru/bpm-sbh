@@ -130,9 +130,8 @@ line-height:normal'>
         <![endif]>
         <span >Penyerahan buku Greenship</span>
         <span  ></span>
-        <i style='mso-bidi-font-style:normal'>
-          <span >guideline for New Building</span>
-        </i>
+        <i> <span >guideline for </span></i>
+        <i><span th:text="${certification_type}"></span></i>
         <span > sebanyak 2 Eksemplar</span>
         <span >
           
@@ -262,7 +261,9 @@ line-height:normal'>
       <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;text-justify:inter-ideograph'>
         <span >Sekali lagi kami ucapkan selamat atas partisipasi <span th:text="${owner}"></span> untuk proyek </span>
         <span  style='mso-ansi-language:EN-GB'>Gedung <span th:text="${building_name}"></span> </span>
-        <span >dalam sertifikasi Greenship New Building. Selanjutnya kami akan menunggu:</span>
+        <span >dalam sertifikasi Greenship </span>
+        <span th:text="${certification_type}"></span>
+        <span>. Selanjutnya kami akan menunggu:</span>
       </p>
       <p class=MsoListParagraphCxSpFirst style='text-align:justify;text-justify:inter-ideograph;text-indent:-18.0pt;line-height:normal;mso-list:l3 level1 lfo19'>
         <![if !supportLists]>

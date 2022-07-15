@@ -58,4 +58,10 @@ public class MasterLevelService implements IMasterLevelService {
     return (List<MasterLevel>) repository.findByMasterTemplateIDIn(masterTemplateIds);
 
   }
+
+  @Override
+  public boolean deleteById(Integer levelId) {
+    repository.deleteById(levelId);
+    return !repository.existsById(levelId);
+  }
 }

@@ -27,4 +27,10 @@ public class MasterVendorService implements IMasterVendorService {
   public MasterVendor save(MasterVendor masterVendor) {
     return repository.save(masterVendor);
   }
+
+  @Override
+  public boolean deleteById(Integer vendorId) {
+    repository.deleteById(vendorId);
+    return !repository.existsById(vendorId);
+  }
 }

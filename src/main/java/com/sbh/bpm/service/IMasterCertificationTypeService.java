@@ -11,4 +11,5 @@ public interface IMasterCertificationTypeService {
   List<MasterCertificationType> findByCertificationCode(String certificationCode);
   MasterCertificationType findById(Integer masterCertificationTypeId);
   MasterCertificationType save(MasterCertificationType masterCertificationType);
+  boolean deleteById(Integer certificationTypeId);
 }

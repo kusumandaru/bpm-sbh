@@ -42,4 +42,10 @@ public class MasterTemplateService implements IMasterTemplateService {
   public List<MasterTemplate> findByProjectType(String projectType) {
     return (List<MasterTemplate>) repository.findByProjectType(projectType);
   }
+
+  @Override
+  public boolean deleteById(Integer templateId) {
+    repository.deleteById(templateId);
+    return !repository.existsById(templateId);
+  }
 }
