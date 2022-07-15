@@ -12,4 +12,5 @@ public interface IMasterTemplateService {
   List<MasterTemplate> findByProjectType(String projectType);
   MasterTemplate findById(Integer masterTemplateId);
   MasterTemplate save(MasterTemplate masterTemplate);
+  boolean deleteById(Integer templateId);
 }

@@ -10,4 +10,5 @@ public interface IBuildingTypeService {
   BuildingType findById(Integer buildingTypeId);
   BuildingType findByCode(String code);
   BuildingType save(BuildingType buildingType);
+  boolean deleteById(Integer buildingTypeId);
 }

@@ -11,4 +11,5 @@ public interface IMasterDocumentService {
   List<MasterDocument> findBymasterCriteriaIDAndActiveTrue(Integer criteriaId);
   MasterDocument findById(Integer masterDocumentId);
   MasterDocument save(MasterDocument masterDocument);
+  boolean deleteById(Integer documentId);
 }

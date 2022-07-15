@@ -32,4 +32,10 @@ public class BuildingTypeService implements IBuildingTypeService {
   public BuildingType save(BuildingType buildingType) {
     return repository.save(buildingType);
   }
+
+  @Override
+  public boolean deleteById(Integer buildingTypeId) {
+    repository.deleteById(buildingTypeId);
+    return !repository.existsById(buildingTypeId);
+  }
 }

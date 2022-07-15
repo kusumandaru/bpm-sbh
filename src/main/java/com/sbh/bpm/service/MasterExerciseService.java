@@ -42,4 +42,10 @@ public class MasterExerciseService implements IMasterExerciseService {
   public List<MasterExercise> findByMasterEvaluationIDInAndActiveTrue(List<Integer> evaluationIds) {
     return (List<MasterExercise>) repository.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
   }
+
+  @Override
+  public boolean deleteById(Integer exerciseId) {
+    repository.deleteById(exerciseId);
+    return !repository.existsById(exerciseId);
+  }
 }

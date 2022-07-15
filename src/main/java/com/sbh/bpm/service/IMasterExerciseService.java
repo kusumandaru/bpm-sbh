@@ -12,4 +12,5 @@ public interface IMasterExerciseService {
   List<MasterExercise> findByMasterEvaluationIDInAndActiveTrue(List<Integer> evaluationIds);
   MasterExercise findById(Integer masterExerciseId);
   MasterExercise save(MasterExercise masterExercise);
+  boolean deleteById(Integer exerciseId);
 }

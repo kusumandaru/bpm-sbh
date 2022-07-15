@@ -64,4 +64,10 @@ public class MasterCriteriaService implements IMasterCriteriaService {
     List<MasterCriteria> unselectedCriterias = criterias.stream().filter(criteria -> masterCriteriaIds.contains(criteria.getId())).collect(Collectors.toList());
     return unselectedCriterias;
   }
+
+  @Override
+  public boolean deleteById(Integer criteriaId) {
+    repository.deleteById(criteriaId);
+    return !repository.existsById(criteriaId);
+  }
 }

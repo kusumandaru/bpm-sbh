@@ -37,4 +37,10 @@ public class MasterDocumentService implements IMasterDocumentService {
   public List<MasterDocument> findBymasterCriteriaIDAndActiveTrue(Integer criteriaId) {
     return (List<MasterDocument>) repository.findBymasterCriteriaIDAndActiveTrue(criteriaId);
   }
+
+  @Override
+  public boolean deleteById(Integer documentId) {
+    repository.deleteById(documentId);
+    return !repository.existsById(documentId);
+  }
 }

@@ -21,6 +21,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PATCH;
@@ -237,6 +238,18 @@ public class MasterController extends GcsUtil{
 
     String json = new Gson().toJson(bt);
     return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/building_types/{building_type_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response BuildingTypeDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("building_type_id") Integer buildingTypeId
+
+  ) {
+    boolean status = buildingTypeService.deleteById(buildingTypeId);
+    return Response.status(status ? 200 : 400).build();
   }
 
   @GET
