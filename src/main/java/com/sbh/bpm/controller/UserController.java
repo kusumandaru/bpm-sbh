@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.Consumes;
@@ -273,7 +274,7 @@ public class UserController extends GcsUtil{
     }
   
   @GET
-  @Path(value = "/users/count")
+  @Path(value = "/user_count")
   @Produces(MediaType.APPLICATION_JSON)
   public Response CountAllUsers(
     @HeaderParam("Authorization") String authorization) {
@@ -296,6 +297,39 @@ public class UserController extends GcsUtil{
       Long count = userService.Count();
 
       String json = new Gson().toJson(count);
+      return Response.status(200).entity(json).build();
+    }
+
+  @GET
+  @Path(value = "/grouping_user")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response UserGrouping(
+    @HeaderParam("Authorization") String authorization) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Only administrator permitted");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+      
+      Map<String, Long> dict = new TreeMap<>();
+      List<com.sbh.bpm.model.Tenant> tenantList = tenantService.findAll();
+
+      tenantList.stream().forEach(t -> {
+        Long userCount = userService.CountByTenantId(t.getId());
+        dict.put(t.getName(), userCount);
+      });
+
+      String json = new Gson().toJson(dict);
       return Response.status(200).entity(json).build();
     }
   
