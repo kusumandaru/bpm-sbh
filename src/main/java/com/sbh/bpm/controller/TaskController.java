@@ -70,6 +70,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Path(value = "/new-building")
 public class TaskController {
   private static final Logger logger = LoggerFactory.getLogger(TaskController.class);
+  private final String[] adminTasks = {"check-registration-project", "check-document-building", "agreement", "check-first-payment", "workshop", "check-second-payment", "check-third-payment", "design-recognition-evaluation-assessment", "design-recognition-trial", "design-recognition-letter", "check-third-payment-fa"};
+  private final String[] clientTasks = {"fill-registration-project", "fill-document-building", "first-payment", "second-payment", "design-recognition-submission", "third-payment", "design-recognition-trial-revision", "final-assessment-submission", "third-payment-fa", "on-site-revision-submission", "final-assessment-trial-revision", "final-assessment-letter"};
+  private final String[] verificatorTasks = {"design-recognition-review", "design-recognition-revision-review", "final-assessment-review", "on-site-verification", "final-assessment-evaluation-assessment", "final-assessment-revision-review"};
 
   @Autowired
   private IProvinceService provinceService;
@@ -356,7 +359,7 @@ public class TaskController {
       taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
     }
     taskQuery = taskQuery.endOr();
-    
+
     taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
@@ -498,6 +501,7 @@ public class TaskController {
     taskQuery = taskQuery.processVariableValueEquals("tenant", user.getTenant().getId());
     String[] processInstanceIds = projectUsers.stream().map(pu -> pu.getProcessInstanceID()).toArray(String[]::new);
     taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+    taskQuery = taskQuery.taskDefinitionKeyIn(clientTasks);
     taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
@@ -523,10 +527,10 @@ public class TaskController {
   }
 
   @POST
-  @Path(value = "/tasks/admin/own_task/pagi")
+  @Path(value = "/tasks/verificator/own_task/pagi")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response AdminPaginationOwnTasks(@HeaderParam("Authorization") String authorization,
+  public Response VerificatorPaginationOwnTasks(@HeaderParam("Authorization") String authorization,
                                   PaginationRequest pagiRequest) {
     UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
     if (user == null) {
@@ -563,6 +567,7 @@ public class TaskController {
     taskQuery = taskQuery.endOr();
     String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
     taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+    taskQuery = taskQuery.taskDefinitionKeyIn(verificatorTasks);
     taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
@@ -588,6 +593,71 @@ public class TaskController {
         sbhTask.setAssigned(true);
       }
 
+      sbhTasks.add(sbhTask);
+    }
+
+    PaginationResult result = new PaginationResult(sbhTasks, taskSize);
+    String json = new Gson().toJson(result);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/tasks/admin/own_task/pagi")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response AdminPaginationOwnTasks(@HeaderParam("Authorization") String authorization,
+                                  PaginationRequest pagiRequest) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    taskQuery = taskQuery.or();
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getAssignee())) {
+      taskQuery = taskQuery.taskAssigneeLike("%"+pagiRequest.getFilter().getAssignee()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingTypeName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_type", pagiRequest.getFilter().getBuildingTypeName());
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_name", "%"+pagiRequest.getFilter().getBuildingName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getName())) {
+      taskQuery = taskQuery.taskNameLike("%"+pagiRequest.getFilter().getName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getCertificationType())) {
+      taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
+    }
+    taskQuery = taskQuery.endOr();
+    taskQuery = taskQuery.taskDefinitionKeyIn(adminTasks);
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+
+    List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
+    Long taskSize = taskQuery.count();
+
+    List<Tenant> tenants = tenantService.findAll();
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
+      sbhTask.setAssigned(true);
       sbhTasks.add(sbhTask);
     }
 
