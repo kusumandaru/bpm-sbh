@@ -917,12 +917,12 @@ public class FileController extends GcsUtil{
     MasterTemplate masterTemplate = masterTemplates.get(masterTemplates.size() - 1);;
     List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplate.getId());
 
-    ExecutorService executor = Executors.newFixedThreadPool(8);
-    List<Callable<Pair<byte[], Attachment>>> listOfCallable = new ArrayList<Callable<Pair<byte[], Attachment>>>();
+    // ExecutorService executor = Executors.newFixedThreadPool(8);
+    // List<Callable<Pair<byte[], Attachment>>> listOfCallable = new ArrayList<Callable<Pair<byte[], Attachment>>>();
 
-    for (Attachment attachment : attachments) {
-      listOfCallable.add(() -> new ImmutablePair<>(GetBlobByte(attachment.getLink()), attachment));
-    }
+    // for (Attachment attachment : attachments) {
+    //   listOfCallable.add(() -> new ImmutablePair<>(GetBlobByte(attachment.getLink()), attachment));
+    // }
 
     FileOutputStream fos;
     ZipOutputStream zipOut;
@@ -934,40 +934,60 @@ public class FileController extends GcsUtil{
       logger.error(e.getMessage());
       return Response.status(400, e.getMessage()).build();
     }
-    try {
-      List<Future<Pair<byte[], Attachment>>> futures = executor.invokeAll(listOfCallable);
-      List<String> filenames = new ArrayList<String>();
-      futures.stream().forEach(f -> {
-          try {
-            Pair<byte[], Attachment> result = f.get();
-            byte[] byteArray = result.getLeft();
-            Attachment attachment = result.getRight();
-            String criteriaCode = attachment.getCriteriaCode();
 
-            if (attachment != null) {
-              String filename = criteriaCode + '/' + attachment.getFilename();
-              if (ArrayUtils.contains(filenames.toArray(), filename)) {
-                return;
-              }
-              filenames.add(filename);
-              ZipEntry zipEntry = new ZipEntry(filename);
-              zipOut.putNextEntry(zipEntry);
-              zipOut.write(byteArray);
-              zipOut.closeEntry();
-            }
-          } catch (Exception e) {
-            throw new IllegalStateException(e);
-          }
-      });
+    List<String> filenames = new ArrayList<String>();
+    attachments.parallelStream().forEach(attachment -> {
+      byte[] byteArray = GetBlobByte(attachment.getLink());
+      String criteriaCode = attachment.getCriteriaCode();
+      String filename = criteriaCode + '/' + attachment.getFilename();
+      if (ArrayUtils.contains(filenames.toArray(), filename)) {
+        return;
+      }
+      filenames.add(filename);
+      ZipEntry zipEntry = new ZipEntry(filename);
+      try {
+        zipOut.putNextEntry(zipEntry);
+        zipOut.write(byteArray);
+        zipOut.closeEntry();
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+      
+    });
+    // try {
+    //   List<Future<Pair<byte[], Attachment>>> futures = executor.invokeAll(listOfCallable);
+    //   List<String> filenames = new ArrayList<String>();
+    //   futures.parallelStream().forEach(f -> {
+    //       try {
+    //         Pair<byte[], Attachment> result = f.get();
+    //         byte[] byteArray = result.getLeft();
+    //         Attachment attachment = result.getRight();
+    //         String criteriaCode = attachment.getCriteriaCode();
 
-    } catch (InterruptedException e) {// thread was interrupted
-        logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
+    //         if (attachment != null) {
+    //           String filename = criteriaCode + '/' + attachment.getFilename();
+    //           if (ArrayUtils.contains(filenames.toArray(), filename)) {
+    //             return;
+    //           }
+    //           filenames.add(filename);
+    //           ZipEntry zipEntry = new ZipEntry(filename);
+    //           zipOut.putNextEntry(zipEntry);
+    //           zipOut.write(byteArray);
+    //           zipOut.closeEntry();
+    //         }
+    //       } catch (Exception e) {
+    //         throw new IllegalStateException(e);
+    //       }
+    //   });
 
-    } finally {
-        // shut down the executor manually
-        executor.shutdown();
-    }
+    // } catch (InterruptedException e) {// thread was interrupted
+    //     logger.error(e.getMessage());
+    //   return Response.status(400, e.getMessage()).build();
+
+    // } finally {
+    //     // shut down the executor manually
+    //     executor.shutdown();
+    // }
 
     try {
       zipOut.close();
