@@ -850,7 +850,6 @@ public class FileController extends GcsUtil{
               zipOut.putNextEntry(zipEntry);
               byte[] byteArray = blob.getContent();
               zipOut.write(byteArray);
-              zipOut.closeEntry();
             }
           } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -954,6 +953,7 @@ public class FileController extends GcsUtil{
               ZipEntry zipEntry = new ZipEntry(filename);
               zipOut.putNextEntry(zipEntry);
               zipOut.write(byteArray);
+              zipOut.closeEntry();
             }
           } catch (Exception e) {
             throw new IllegalStateException(e);

@@ -48,15 +48,17 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
   public void InitCloudStorage() throws IOException{
     // Use this variation to read the Google authorization JSON from the resources directory with a path
     // and a project name.
-    try {
-      URL url = Resources.getResource(gcsJsonFile);
-      initGoogleCloudStorage(url.getPath(), gcsProject);
-    } catch (IOException e) {
-      logger.error(e.getMessage());
+    if (bucket == null) {
+      try {
+        URL url = Resources.getResource(gcsJsonFile);
+        initGoogleCloudStorage(url.getPath(), gcsProject);
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+      }
+    
+      // Bucket require globally unique names, so you'll probably need to change this
+      bucket = getBucket(bucketName);
     }
-  
-    // Bucket require globally unique names, so you'll probably need to change this
-    bucket = getBucket(bucketName);
   }
   
   
