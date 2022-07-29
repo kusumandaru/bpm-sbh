@@ -13,5 +13,6 @@ public interface MasterTemplateRepository extends CrudRepository<MasterTemplate,
   List<MasterTemplate> findByMasterVendorID(Integer vendorId);
   List<MasterTemplate> findByMasterCertificationTypeID(Integer certificationTypeId);
   List<MasterTemplate> findByProjectType(String projectTypes);
+  List<MasterTemplate> findByMasterCertificationTypeIDAndProjectType(Integer certificationTypeId, String projectType);
 }
 

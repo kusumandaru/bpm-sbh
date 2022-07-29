@@ -8,7 +8,6 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
-import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
@@ -120,13 +119,15 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
       logger.error(e.getMessage());
     }
 
-    Page<Blob> blobs = bucket.list();
-    for (Blob blob: blobs.getValues()) {
-        if (name.equals(blob.getName())) {
-            return blob;
-        }
-    }
-    return null;
+    Blob blob = bucket.get(name);
+    return blob;
+    // Page<Blob> blobs = bucket.list();
+    // for (Blob blob: blobs.getValues()) {
+    //     if (name.equals(blob.getName())) {
+    //         return blob;
+    //     }
+    // }
+    // return null;
   }
 
   // delete blob
