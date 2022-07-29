@@ -36,6 +36,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
+import com.sbh.bpm.heap.MemoryStats;
 import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.MasterTemplate;
@@ -220,6 +221,19 @@ public class FileController extends GcsUtil{
     String fileName = definition.getDiagramResourceName();
 
     return Response.ok(fileName).build();
+  }
+
+  @GET
+  @Path(value = "/memory-status")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetMemoryStatus(@HeaderParam("Authorization") String authorization) { 
+    MemoryStats stats = new MemoryStats();
+    stats.setHeapSize(Runtime.getRuntime().totalMemory());
+    stats.setHeapMaxSize(Runtime.getRuntime().maxMemory());
+    stats.setHeapFreeSize(Runtime.getRuntime().freeMemory());
+
+    String json = new Gson().toJson(stats);
+    return Response.ok().entity(json).build();
   }
 
   @GET
