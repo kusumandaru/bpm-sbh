@@ -904,10 +904,10 @@ public class FileController extends GcsUtil{
     List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplate.getId());
 
     ExecutorService executor = Executors.newCachedThreadPool();
-    List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
+    List<Callable<Pair<byte[], Attachment>>> listOfCallable = new ArrayList<Callable<Pair<byte[], Attachment>>>();
 
     for (Attachment attachment : attachments) {
-      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(attachment.getLink()), attachment.getCriteriaCode()));
+      listOfCallable.add(() -> new ImmutablePair<>(GetBlobByte(attachment.getLink()), attachment));
     }
 
     FileOutputStream fos;
@@ -921,24 +921,23 @@ public class FileController extends GcsUtil{
       return Response.status(400, e.getMessage()).build();
     }
     try {
-      List<Future<Pair<Blob, String>>> futures = executor.invokeAll(listOfCallable);
+      List<Future<Pair<byte[], Attachment>>> futures = executor.invokeAll(listOfCallable);
       List<String> filenames = new ArrayList<String>();
       futures.stream().forEach(f -> {
           try {
-            Pair<Blob, String> result = f.get();
-            Blob blob = result.getLeft();
-            String criteriaCode = result.getRight();
+            Pair<byte[], Attachment> result = f.get();
+            byte[] byteArray = result.getLeft();
+            Attachment attachment = result.getRight();
+            String criteriaCode = attachment.getCriteriaCode();
 
-            if (blob != null) {
-              String name = FilenameUtils.getName(blob.getName());
-              String filename = criteriaCode + '/' + name;
+            if (attachment != null) {
+              String filename = criteriaCode + '/' + attachment.getFilename();
               if (ArrayUtils.contains(filenames.toArray(), filename)) {
                 return;
               }
               filenames.add(filename);
               ZipEntry zipEntry = new ZipEntry(filename);
               zipOut.putNextEntry(zipEntry);
-              byte[] byteArray = blob.getContent();
               zipOut.write(byteArray);
             }
           } catch (Exception e) {

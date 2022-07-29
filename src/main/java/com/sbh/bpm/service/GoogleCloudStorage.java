@@ -62,8 +62,10 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
   
   // Use path and project name
   private void initGoogleCloudStorage(String pathToConfig, String projectId) throws FileNotFoundException, IOException {
+    if (storage == null) {
       Credentials credentials = GoogleCredentials.fromStream(new FileInputStream(pathToConfig));
       storage = StorageOptions.newBuilder().setCredentials(credentials).setProjectId(projectId).build().getService();
+    }
   }
   
   // Check for bucket existence and create if needed.
@@ -157,6 +159,18 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
         channel.write(ByteBuffer.wrap(object));
         channel.close();
     }
+  }
+
+
+  @Override
+  public byte[] ReadAllByte(String name) {
+    try {
+      InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+
+    return storage.readAllBytes(bucketName, name);
   }
 }
 

@@ -11,6 +11,7 @@ public interface IGoogleCloudStorage {
   BlobId SaveObject(String directory, String blobName, InputStream stream);
   BlobId SaveObject(String directory, String blobName, byte[] targetArray) ;
   byte[] GetContent(BlobId blobId);
+  byte[] ReadAllByte(String name);
   Blob GetBlobByName(String name);
   boolean DeleteBlob(Blob blob);
   void SetGcsSignUrl(Blob blob);

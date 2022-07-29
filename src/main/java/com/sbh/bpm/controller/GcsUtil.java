@@ -30,7 +30,7 @@ class GcsUtil {
   private IUserService userService;
 
   @Autowired
-private IGoogleCloudStorage cloudStorage;
+  private IGoogleCloudStorage cloudStorage;
 
   protected Pair<String, String> UploadToGcs(
     String directory,
@@ -160,6 +160,10 @@ private IGoogleCloudStorage cloudStorage;
 
   protected Blob GetBlob(String pathname) {
     return cloudStorage.GetBlobByName(pathname);
+  }
+
+  protected byte[] GetBlobByte(String pathname) {
+    return cloudStorage.ReadAllByte(pathname);
   }
 
   protected boolean DeleteBlob(Blob blob) {
