@@ -38,6 +38,7 @@ import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
 import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.City;
+import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.UserDetail;
@@ -46,6 +47,7 @@ import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IGoogleCloudStorage;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IMasterAdminService;
+import com.sbh.bpm.service.IMasterTemplateService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
@@ -104,6 +106,9 @@ public class FileController extends GcsUtil{
 
   @Autowired
   private IUserService userService;
+
+  @Autowired
+  private IMasterTemplateService masterTemplateService;
 
   @Autowired
   private IGoogleCloudStorage cloudStorage;
@@ -873,11 +878,12 @@ public class FileController extends GcsUtil{
   }
 
   @GET
-  @Path(value = "project/attachments/{task_id}/archived_scoring/{master_template_id}")
+  @Path(value = "project/attachments/{task_id}/archived_scoring/{certification_type_id}/{project_type}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response DesignRecognitionAttachmentArchived(@HeaderParam("Authorization") String authorization, 
     @PathParam("task_id") String taskId,
-    @PathParam("master_template_id") Integer masterTemplateId
+    @PathParam("certification_type_id") Integer certificationTypeId,
+    @PathParam("project_type") String projectType
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -893,8 +899,9 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
     String processInstanceId = task.getProcessInstanceId();
-
-    List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplateId);
+    List<MasterTemplate> masterTemplates = masterTemplateService.findByMasterCertificationTypeIDAndProjectType(certificationTypeId, projectType);
+    MasterTemplate masterTemplate = masterTemplates.get(masterTemplates.size() - 1);;
+    List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplate.getId());
 
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
