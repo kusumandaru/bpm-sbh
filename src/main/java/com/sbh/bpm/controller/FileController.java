@@ -917,7 +917,7 @@ public class FileController extends GcsUtil{
     MasterTemplate masterTemplate = masterTemplates.get(masterTemplates.size() - 1);;
     List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplate.getId());
 
-    ExecutorService executor = Executors.newCachedThreadPool();
+    ExecutorService executor = Executors.newFixedThreadPool(8);
     List<Callable<Pair<byte[], Attachment>>> listOfCallable = new ArrayList<Callable<Pair<byte[], Attachment>>>();
 
     for (Attachment attachment : attachments) {
