@@ -995,8 +995,9 @@ public class FileController extends GcsUtil{
           java.nio.file.Files.createDirectories(dirPath);
           java.nio.file.Path path = Paths.get(rootDir +'/'+ filename);
           java.nio.file.Files.write(path, byteArray);
-        } catch (Exception e) {
-          throw new IllegalStateException(e);
+        } catch (Exception e1) {
+          logger.error(e1.getMessage());
+          throw new IllegalStateException(e1);
         }
       });
     } catch (Exception e1) {// thread was interrupted
@@ -1056,9 +1057,9 @@ public class FileController extends GcsUtil{
     try {
       fos = new FileOutputStream(zipfilename);
       zipOut = new ZipOutputStream(fos);
-    } catch (FileNotFoundException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
+    } catch (FileNotFoundException e1) {
+      logger.error(e1.getMessage());
+      return Response.status(400, e1.getMessage()).build();
     }
 
     File zipDir = new File(rootDir);
@@ -1077,8 +1078,8 @@ public class FileController extends GcsUtil{
       public void write(OutputStream output) throws IOException {
         try {
             output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
-        } catch (Exception e) {
-            logger.error(e.getMessage());
+        } catch (Exception e1) {
+            logger.error(e1.getMessage());
         }
       }
     };
