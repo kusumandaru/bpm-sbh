@@ -1001,8 +1001,10 @@ public class FileController extends GcsUtil{
         }
       });
     } catch (Exception e1) {// thread was interrupted
-      logger.error(e1.getMessage());
-      return Response.status(400, e1.getMessage()).build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", e1.getMessage());
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
     } finally {
         // shut down the executor manually
         executor.shutdown();
@@ -1058,8 +1060,10 @@ public class FileController extends GcsUtil{
       fos = new FileOutputStream(zipfilename);
       zipOut = new ZipOutputStream(fos);
     } catch (FileNotFoundException e1) {
-      logger.error(e1.getMessage());
-      return Response.status(400, e1.getMessage()).build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", e1.getMessage());
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
     }
 
     File zipDir = new File(rootDir);
@@ -1068,8 +1072,10 @@ public class FileController extends GcsUtil{
       zipOut.close();
       fos.close();
     } catch (IOException e1) {
-      logger.error(e1.getMessage());
-      return Response.status(400, e1.getMessage()).build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", e1.getMessage());
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
     }
 
     File zipFile = new File(zipfilename);
