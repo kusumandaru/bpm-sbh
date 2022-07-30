@@ -81,6 +81,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 @Path(value = "/new-building")
 public class FileController extends GcsUtil{
@@ -902,6 +903,7 @@ public class FileController extends GcsUtil{
   @GET
   @Path(value = "project/attachments/{task_id}/archived_scoring/{certification_type_id}/{project_type}")
   @Produces(MediaType.APPLICATION_JSON)
+  @Transactional(timeout = 600)
   public Response DesignRecognitionAttachmentArchived(@HeaderParam("Authorization") String authorization, 
     @PathParam("task_id") String taskId,
     @PathParam("certification_type_id") Integer certificationTypeId,
