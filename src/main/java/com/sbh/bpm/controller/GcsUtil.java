@@ -163,6 +163,10 @@ class GcsUtil {
   }
 
   protected byte[] GetBlobByte(String pathname) {
+    if (pathname == null) {
+      return new byte[0];
+    }
+    
     return cloudStorage.ReadAllByte(pathname);
   }
 
