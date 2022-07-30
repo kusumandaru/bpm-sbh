@@ -913,7 +913,9 @@ public class FileController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (Exception e) {
+    } catch (Exception e1) {
+      e1.printStackTrace(System.out);
+
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
@@ -996,11 +998,15 @@ public class FileController extends GcsUtil{
           java.nio.file.Path path = Paths.get(rootDir +'/'+ filename);
           java.nio.file.Files.write(path, byteArray);
         } catch (Exception e1) {
+          e1.printStackTrace(System.out);
+
           logger.error(e1.getMessage());
           throw new IllegalStateException(e1);
         }
       });
     } catch (Exception e1) {// thread was interrupted
+      e1.printStackTrace(System.out);
+
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", e1.getMessage());
       String json = new Gson().toJson(map);
@@ -1060,6 +1066,7 @@ public class FileController extends GcsUtil{
       fos = new FileOutputStream(zipfilename);
       zipOut = new ZipOutputStream(fos);
     } catch (FileNotFoundException e1) {
+      e1.printStackTrace(System.out);
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", e1.getMessage());
       String json = new Gson().toJson(map);
@@ -1085,6 +1092,7 @@ public class FileController extends GcsUtil{
         try {
             output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
         } catch (Exception e1) {
+            e1.printStackTrace(System.out);
             logger.error(e1.getMessage());
         }
       }
