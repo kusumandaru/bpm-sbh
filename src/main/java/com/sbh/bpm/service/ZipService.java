@@ -20,6 +20,7 @@ import java.util.zip.ZipOutputStream;
 import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.MasterTemplate;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -91,7 +92,7 @@ public class ZipService implements IZipService{
       listOfCallable.add(() -> new ImmutablePair<>(GetBlobByte(attachment.getLink()), attachment));
     }
     
-    String zipfilename = taskId + "_" + certificationTypeId + "_" + projectType + ".zip";
+    String zipfilename = task.getProcessInstanceId() + "_" + certificationTypeId + "_" + projectType + ".zip";
 
     String rootDir;
 
@@ -150,6 +151,8 @@ public class ZipService implements IZipService{
         logger.error(e1.getMessage());
         throw new IllegalStateException(e1);
     }
+
+    FileUtils.deleteDirectory(zipDir);
 
     String archivedVar = "finish_archived_" + projectType;
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();

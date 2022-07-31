@@ -951,7 +951,7 @@ public class FileController extends GcsUtil{
       return Response.status(400).entity(json).build();
     }
 
-    String zipfilename = taskId + "_" + certificationTypeId + "_" + projectType + ".zip";
+    String zipfilename = task.getProcessInstanceId() + "_" + certificationTypeId + "_" + projectType + ".zip";
     File zipFile = new File(zipfilename);
     StreamingOutput stream = new StreamingOutput() {
       @Override
