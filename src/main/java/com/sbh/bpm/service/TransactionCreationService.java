@@ -73,9 +73,6 @@ public class TransactionCreationService implements ITransactionCreationService {
   private IAttachmentService attachmentService;
 
   @Autowired
-  private IMasterCertificationTypeService masterCertificationTypeService;
-
-  @Autowired
   private PlatformTransactionManager transactionManager;
   
   public class TransactionCreationResponse {

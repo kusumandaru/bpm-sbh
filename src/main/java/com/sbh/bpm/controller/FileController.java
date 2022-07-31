@@ -8,15 +8,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -40,18 +37,13 @@ import javax.ws.rs.core.StreamingOutput;
 import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
 import com.sbh.bpm.heap.MemoryStats;
-import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.City;
-import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.UserDetail;
-import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IGoogleCloudStorage;
-import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IMasterAdminService;
-import com.sbh.bpm.service.IMasterTemplateService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
@@ -63,7 +55,6 @@ import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.BpmPlatform;
@@ -72,7 +63,6 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
-import org.checkerframework.checker.units.qual.A;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -81,9 +71,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.transaction.annotation.Transactional;
 
 @Path(value = "/new-building")
 public class FileController extends GcsUtil{
@@ -94,9 +81,6 @@ public class FileController extends GcsUtil{
 
   @Autowired
   private ICityService cityService;
-
-  @Autowired
-  private IMailerService mailerService;
 
   @Autowired
   private IPdfGeneratorUtil pdfGeneratorUtil;
@@ -111,13 +95,7 @@ public class FileController extends GcsUtil{
   private IProjectAttachmentService projectAttachmentService;
 
   @Autowired
-  private IAttachmentService attachmentService;
-
-  @Autowired
   private IUserService userService;
-
-  @Autowired
-  private IMasterTemplateService masterTemplateService;
 
   @Autowired
   private IZipService zipService;
@@ -901,211 +879,6 @@ public class FileController extends GcsUtil{
         .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
         .build();
   }
-
-  // @GET
-  // @Path(value = "project/attachments/{task_id}/archived_scoring/{certification_type_id}/{project_type}")
-  // @Produces(MediaType.APPLICATION_JSON)
-  // @Transactional(timeout = 600)
-  // public Response DesignRecognitionAttachmentArchived(@HeaderParam("Authorization") String authorization, 
-  //   @PathParam("task_id") String taskId,
-  //   @PathParam("certification_type_id") Integer certificationTypeId,
-  //   @PathParam("project_type") String projectType
-  // ) {
-  //   ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
-  //   TaskService taskService = processEngine.getTaskService();
-    
-  //   Task task;
-  //   try {
-  //     task = taskService.createTaskQuery().taskId(taskId).singleResult();
-  //   } catch (Exception e1) {
-  //     e1.printStackTrace(System.out);
-
-  //     Map<String, String> map = new HashMap<String, String>();
-  //     map.put("message", "task id not found");
-  //     String json = new Gson().toJson(map);
-
-  //     return Response.status(400).entity(json).build();
-  //   }
-  //   String processInstanceId = task.getProcessInstanceId();
-  //   List<MasterTemplate> masterTemplates = masterTemplateService.findByMasterCertificationTypeIDAndProjectType(certificationTypeId, projectType);
-  //   MasterTemplate masterTemplate = masterTemplates.get(masterTemplates.size() - 1);;
-  //   List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplate.getId());
-
-  //   ExecutorService executor = Executors.newCachedThreadPool();
-  //   List<Callable<Pair<byte[], Attachment>>> listOfCallable = new ArrayList<Callable<Pair<byte[], Attachment>>>();
-
-  //   for (Attachment attachment : attachments) {
-  //     listOfCallable.add(() -> new ImmutablePair<>(GetBlobByte(attachment.getLink()), attachment));
-  //   }
-
-  //   // FileOutputStream fos;
-  //   // ZipOutputStream zipOut;
-  //   String zipfilename = taskId + ".zip";
-  //   // try {
-  //   //   fos = new FileOutputStream(zipfilename);
-  //   //   zipOut = new ZipOutputStream(fos);
-  //   // } catch (FileNotFoundException e) {
-  //   //   logger.error(e.getMessage());
-  //   //   return Response.status(400, e.getMessage()).build();
-  //   // }
-
-  //   // List<String> filenames = new ArrayList<String>();
-  //   // String rootDir;
-  //   // try {
-  //   //   rootDir = Files.createTempDirectory(taskId).toFile().getAbsolutePath();
-  //   // } catch (IOException e1) {
-  //   //   throw new IllegalStateException(e1);
-  //   // }
-
-  //   // attachments.forEach(attachment -> {
-  //   //   byte[] byteArray = GetBlobByte(attachment.getLink());
-  //   //   String criteriaCode = attachment.getCriteriaCode();
-  //   //   String filename = criteriaCode + '/' + attachment.getFilename();
-  //   //   if (ArrayUtils.contains(filenames.toArray(), filename)) {
-  //   //     return;
-  //   //   }
-  //   //   filenames.add(filename);
-
-  //   //   try {
-  //   //     java.nio.file.Path dirPath = Paths.get(rootDir +'/'+ criteriaCode + '/');
-  //   //     java.nio.file.Files.createDirectories(dirPath);
-  //   //     java.nio.file.Path path = Paths.get(rootDir +'/'+ criteriaCode + '/' + filename);
-  //   //     java.nio.file.Files.write(path, byteArray);
-  //   //   } catch (Exception e1) {
-  //   //     throw new IllegalStateException(e1);
-  //   //   }
-  //   // });
-
-  //   String rootDir;
-
-  //   try {
-  //     rootDir = Files.createTempDirectory(taskId).toFile().getAbsolutePath();
-
-  //     List<Future<Pair<byte[], Attachment>>> futures = executor.invokeAll(listOfCallable);
-  //     List<String> filenames = new ArrayList<String>();
-  //     futures.parallelStream().forEach(f -> {
-  //       try {
-  //         Pair<byte[], Attachment> result = f.get();
-  //         byte[] byteArray = result.getLeft();
-  //         Attachment attachment = result.getRight();
-  //         String criteriaCode = attachment.getCriteriaCode();
-  //         String filename = criteriaCode + '/' + attachment.getFilename();
-  //         if (attachment != null) {
-  //           if (ArrayUtils.contains(filenames.toArray(), filename)) {
-  //             return;
-  //           }
-  //           filenames.add(filename);
-  //         }
-
-  //         java.nio.file.Path dirPath = Paths.get(rootDir +'/'+ criteriaCode + '/');
-  //         java.nio.file.Files.createDirectories(dirPath);
-  //         java.nio.file.Path path = Paths.get(rootDir +'/'+ filename);
-  //         java.nio.file.Files.write(path, byteArray);
-  //       } catch (Exception e1) {
-  //         e1.printStackTrace(System.out);
-
-  //         logger.error(e1.getMessage());
-  //         throw new IllegalStateException(e1);
-  //       }
-  //     });
-  //   } catch (Exception e1) {// thread was interrupted
-  //     e1.printStackTrace(System.out);
-
-  //     Map<String, String> map = new HashMap<String, String>();
-  //     map.put("message", e1.getMessage());
-  //     String json = new Gson().toJson(map);
-  //     return Response.status(400).entity(json).build();
-  //   } finally {
-  //       // shut down the executor manually
-  //       executor.shutdown();
-  //   }
-
-  //   // zipFolder(String rootDir, String zipfilename);
-  //   // try {
-  //   //   List<Future<Pair<byte[], Attachment>>> futures = executor.invokeAll(listOfCallable);
-  //   //   List<String> filenames = new ArrayList<String>();
-  //   //   futures.parallelStream().forEach(f -> {
-  //   //       try {
-  //   //         Pair<byte[], Attachment> result = f.get();
-  //   //         byte[] byteArray = result.getLeft();
-  //   //         Attachment attachment = result.getRight();
-  //   //         String criteriaCode = attachment.getCriteriaCode();
-
-  //   //         if (attachment != null) {
-  //   //           String filename = criteriaCode + '/' + attachment.getFilename();
-  //   //           if (ArrayUtils.contains(filenames.toArray(), filename)) {
-  //   //             return;
-  //   //           }
-  //   //           filenames.add(filename);
-  //   //           ZipEntry zipEntry = new ZipEntry(filename);
-  //   //           zipOut.putNextEntry(zipEntry);
-  //   //           zipOut.write(byteArray);
-  //   //           zipOut.closeEntry();
-  //   //         }
-  //   //       } catch (Exception e) {
-  //   //         throw new IllegalStateException(e);
-  //   //       }
-  //   //   });
-
-  //   // } catch (InterruptedException e) {// thread was interrupted
-  //   //     logger.error(e.getMessage());
-  //   //   return Response.status(400, e.getMessage()).build();
-
-  //   // } finally {
-  //   //     // shut down the executor manually
-  //   //     executor.shutdown();
-  //   // }
-
-  //   // try {
-  //   //   zipOut.close();
-  //   //   fos.close();
-  //   // } catch (IOException e) {
-  //   //   logger.error(e.getMessage());
-  //   //   return Response.status(400, e.getMessage()).build();
-  //   // }
-
-  //   FileOutputStream fos;
-  //   ZipOutputStream zipOut;
-  //   try {
-  //     fos = new FileOutputStream(zipfilename);
-  //     zipOut = new ZipOutputStream(fos);
-  //   } catch (FileNotFoundException e1) {
-  //     e1.printStackTrace(System.out);
-  //     Map<String, String> map = new HashMap<String, String>();
-  //     map.put("message", e1.getMessage());
-  //     String json = new Gson().toJson(map);
-  //     return Response.status(400).entity(json).build();
-  //   }
-
-  //   File zipDir = new File(rootDir);
-  //   try {
-  //     zipService.zipFile(zipDir, zipDir.getName(), zipOut);
-  //     zipOut.close();
-  //     fos.close();
-  //   } catch (IOException e1) {
-  //     Map<String, String> map = new HashMap<String, String>();
-  //     map.put("message", e1.getMessage());
-  //     String json = new Gson().toJson(map);
-  //     return Response.status(400).entity(json).build();
-  //   }
-
-  //   File zipFile = new File(zipfilename);
-  //   StreamingOutput stream = new StreamingOutput() {
-  //     @Override
-  //     public void write(OutputStream output) throws IOException {
-  //       try {
-  //           output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
-  //       } catch (Exception e1) {
-  //           e1.printStackTrace(System.out);
-  //           logger.error(e1.getMessage());
-  //       }
-  //     }
-  //   };
-
-  //   return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
-  //       .header("Content-Disposition", "inline; filename=\"" + zipFile.getName() + "\"") 
-  //       .build();
-  // }
 
   @GET
   @Path(value = "project/attachments/{task_id}/archived_scoring/{certification_type_id}/{project_type}")
