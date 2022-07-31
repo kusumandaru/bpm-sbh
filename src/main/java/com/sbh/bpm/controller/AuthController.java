@@ -10,10 +10,8 @@ import com.sbh.bpm.payload.AuthRequest;
 import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.payload.RegisterRequest;
 import com.sbh.bpm.security.JwtUtil;
-import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IUserService;
 
-import org.camunda.bpm.engine.IdentityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
-
-    @Autowired
-    private IdentityService identityService;
-
-    @Autowired
-    private IMailerService mailerService;
 
     @Autowired
     private IUserService userService;

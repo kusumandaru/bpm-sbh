@@ -1085,8 +1085,7 @@ public class TaskController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     RuntimeService runtimeService = processEngine.getRuntimeService();
-    HistoryService historyService = processEngine.getHistoryService();
- 
+
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();

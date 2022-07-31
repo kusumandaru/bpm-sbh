@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +20,7 @@ import java.util.zip.ZipOutputStream;
 import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.MasterTemplate;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,19 +28,17 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ZipService implements IZipService{
+  private static final Logger logger = LoggerFactory.getLogger(ZipService.class);
+
   @Autowired
   private IAttachmentService attachmentService;
 
@@ -94,7 +92,7 @@ public class ZipService implements IZipService{
       listOfCallable.add(() -> new ImmutablePair<>(GetBlobByte(attachment.getLink()), attachment));
     }
     
-    String zipfilename = taskId + "_" + certificationTypeId + "_" + projectType + ".zip";
+    String zipfilename = task.getProcessInstanceId() + "_" + certificationTypeId + "_" + projectType + ".zip";
 
     String rootDir;
 
@@ -122,12 +120,12 @@ public class ZipService implements IZipService{
           java.nio.file.Path path = Paths.get(rootDir +'/'+ filename);
           java.nio.file.Files.write(path, byteArray);
         } catch (Exception e1) {
-          e1.printStackTrace(System.out);
+          logger.error(e1.getMessage());
           throw new IllegalStateException(e1);
         }
       });
     } catch (Exception e1) {// thread was interrupted
-        e1.printStackTrace(System.out);
+        logger.error(e1.getMessage());
         throw new IllegalStateException(e1);
     } finally {
         // shut down the executor manually
@@ -150,9 +148,11 @@ public class ZipService implements IZipService{
       zipOut.close();
       fos.close();
     } catch (IOException e1) {
-        e1.printStackTrace(System.out);
+        logger.error(e1.getMessage());
         throw new IllegalStateException(e1);
     }
+
+    FileUtils.deleteDirectory(zipDir);
 
     String archivedVar = "finish_archived_" + projectType;
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
