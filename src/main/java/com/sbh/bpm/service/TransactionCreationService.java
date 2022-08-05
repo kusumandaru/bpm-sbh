@@ -181,6 +181,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         scoring.setApprovedScore(0.0f);
         scoring.setSubmittedScore(0.0f);
         scoring.setApprovalStatus(1); // idle
+        scoring.setAdditionalNotes(criteria.getAdditionalNotes());
         scoring.setCreatedBy("system");
         scoring.setCreatedAt(newDate);
 
@@ -308,6 +309,7 @@ public class TransactionCreationService implements ITransactionCreationService {
         scoring.setApprovedScore(0.0f);
         scoring.setSubmittedScore(0.0f);
         scoring.setApprovalStatus(1); // idle
+        scoring.setAdditionalNotes(criteria.getAdditionalNotes());
         scoring.setCreatedBy("system");
         scoring.setCreatedAt(newDate);
 

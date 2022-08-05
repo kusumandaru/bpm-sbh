@@ -69,6 +69,12 @@ public class CriteriaScoring {
   @Setter
   private Integer approvalStatus;
 
+  @SerializedName("additional_notes")
+  @Column(name="additional_notes")
+  @Getter
+  @Setter
+  private String additionalNotes;
+
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
