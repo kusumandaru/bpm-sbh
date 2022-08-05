@@ -1259,6 +1259,31 @@ public class AssessmentController extends GcsUtil {
     return Response.status(200).entity(json).build();
   }
 
+  @POST
+  @Path(value = "/criteria_scoring/{criteriaScoringId}/additional_notes")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DesignRecognitionCommentCreation(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("criteriaScoringId") Integer criteriaScoringId,
+    CriteriaScoring criteriaScoring
+  ) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    CriteriaScoring scoring = criteriaScoringService.findById(criteriaScoringId);
+
+    scoring.setAdditionalNotes(criteriaScoring.getAdditionalNotes());
+    scoring = criteriaScoringService.save(scoring);
+    String json = new Gson().toJson(scoring);
+    return Response.status(200).entity(json).build();
+  }
+
   @GET
   @Path(value = "/attachments/{attachmentId}")
   @Produces(MediaType.APPLICATION_JSON)
