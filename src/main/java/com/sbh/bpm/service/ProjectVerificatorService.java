@@ -67,8 +67,9 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
     TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
     
-    List<ProjectVerificator> existingProjectVerificators = findByUserId(userId);
-    List<String> existingProjectVerificatorIds = existingProjectVerificators.stream().map(project -> project.getProcessInstanceID()).collect(Collectors.toList());
+    // List<ProjectVerificator> existingProjectVerificators = findByUserId(userId);
+    List<ProjectVerificator> allProjectVerificators = findAll();
+    List<String> existingProjectVerificatorIds = allProjectVerificators.stream().map(project -> project.getProcessInstanceID()).collect(Collectors.toList());
     
     String[] projectIdArray = projectIds.split(",");
     List<String> projectIdList = Arrays.asList(projectIdArray);
@@ -82,7 +83,7 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
     newProjectIds.removeIf(item -> item == null || "".equals(item));
 
     try {
-      Iterable<ProjectVerificator> deletedIterable = existingProjectVerificators.stream().filter(project -> deletedProjectIds.contains(project.getProcessInstanceID())).collect(Collectors.toList());
+      Iterable<ProjectVerificator> deletedIterable = allProjectVerificators.stream().filter(project -> deletedProjectIds.contains(project.getProcessInstanceID())).collect(Collectors.toList());
       deleteAll(deletedIterable);
 
       Iterable<ProjectVerificator> newIterable = newProjectIds.stream().map(processInstanceID -> new ProjectVerificator(userId, userDetail.getGroup().getId(), processInstanceID, userDetail.getUsername())).collect(Collectors.toList());

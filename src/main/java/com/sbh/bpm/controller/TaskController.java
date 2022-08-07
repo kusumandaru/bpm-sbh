@@ -278,6 +278,73 @@ public class TaskController {
   }
 
   @GET
+  @Path(value = "/grouped_task_by_verificator")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response TaskCountGroupByVerificator(@HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Map<String, Long> dict = new TreeMap<>();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    List<Tenant> tenantList = tenantService.findAll();
+
+    tenantList.stream().forEach(t -> {
+      TaskQuery taskQuery = taskService.createTaskQuery();
+      taskQuery = taskQuery.processVariableValueEquals("tenant", t.getId());
+      taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+      dict.put(t.getName(), taskQuery.count());
+    });
+
+    dict.values().removeIf(f -> f == 0f);
+
+    String json = new Gson().toJson(dict);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/grouped_pending_task_by_verificator")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response PendingTaskCountGroupByVerificator(@HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Map<String, Long> dict = new TreeMap<>();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    List<Tenant> tenantList = tenantService.findAll();
+
+    tenantList.stream().forEach(t -> {
+      TaskQuery taskQuery = taskService.createTaskQuery();
+      taskQuery = taskQuery.processVariableValueEquals("tenant", t.getId());
+      taskQuery = taskQuery.taskDefinitionKeyIn(verificatorTasks);
+      taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+      dict.put(t.getName(), taskQuery.count());
+    });
+
+    dict.values().removeIf(f -> f == 0f);
+
+    String json = new Gson().toJson(dict);
+    return Response.ok(json).build();
+  }
+
+  @GET
   @Path(value = "/tasks/tenant/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response TenantTasks(
@@ -365,7 +432,73 @@ public class TaskController {
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<Tenant> tenants = tenantService.findAll();
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
+      sbhTask.setAssigned(true);
+
+      sbhTasks.add(sbhTask);
+    }
+
+    PaginationResult result = new PaginationResult(sbhTasks, taskSize);
+    String json = new Gson().toJson(result);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/tasks/verificator/pagi")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response VerificatorPaginationTasks(@HeaderParam("Authorization") String authorization,
+                                  PaginationRequest pagiRequest) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
     List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    taskQuery = taskQuery.or();
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getAssignee())) {
+      taskQuery = taskQuery.taskAssigneeLike("%"+pagiRequest.getFilter().getAssignee()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingTypeName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_type", pagiRequest.getFilter().getBuildingTypeName());
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_name", "%"+pagiRequest.getFilter().getBuildingName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getName())) {
+      taskQuery = taskQuery.taskNameLike("%"+pagiRequest.getFilter().getName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getCertificationType())) {
+      taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
+    }
+    taskQuery = taskQuery.endOr();
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+
+    List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
+    Long taskSize = taskQuery.count();
+
     List<Tenant> tenants = tenantService.findAll();
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -379,12 +512,8 @@ public class TaskController {
       Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
       sbhTask.setTenantName(selectedTenant.getName());
       final SbhTask innerTask = sbhTask;
-      if (user.getGroupId().equals("verificator")) {
-        Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
-        sbhTask.setAssigned(assigned);
-      } else {
-        sbhTask.setAssigned(true);
-      }
+      Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
+      sbhTask.setAssigned(assigned);
 
       sbhTasks.add(sbhTask);
     }
@@ -666,6 +795,33 @@ public class TaskController {
     return Response.ok(json).build();
   }
 
+  @GET
+  @Path(value = "/tasks/verificator/pagi/count")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response VerificatorPaginationTaskCounts(@HeaderParam("Authorization") String authorization) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+    Long taskSize = taskQuery.count();
+
+    String json = new Gson().toJson(taskSize);
+    return Response.ok(json).build();
+  }
 
   @GET
   @Path(value = "/variables/client/{taskId}")
@@ -718,7 +874,11 @@ public class TaskController {
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
-    variableMap.put("task_name", task.getName());
+    if (task.getTaskDefinitionKey().equals("final-assessment-letter")) {
+      variableMap.put("task_name", "Final Assessment Certificate");
+    } else {
+      variableMap.put("task_name", task.getName());
+    }
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));
@@ -794,7 +954,11 @@ public class TaskController {
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
-    variableMap.put("task_name", task.getName());
+    if (task.getTaskDefinitionKey().equals("final-assessment-letter")) {
+      variableMap.put("task_name", "Final Assessment Certificate");
+    } else {
+      variableMap.put("task_name", task.getName());
+    }
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));

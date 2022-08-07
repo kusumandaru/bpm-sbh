@@ -63,6 +63,11 @@ public class ProjectUserService implements IProjectUserService{
   }
 
   @Override
+  public void delete(ProjectUser projectUser) {
+    projectUserRepository.delete(projectUser);
+  }
+
+  @Override
   public List<ProjectUser> assignProjectUsers(UserDetail userDetail, String userId, String projectIds) {
     TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
@@ -103,5 +108,10 @@ public class ProjectUserService implements IProjectUserService{
   @Override
   public List<ProjectUser> findByUserIdAndProcessInstanceID(String userId, String processInstanceID) {
     return projectUserRepository.findByUserIdAndProcessInstanceID(userId, processInstanceID);
+  }
+
+  @Override
+  public List<ProjectUser> findByProcessInstanceID(String processInstanceID) {
+    return projectUserRepository.findByProcessInstanceID(processInstanceID);
   }
 }

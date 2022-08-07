@@ -13,4 +13,5 @@ public interface ProjectUserRepository extends CrudRepository<ProjectUser, Integ
   List<ProjectUser> findByUserId(String userId);
   List<ProjectUser> findByTenantId(String tenantId);
   List<ProjectUser> findByUserIdAndProcessInstanceID(String userId, String processInstanceID);
+  List<ProjectUser> findByProcessInstanceID(String processInstanceID);
 }
