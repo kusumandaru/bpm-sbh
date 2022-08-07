@@ -51,6 +51,12 @@ public class ProjectUser {
   @Setter
   private Boolean owner;
 
+  @SerializedName("external_party")
+  @Column(name="external_party")
+  @Getter
+  @Setter
+  private Boolean externalParty;
+
   public ProjectUser() {
   }
 
