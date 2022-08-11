@@ -49,9 +49,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
+import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -814,11 +816,11 @@ public class UserController extends GcsUtil{
     }
 
   @GET
-  @Path(value = "/project_users_by_process_instance_id/{process_instance_id}")
+  @Path(value = "/project_users_by_process_instance_id/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetProjectUserByProcessInstanceID(
     @HeaderParam("Authorization") String authorization,
-    @PathParam("process_instance_id") String processInstanceID
+    @PathParam("taskId") String taskID
     ) {
       User user = userService.GetUserFromAuthorization(authorization);
       if (user == null) {
@@ -828,6 +830,20 @@ public class UserController extends GcsUtil{
         return Response.status(400).entity(json).build();
       }
 
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      TaskService taskService = processEngine.getTaskService();
+  
+      Task task;
+      try {
+        task = taskService.createTaskQuery().taskId(taskID).singleResult();
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "task id not found");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
+      String processInstanceID = task.getProcessInstanceId();
       List<ProjectUser> projectUsers = projectUserService.findByProcessInstanceID(processInstanceID);
 
       String json = new Gson().toJson(projectUsers);
@@ -856,20 +872,55 @@ public class UserController extends GcsUtil{
     }
 
   @POST
-  @Path(value = "/project_users")
+  @Path(value = "/project_users/{taskId}")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response UpdateProjectUserByUserId(
+  public Response AddProjectUserByUserId(
     @HeaderParam("Authorization") String authorization,
-    ProjectUser projectUser
+    @PathParam("taskId") String taskID,
+    User u
     ) {
-      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
-      if (userDetail == null) {
+      UserDetail currentUser = userService.GetCompleteUserFromAuthorization(authorization);
+      if (currentUser == null) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "login expired, please logout and relogin");
         String json = new Gson().toJson(map);
         return Response.status(400).entity(json).build();
       }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      TaskService taskService = processEngine.getTaskService();
+  
+      Task task;
+      try {
+        task = taskService.createTaskQuery().taskId(taskID).singleResult();
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "task id not found");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
+      String processInstanceID = task.getProcessInstanceId();
+
+      User user = userService.FindByEmail(u.getEmail());
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "User email not exist or registered");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectUser> existingUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getId(), processInstanceID);
+      if (!existingUsers.isEmpty()) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "User already become viewer to current project");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      UserDetail ud = userService.GetUserDetailFromId(user.getId());
+      ProjectUser projectUser = new ProjectUser(user.getId(), ud.getTenantId(), processInstanceID, currentUser.getId(), false);
 
       try {
         projectUser = projectUserService.save(projectUser);

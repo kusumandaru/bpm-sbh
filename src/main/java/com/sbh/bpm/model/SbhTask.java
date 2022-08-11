@@ -95,6 +95,10 @@ public class SbhTask {
   @Column(name="assigned")
   private Boolean assigned;
 
+  @Getter @Setter
+  @Column(name="internal")
+  private Boolean internal;
+
   public static SbhTask CreateFromTask(Task cTask) {
     SbhTask sbhTask = new SbhTask();
     sbhTask.id = cTask.getId();

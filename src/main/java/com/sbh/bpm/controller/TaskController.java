@@ -563,16 +563,27 @@ public class TaskController {
       taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
     }
     taskQuery = taskQuery.endOr();
+
+    String[] processInstanceIds = projectUsers.stream().map(pu -> pu.getProcessInstanceID()).toArray(String[]::new);
+    taskQuery = taskQuery.or();
+    taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
     taskQuery = taskQuery.processVariableValueEquals("tenant", user.getTenant().getId());
+    taskQuery = taskQuery.endOr();
+
     taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<Tenant> tenants = tenantService.findAll();
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
       sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
+      sbhTask.setInternal(user.getTenantId().equals(tenantId));
       if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
@@ -853,18 +864,10 @@ public class TaskController {
       return Response.status(400).entity(json).build();
     }
 
-    List<ProjectUser> projectUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getUsername(), task.getProcessInstanceId());
+    List<ProjectUser> projectUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getId(), task.getProcessInstanceId());
     if (projectUsers.size() <= 0) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "User not assigned or owned these project");
-      String json = new Gson().toJson(map);
-
-      return Response.status(400).entity(json).build();
-    }
-
-    if (!variableMap.get("tenant").equals(user.getTenant().getId())) {
-      Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "Project not eligible to access for current user");
       String json = new Gson().toJson(map);
 
       return Response.status(400).entity(json).build();
