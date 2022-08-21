@@ -34,6 +34,12 @@ public class ProjectDocumentBuildingService implements IProjectDocumentBuildingS
   }
 
   @Override
+  public List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndProjectDocumentCategoryID(Integer masterCertificationTypeID,
+      Integer categoryID) {
+        return repository.findByMasterCertificationTypeIDAndProjectDocumentCategoryID(masterCertificationTypeID, categoryID);
+  }
+
+  @Override
   public ProjectDocumentBuilding findByMasterCertificationTypeIDAndId(Integer masterCertificationTypeID, Integer attachmentId) {
     return repository.findByMasterCertificationTypeIDAndId(masterCertificationTypeID, attachmentId);
   }
@@ -44,8 +50,16 @@ public class ProjectDocumentBuildingService implements IProjectDocumentBuildingS
   }
 
   @Override
+  public List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndProjectDocumentCategoryIDAndActiveTrue(
+      Integer masterCertificationTypeID, Integer categoryID) {
+    return repository.findByMasterCertificationTypeIDAndProjectDocumentCategoryIDAndActiveTrue(masterCertificationTypeID, categoryID);
+  }
+
+  @Override
   public boolean deleteById(Integer attachmentId) {
     repository.deleteById(attachmentId);
     return !repository.existsById(attachmentId);
   }
+
+
 }

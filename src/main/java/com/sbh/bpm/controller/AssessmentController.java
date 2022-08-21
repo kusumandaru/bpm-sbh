@@ -65,13 +65,11 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
 public class AssessmentController extends GcsUtil {
-  private static final Logger logger = LoggerFactory.getLogger(AssessmentController.class);
+  // private static final Logger logger = LoggerFactory.getLogger(AssessmentController.class);
   
   @Autowired
   private ITransactionCreationService transactionCreationService;
