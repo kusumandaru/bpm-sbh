@@ -564,6 +564,7 @@ public class AssessmentController extends GcsUtil {
     map.put("criteria_codes", underReviewCriteriaCodes);
     map.put("eligible_approved", underReviewScorings.isEmpty() && rejectedCriteriaCodes.isEmpty());
     map.put("rejected_criteria_codes", rejectedCriteriaCodes);
+    map.put("dr_approved", taskService.getVariable(taskId, "dr_approved"));
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
@@ -1096,6 +1097,7 @@ public class AssessmentController extends GcsUtil {
     map.put("criteria_codes", underReviewCriteriaCodes);
     map.put("eligible_approved", underReviewScorings.isEmpty() && rejectedCriteriaCodes.isEmpty());
     map.put("rejected_criteria_codes", rejectedCriteriaCodes);
+    map.put("fa_approved", taskService.getVariable(taskId, "fa_approved"));
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
