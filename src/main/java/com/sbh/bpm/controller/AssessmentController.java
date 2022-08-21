@@ -65,13 +65,11 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/new-building")
 public class AssessmentController extends GcsUtil {
-  private static final Logger logger = LoggerFactory.getLogger(AssessmentController.class);
+  // private static final Logger logger = LoggerFactory.getLogger(AssessmentController.class);
   
   @Autowired
   private ITransactionCreationService transactionCreationService;
@@ -566,6 +564,7 @@ public class AssessmentController extends GcsUtil {
     map.put("criteria_codes", underReviewCriteriaCodes);
     map.put("eligible_approved", underReviewScorings.isEmpty() && rejectedCriteriaCodes.isEmpty());
     map.put("rejected_criteria_codes", rejectedCriteriaCodes);
+    map.put("dr_approved", taskService.getVariable(taskId, "dr_approved"));
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
@@ -1098,6 +1097,7 @@ public class AssessmentController extends GcsUtil {
     map.put("criteria_codes", underReviewCriteriaCodes);
     map.put("eligible_approved", underReviewScorings.isEmpty() && rejectedCriteriaCodes.isEmpty());
     map.put("rejected_criteria_codes", rejectedCriteriaCodes);
+    map.put("fa_approved", taskService.getVariable(taskId, "fa_approved"));
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();

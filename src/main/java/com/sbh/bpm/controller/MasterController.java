@@ -223,7 +223,7 @@ public class MasterController extends GcsUtil{
   @Path(value = "/building_types/{building_type_id}")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response updateProvinces(@HeaderParam("Authorization") String authorization,
+  public Response updateBuildingType(@HeaderParam("Authorization") String authorization,
                                @PathParam("building_type_id") Integer buildingTypeId, 
                                BuildingType buildingType) {   
     BuildingType bt = (BuildingType) buildingTypeService.findById(buildingTypeId);

@@ -64,7 +64,7 @@ import net.coobird.thumbnailator.Thumbnails;
 
 @Path(value = "/user")
 public class UserController extends GcsUtil{
-  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+  // private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
   @Autowired
   private IUserService userService;

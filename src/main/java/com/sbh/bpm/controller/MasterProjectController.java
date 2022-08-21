@@ -47,13 +47,11 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/master-project")
 public class MasterProjectController extends GcsUtil{
-  private static final Logger logger = LoggerFactory.getLogger(MasterProjectController.class);
+  // private static final Logger logger = LoggerFactory.getLogger(MasterProjectController.class);
 
   @Autowired
   private IMasterTemplateService masterTemplateService;

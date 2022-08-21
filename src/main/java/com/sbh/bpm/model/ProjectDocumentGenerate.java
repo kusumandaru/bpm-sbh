@@ -17,8 +17,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "project_document_buildings")
-public class ProjectDocumentBuilding {
+@Table(name = "project_document_generates")
+public class ProjectDocumentGenerate {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter
@@ -48,24 +48,6 @@ public class ProjectDocumentBuilding {
   @Getter
   @Setter
   private String code;
-
-  @SerializedName("placeholder")
-  @Column(name="placeholder")
-  @Getter
-  @Setter
-  private String placeholder;
-
-  @SerializedName("object_type")
-  @Column(name="object_type")
-  @Getter
-  @Setter
-  private String objectType;
-
-  @SerializedName("mandatory")
-  @Column(name="mandatory")
-  @Getter
-  @Setter
-  private Boolean mandatory;
 
   @SerializedName("active")
   @Column(name="active")
@@ -97,13 +79,11 @@ public class ProjectDocumentBuilding {
   @Setter
   private ProjectDocumentCategory category;
 
-  public ProjectDocumentBuilding() {
+  public ProjectDocumentGenerate() {
   }
 
-  public ProjectDocumentBuilding(String code, String name) {
-    this.code = code;
-    this.name = name;
-    this.active = true;
-    this.mandatory = true;
+  public ProjectDocumentGenerate(Integer id, Integer masterCertificationTypeID) {
+    this.id = id;
+    this.masterCertificationTypeID = masterCertificationTypeID;
   }
 }
