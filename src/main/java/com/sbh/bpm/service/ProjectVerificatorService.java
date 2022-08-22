@@ -64,8 +64,7 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
     TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
     
-    // List<ProjectVerificator> existingProjectVerificators = findByUserId(userId);
-    List<ProjectVerificator> allProjectVerificators = findAll();
+    List<ProjectVerificator> allProjectVerificators = findByUserId(userId);
     List<String> existingProjectVerificatorIds = allProjectVerificators.stream().map(project -> project.getProcessInstanceID()).collect(Collectors.toList());
     
     String[] projectIdArray = projectIds.split(",");
