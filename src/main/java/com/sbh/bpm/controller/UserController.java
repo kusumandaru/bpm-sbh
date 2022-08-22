@@ -56,8 +56,6 @@ import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
 import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import net.coobird.thumbnailator.Thumbnails;
@@ -1028,7 +1026,7 @@ public class UserController extends GcsUtil{
 
       List<ProjectVerificator> projectVerificators = new ArrayList<ProjectVerificator>();
       try {
-      projectVerificators = projectVerificatorService.assignProjectVerificators(userDetail, userId, projectIds);
+        projectVerificators = projectVerificatorService.assignProjectVerificators(userDetail, userId, projectIds);
       } catch (Exception e) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", e.getMessage());
