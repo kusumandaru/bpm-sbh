@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.ActivityName;
 import com.sbh.bpm.model.MasterCertificationType;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
@@ -32,6 +33,7 @@ import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.MasterVendor;
 import com.sbh.bpm.model.ProjectAssessment;
+import com.sbh.bpm.service.IActivityNameService;
 import com.sbh.bpm.service.IMasterCertificationTypeService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
@@ -82,6 +84,9 @@ public class MasterProjectController extends GcsUtil{
 
   @Autowired
   private IProjectAssessmentService projectAssessmentService;
+
+  @Autowired
+  private IActivityNameService activityNameService;
 
   @GET
   @Path(value = "/levels")
@@ -907,5 +912,118 @@ public class MasterProjectController extends GcsUtil{
     List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaID(criteriaId);
     String json = new Gson().toJson(blockers);
     return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetAllActivityName(@HeaderParam("Authorization") String authorization) {
+    List<ActivityName> activityNames = activityNameService.findAll();
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names/{id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActivityNameDetail(@HeaderParam("Authorization") String authorization,
+    @PathParam("id") Integer id
+  ) {
+    ActivityName activityName = activityNameService.findById(id);
+
+    String json = new Gson().toJson(activityName);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names/{master_certification_type_id}/activity/{activity_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActivityNameByActivityId(@HeaderParam("Authorization") String authorization,
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID,
+    @PathParam("activity_id") String activityID
+
+  ) {
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeIDAndActivityID(masterCertificationTypeID, activityID);
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/active_activity_names/{master_certification_type_id}/master_certification_type")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActiveAcitivityName(@HeaderParam("Authorization") String authorization, 
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
+  ) {
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeIDAndActiveTrue(masterCertificationTypeID);
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names/{master_certification_type_id}/master_certification_type")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GeActivityNameByMasterCertificationType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
+  ) {
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeID(masterCertificationTypeID);
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @POST
+  @Path(value = "/activity_names")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ActivityNameCreation(
+    @HeaderParam("Authorization") String authorization,
+    ActivityName activityName
+  ) {
+    activityName.setCreatedAt(new Date()); 
+    activityName.setCreatedBy("system");       
+    activityName = activityNameService.save(activityName);
+
+    String json = new Gson().toJson(activityName);
+    return Response.status(200).entity(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/activity_names/{activity_name_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response updatActivityName(@HeaderParam("Authorization") String authorization,
+                               @PathParam("activity_name_id") Integer activityNameId, 
+                               ActivityName activityName) {   
+    ActivityName act = (ActivityName) activityNameService.findById(activityNameId);
+    if (act == null) {
+      return Response.status(400, "project document activityName not found").build();
+    }
+
+    act.setName(activityName.getName());
+    act.setActivityID(activityName.getActivityID());
+    act.setActive(activityName.getActive());
+    act.setMasterCertificationTypeID(activityName.getMasterCertificationTypeID());
+    act.setCreatedBy(activityName.getCreatedBy());
+
+    act = activityNameService.save(act);
+
+    String json = new Gson().toJson(act);
+    return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/activity_names/{activity_name_id}")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ActivityNameDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("activity_name_id") Integer activityNameId
+
+  ) {
+    boolean status = activityNameService.deleteById(activityNameId);
+    return Response.status(status ? 200 : 400).build();
   }
 }
