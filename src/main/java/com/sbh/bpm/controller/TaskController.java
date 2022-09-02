@@ -73,7 +73,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class TaskController {
   private static final Logger logger = LoggerFactory.getLogger(TaskController.class);
   private final String[] adminTasks = {"check-registration-project", "check-document-building", "agreement", "check-first-payment", "workshop", "check-second-payment", "check-third-payment", "design-recognition-evaluation-assessment", "design-recognition-trial", "design-recognition-letter", "check-third-payment-fa"};
-  private final String[] clientTasks = {"fill-registration-project", "fill-document-building", "first-payment", "second-payment", "design-recognition-submission", "third-payment", "design-recognition-trial-revision", "final-assessment-submission", "third-payment-fa", "on-site-revision-submission", "final-assessment-trial-revision", "final-assessment-letter"};
+  private final String[] clientTasks = {"fill-registration-project", "fill-document-building", "first-payment", "agreement", "second-payment", "design-recognition-submission", "third-payment", "design-recognition-trial-revision", "final-assessment-submission", "third-payment-fa", "on-site-revision-submission", "final-assessment-trial-revision", "final-assessment-letter"};
   private final String[] verificatorTasks = {"design-recognition-review", "design-recognition-revision-review", "final-assessment-review", "on-site-verification", "final-assessment-evaluation-assessment", "final-assessment-revision-review"};
 
   @Autowired
