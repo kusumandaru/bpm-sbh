@@ -101,4 +101,14 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
   public List<ProjectVerificator> findByUserIdAndProcessInstanceID(String userId, String processInstanceID) {
     return projectVerificatorRepository.findByUserIdAndProcessInstanceID(userId, processInstanceID);
   }
+
+  @Override
+  public List<ProjectVerificator> findByProcessInstanceID(String processInstanceID) {
+    return projectVerificatorRepository.findByProcessInstanceID(processInstanceID);
+  }
+
+  @Override
+  public void delete(ProjectVerificator projectVerificator) {
+    projectVerificatorRepository.deleteById(projectVerificator.getId());
+  }
 }
