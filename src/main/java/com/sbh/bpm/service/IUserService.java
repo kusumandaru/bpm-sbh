@@ -20,6 +20,7 @@ public interface IUserService {
   User findById(String userId);
   UserDetail findByIdDetail(String userId);
   List<User> findByTenantId(String tenantId);
+  List<User> findByGroupId(String groupId);
   List<User> findAll();
   List<UserDetail> findAllDetail();
   Long Count();

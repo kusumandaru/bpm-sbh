@@ -987,6 +987,61 @@ public class UserController extends GcsUtil{
     }
   
   @GET
+  @Path(value = "/verificators")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetAllVerificators(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<User> users = userService.findByGroupId("verificator");
+      String json = new Gson().toJson(users);
+      return Response.status(200).entity(json).build();
+    }
+
+  @GET
+  @Path(value = "/project_verificators_by_process_instance_id/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectVerificatorByProcessInstanceID(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("taskId") String taskID
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      TaskService taskService = processEngine.getTaskService();
+  
+      Task task;
+      try {
+        task = taskService.createTaskQuery().taskId(taskID).singleResult();
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "task id not found");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
+      String processInstanceID = task.getProcessInstanceId();
+      List<ProjectVerificator> projectVerificators = projectVerificatorService.findByProcessInstanceID(processInstanceID);
+
+      String json = new Gson().toJson(projectVerificators);
+      return Response.status(200).entity(json).build();
+    }
+
+  @GET
   @Path(value = "/project_verificators/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetProjectVerificatorByUserId(
@@ -1007,6 +1062,70 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @POST
+  @Path(value = "/project_verificators/{task_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response AddProjectVerificatorByUserId(
+      @HeaderParam("Authorization") String authorization,
+      @PathParam("task_id") String taskID,
+      User u
+      ) {
+        UserDetail currentUser = userService.GetCompleteUserFromAuthorization(authorization);
+        if (currentUser == null) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "login expired, please logout and relogin");
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+        TaskService taskService = processEngine.getTaskService();
+    
+        Task task;
+        try {
+          task = taskService.createTaskQuery().taskId(taskID).singleResult();
+        } catch (Exception e) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "task id not found");
+          String json = new Gson().toJson(map);
+    
+          return Response.status(400).entity(json).build();
+        }
+        String processInstanceID = task.getProcessInstanceId();
+  
+        User user = userService.findById(u.getId());
+        if (user == null) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "User email not exist or registered");
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        List<ProjectVerificator> existingVerificators = projectVerificatorService.findByUserIdAndProcessInstanceID(user.getId(), processInstanceID);
+        if (!existingVerificators.isEmpty()) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "Verificator already assigned to current project");
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        UserDetail ud = userService.GetUserDetailFromId(user.getId());
+        ProjectVerificator projectVerificator = new ProjectVerificator(user.getId(), ud.getGroupId(), processInstanceID, currentUser.getId());
+  
+        try {
+          projectVerificator = projectVerificatorService.save(projectVerificator);
+        } catch (Exception e) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", e.getMessage());
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        String json = new Gson().toJson(projectVerificator);
+        return Response.status(200).entity(json).build();
+      }
+  
   @PATCH
   @Path(value = "/project_verificators/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -1038,6 +1157,28 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
   
+  @DELETE
+  @Path(value = "/project_verificators/{project_verificator_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response DeleteProjectVerificatorByProjectVerificatorId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("project_verificator_id") Integer projectVerificatorId
+    ) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProjectVerificator projectVerificator = projectVerificatorService.findById(projectVerificatorId);
+      projectVerificatorService.delete(projectVerificator);
+
+      return Response.ok().build();
+    }
+    
   @GET
   @Path(value = "/groups")
   @Produces(MediaType.APPLICATION_JSON)
