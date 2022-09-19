@@ -16,4 +16,5 @@ public interface IMasterLevelService {
   MasterLevel findFirstByOrderByMinimumScoreAsc();
   MasterLevel findFirstByMasterTemplateIDOrderByMinimumScoreAsc(Integer templateId);
   boolean deleteById(Integer levelId);
+  MasterLevel getLevelByScoreAndTemplateId(Float score, Integer templateId);
 }

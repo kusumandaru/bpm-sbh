@@ -1,6 +1,7 @@
 package com.sbh.bpm.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.repository.MasterLevelRepository;
@@ -63,5 +64,14 @@ public class MasterLevelService implements IMasterLevelService {
   public boolean deleteById(Integer levelId) {
     repository.deleteById(levelId);
     return !repository.existsById(levelId);
+  }
+
+  @Override
+  public MasterLevel getLevelByScoreAndTemplateId(Float score, Integer templateId) {
+    MasterLevel level = repository.getLevelByScoreAndTemplateId(score, templateId);
+    if (Objects.isNull(level)) {
+      level = repository.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(templateId);
+    }
+    return level;
   }
 }

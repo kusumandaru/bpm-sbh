@@ -1082,6 +1082,14 @@ public class TaskController {
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("task_id") String taskId
   ) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -1124,9 +1132,11 @@ public class TaskController {
     }
 
     taskService.setVariable(taskId, "approved", true);
+    taskService.setVariable(taskId, "rejected_reason", null);
     taskService.setVariable(taskId, "read", false);
     if (!Objects.nonNull(task.getAssignee())) {
-      taskService.claim(taskId, "admin");
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
     }
     taskService.complete(taskId);
 
@@ -1184,15 +1194,17 @@ public class TaskController {
     taskService.setVariable(taskId, "rejected_reason", rejectedReason);
     taskService.setVariable(taskId, "read", false);
     if (!Objects.nonNull(task.getAssignee())) {
-      taskService.claim(taskId, "admin");
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
     }
     taskService.complete(taskId);
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
-    task.setAssignee(assignee);
-    taskService.claim(task.getId(), assignee);
-
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), assignee);
+      taskService.setAssignee(task.getId(), assignee);
+    }
     mailerService.SendRejectionEmail(rejectedReason, task);
 
     return Response.ok().build();
