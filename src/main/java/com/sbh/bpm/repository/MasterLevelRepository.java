@@ -19,5 +19,7 @@ public interface MasterLevelRepository extends CrudRepository<MasterLevel, Integ
   @Query("select id FROM MasterLevel WHERE active = TRUE AND masterTemplateID = :templateId")
   List<Integer> getAllIdsByTemplateIdAndActiveTrue(@Param("templateId") Integer templateId);
   List<MasterLevel> findByMasterTemplateIDIn(List<Integer> masterTemplateIds);
+  @Query(value = "select * FROM master_levels WHERE minimum_score <= :score AND master_template_id = :templateId ORDER BY minimum_score DESC LIMIT 1", nativeQuery = true)
+  MasterLevel getLevelByScoreAndTemplateId(@Param("score") Float score, @Param("templateId") Integer templateId);
 }
 

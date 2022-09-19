@@ -124,16 +124,15 @@ public class NewBuildingController extends GcsUtil{
         // shut down the executor manually
         executor.shutdown();
     }
-
-    taskService.setAssignee(task.getId(), username);
-    taskService.claim(task.getId(), username);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(task.getId());
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
-    taskService.setAssignee(task.getId(), "admin");
-    taskService.claim(task.getId(), "admin");
 
     return Response.ok().build();
   }
@@ -197,8 +196,10 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(task.getId(), "design_recognition", designRecognition);
     taskService.setVariable(task.getId(), "read", false);
 
-    taskService.setAssignee(task.getId(), username);
-    taskService.claim(task.getId(), username);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -260,6 +261,10 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "first_payment_paid", false);
     taskService.setVariable(task.getId(), "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -322,6 +327,10 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(task.getId(), "read", false);
     taskService.setVariable(task.getId(), "second_payment_paid", false);
     taskService.setVariable(task.getId(), "approved", null);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -396,6 +405,7 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(taskId, "read", false);
     if (!Objects.nonNull(task.getAssignee())) {
       taskService.claim(taskId, username);
+      taskService.setAssignee(taskId, username);
     }
     taskService.complete(taskId);
 
@@ -458,6 +468,10 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(task.getId(), "read", false);
     taskService.setVariable(task.getId(), "third_payment_paid", false);
     taskService.setVariable(task.getId(), "approved", null);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -521,7 +535,10 @@ public class NewBuildingController extends GcsUtil{
 
     taskService.setVariable(task.getId(), "read", false);
     taskService.setVariable(task.getId(), "approved", true);
-    taskService.claim(taskId, "admin");
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -638,6 +655,10 @@ public class NewBuildingController extends GcsUtil{
 
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -694,6 +715,10 @@ public class NewBuildingController extends GcsUtil{
 
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -750,6 +775,10 @@ public class NewBuildingController extends GcsUtil{
 
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -806,6 +835,10 @@ public class NewBuildingController extends GcsUtil{
 
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -864,11 +897,15 @@ public class NewBuildingController extends GcsUtil{
     }
 
     taskService.setVariable(task.getId(), "on_site_note", onSiteNote);
+    taskService.setVariable(task.getId(), "rejected_reason", onSiteNote);
     taskService.setVariable(task.getId(), "read", false);
     taskService.setVariable(task.getId(), "approved", approvalStatus);
     taskService.setVariable(task.getId(), "on_site_approved", approvalStatus);
 
-    // taskService.claim(taskId, "admin");
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();
@@ -929,6 +966,10 @@ public class NewBuildingController extends GcsUtil{
     taskService.setVariable(taskId, "on_site_client_revision_note", onSiteClientRevisionNote);
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     return Response.ok().build();

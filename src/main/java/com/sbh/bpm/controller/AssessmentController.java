@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -148,6 +149,10 @@ public class AssessmentController extends GcsUtil {
     String processInstanceId = task.getProcessInstanceId();
 
     TransactionCreationResponse response = transactionCreationService.createDRTransactionForProcessInstance(processInstanceId);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
 
     String json = new Gson().toJson(response);
     return Response.status(200).entity(json).build();
@@ -193,8 +198,10 @@ public class AssessmentController extends GcsUtil {
     }
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
-    taskService.claim(task.getId(), username);
-    taskService.setAssignee(task.getId(), username);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(task.getId());
 
     return Response.status(200).build();
@@ -365,16 +372,23 @@ public class AssessmentController extends GcsUtil {
     taskService.setVariable(taskId, "review_reason", reviewReason);
     if (approvalStatus == false) {
       taskService.setVariable(taskId, "rejected_reason", reviewReason);
+    } else {
+      taskService.setVariable(taskId, "rejected_reason", null);
     }
     taskService.setVariable(taskId, "read", false);
-    taskService.claim(taskId, "admin");
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
 
-    task.setAssignee(assignee);
-    taskService.claim(task.getId(), assignee);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), assignee);
+      taskService.setAssignee(task.getId(), assignee);
+    }
 
     return Response.ok().build();
   }
@@ -725,8 +739,10 @@ public class AssessmentController extends GcsUtil {
     }
     taskService.setVariable(task.getId(), "approved", null);
     taskService.setVariable(task.getId(), "read", false);
-    taskService.claim(task.getId(), username);
-    taskService.setAssignee(task.getId(), username);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(task.getId());
 
     return Response.status(200).build();
@@ -898,17 +914,23 @@ public class AssessmentController extends GcsUtil {
     taskService.setVariable(taskId, "review_reason", reviewReason);
     if (approvalStatus == false) {
       taskService.setVariable(taskId, "rejected_reason", reviewReason);
+    } else {
+      taskService.setVariable(taskId, "rejected_reason", null);
     }
     taskService.setVariable(taskId, "read", false);
-    taskService.claim(taskId, "admin");
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(taskId);
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
 
-    task.setAssignee(assignee);
-    taskService.claim(task.getId(), assignee);
-
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), assignee);
+      taskService.setAssignee(task.getId(), assignee);
+    }
     return Response.ok().build();
   }
 
@@ -1489,6 +1511,8 @@ public class AssessmentController extends GcsUtil {
     Float scoreModifier = allAssessments.stream()
                                         .map(ExerciseAssessment::getScoreModifier).reduce(0.0f, Float::sum);
     ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
+    projectAssessment.setProposedLevelID(level.getId());
     projectAssessment.setSubmittedScore(submittedScore);
     projectAssessment.setApprovedScore(approvedScore);
     projectAssessment.setScoreModifier(scoreModifier);
@@ -1555,6 +1579,8 @@ public class AssessmentController extends GcsUtil {
     Float scoreModifier = allAssessments.stream()
                                         .map(ExerciseAssessment::getScoreModifier).reduce(0.0f, Float::sum);
     ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
+    projectAssessment.setProposedLevelID(level.getId());
     projectAssessment.setSubmittedScore(submittedScore);
     projectAssessment.setApprovedScore(approvedScore);
     projectAssessment.setScoreModifier(scoreModifier);
@@ -1626,6 +1652,8 @@ public class AssessmentController extends GcsUtil {
     Float submittedScore = allAssessments.stream()
                                         .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
     ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
+    projectAssessment.setProposedLevelID(level.getId());
     projectAssessment.setSubmittedScore(submittedScore);
     projectAssessment.setApprovedScore(approvedScore);
     projectAssessment = projectAssessmentService.save(projectAssessment);
