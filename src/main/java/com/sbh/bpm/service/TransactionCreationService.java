@@ -12,10 +12,12 @@ import com.sbh.bpm.model.Attachment;
 import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
+import com.sbh.bpm.model.ExerciseScoreModifier;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterDocument;
 import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.MasterLevel;
+import com.sbh.bpm.model.MasterScoreModifier;
 import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.ProjectAssessment;
 
@@ -65,6 +67,12 @@ public class TransactionCreationService implements ITransactionCreationService {
 
   @Autowired
   private IExerciseAssessmentService exerciseAssessmentService;
+
+  @Autowired
+  private IMasterScoreModifierService masterScoreModifierService;
+
+  @Autowired
+  private IExerciseScoreModifierService exerciseScoreModifierService;
 
   @Autowired
   private IDocumentFileService documentFileService;
@@ -132,7 +140,6 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
-      projectAssessment.setScoreModifier(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("DR");
 
@@ -145,6 +152,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
 
       List<ExerciseAssessment> assessments = new ArrayList<ExerciseAssessment>();
+
       for (MasterExercise exercise : masterExerciseList) {
         ExerciseAssessment assessment = new ExerciseAssessment();
         assessment.setMasterExerciseID(exercise.getId());
@@ -152,7 +160,6 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessment.setSelected(false);
         assessment.setApprovedScore(0.0f);
         assessment.setSubmittedScore(0.0f);
-        assessment.setScoreModifier(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 
@@ -167,6 +174,29 @@ public class TransactionCreationService implements ITransactionCreationService {
       List<MasterCriteria> masterCriteriaList = masterCriteriaService.findByMasterExerciseIDInAndActiveTrue(exerciseIds);
 
       List<CriteriaScoring> scorings = new ArrayList<CriteriaScoring>();
+
+      List<ExerciseScoreModifier> modifiers = new ArrayList<ExerciseScoreModifier>();
+
+      List<MasterScoreModifier> masterScoreModifiers = masterScoreModifierService.findByMasterExerciseIDIn(exerciseIds);
+      for (MasterScoreModifier masterModifier : masterScoreModifiers) {
+        ExerciseAssessment assmnt = assessments.stream()
+                                               .filter(assessment -> assessment.getMasterExerciseID() == masterModifier.getMasterExerciseID())
+                                               .findFirst()
+                                               .get();
+
+        ExerciseScoreModifier modifier = new ExerciseScoreModifier();
+        modifier.setMasterScoreModifierID(masterModifier.getId());
+        modifier.setExerciseAssessmentID(assmnt.getId());
+        modifier.setScoreModifier(masterModifier.getScoreModifier());
+        modifier.setEnabled(false);
+        modifier.setCreatedAt(newDate);
+        modifier.setCreatedBy("system");
+
+        modifiers.add(modifier);
+      }
+
+      Iterable<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.saveAll(modifiers);
+
       for (MasterCriteria criteria : masterCriteriaList) {
 
         ExerciseAssessment assmnt = assessments.stream()
@@ -261,7 +291,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
-      projectAssessment.setScoreModifier(0.0f);
+
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("FA");
       projectAssessment.setProposedLevelID(masterLevel.getId());
@@ -280,7 +310,6 @@ public class TransactionCreationService implements ITransactionCreationService {
         assessment.setSelected(false);
         assessment.setApprovedScore(0.0f);
         assessment.setSubmittedScore(0.0f);
-        assessment.setScoreModifier(0.0f);
         assessment.setCreatedBy("system");
         assessment.setCreatedAt(newDate);
 
@@ -295,6 +324,29 @@ public class TransactionCreationService implements ITransactionCreationService {
       List<MasterCriteria> masterCriteriaList = masterCriteriaService.findByMasterExerciseIDInAndActiveTrue(exerciseIds);
 
       List<CriteriaScoring> scorings = new ArrayList<CriteriaScoring>();
+
+      List<ExerciseScoreModifier> modifiers = new ArrayList<ExerciseScoreModifier>();
+
+      List<MasterScoreModifier> masterScoreModifiers = masterScoreModifierService.findByMasterExerciseIDIn(exerciseIds);
+      for (MasterScoreModifier masterModifier : masterScoreModifiers) {
+        ExerciseAssessment assmnt = assessments.stream()
+                                               .filter(assessment -> assessment.getMasterExerciseID() == masterModifier.getMasterExerciseID())
+                                               .findFirst()
+                                               .get();
+
+        ExerciseScoreModifier modifier = new ExerciseScoreModifier();
+        modifier.setMasterScoreModifierID(masterModifier.getId());
+        modifier.setExerciseAssessmentID(assmnt.getId());
+        modifier.setScoreModifier(masterModifier.getScoreModifier());
+        modifier.setEnabled(false);
+        modifier.setCreatedAt(newDate);
+        modifier.setCreatedBy("system");
+
+        modifiers.add(modifier);
+      }
+
+      Iterable<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.saveAll(modifiers);
+
       for (MasterCriteria criteria : masterCriteriaList) {
 
         ExerciseAssessment assmnt = assessments.stream()
@@ -370,5 +422,53 @@ public class TransactionCreationService implements ITransactionCreationService {
     resultMap.put("message", "Attachment has been tagged");
     return new TransactionCreationResponse(true, resultMap);
   }
-  
+
+  @Override
+  public ProjectAssessment calculateProjectAssessment(Integer projectAssessmentId) {
+    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
+
+    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    List<ExerciseScoreModifier> allScoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessmentId);
+
+    for(ExerciseAssessment assessment : allAssessments) {
+      if(assessment.getExercise().getMaxScore() == null){
+        continue;
+       }
+      Integer assessmentID = assessment.getId();
+      Float scoreModifier = allScoreModifiers.stream()
+                                             .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
+                                             .filter(score -> score.getEnabled().equals(true))
+                                             .map(ExerciseScoreModifier::getScoreModifier).reduce(0.0f, Float::sum);
+      Float approvedScore = allScorings.stream()
+                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
+                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
+      Float submittedScore = allScorings.stream()
+                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
+                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
+      Float maxScore = scoreModifier + (float) assessment.getExercise().getMaxScore();
+      if (approvedScore > maxScore) {
+        approvedScore = maxScore;
+      }
+      if (submittedScore > maxScore) {
+        submittedScore = maxScore;
+      }
+      assessment.setApprovedScore(approvedScore);
+      assessment.setSubmittedScore(submittedScore);
+      assessment = exerciseAssessmentService.save(assessment);
+    }
+
+    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
+    Float approvedScore = allAssessments.stream()
+                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
+    Float submittedScore = allAssessments.stream()
+                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
+    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
+    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
+    projectAssessment.setProposedLevelID(level.getId());
+    projectAssessment.setSubmittedScore(submittedScore);
+    projectAssessment.setApprovedScore(approvedScore);
+    projectAssessment = projectAssessmentService.save(projectAssessment);
+
+    return projectAssessment;
+  }
 }

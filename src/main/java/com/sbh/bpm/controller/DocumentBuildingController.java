@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -293,7 +294,10 @@ public class DocumentBuildingController extends GcsUtil {
                                ProjectDocumentBuilding building) {   
     ProjectDocumentBuilding pdb = (ProjectDocumentBuilding) projectDocumentBuildingService.findById(documentBuildingId);
     if (pdb == null) {
-      return Response.status(400, "project document building not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "project document building not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
 
     pdb.setName(building.getName());
@@ -320,7 +324,10 @@ public class DocumentBuildingController extends GcsUtil {
                                ProjectDocumentGenerate document) {   
     ProjectDocumentGenerate pdg = (ProjectDocumentGenerate) projectDocumentGenerateService.findById(documentGenerateId);
     if (pdg == null) {
-      return Response.status(400, "project document generate not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "project document generate not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
 
     pdg.setName(document.getName());
@@ -344,7 +351,10 @@ public class DocumentBuildingController extends GcsUtil {
                                ProjectDocumentCategory buildingCategory) {   
     ProjectDocumentCategory pdbc = (ProjectDocumentCategory) projectDocumentCategoryService.findById(categoryId);
     if (pdbc == null) {
-      return Response.status(400, "project document building category not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "project document building category not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
 
     pdbc.setName(buildingCategory.getName());

@@ -112,7 +112,10 @@ public class MasterController extends GcsUtil{
     
     Province prov = (Province) provinceService.findById(provinceId);
     if (prov == null) {
-      return Response.status(400, "province not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "province not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
 
     prov.setName(province.getName());
@@ -175,7 +178,10 @@ public class MasterController extends GcsUtil{
 
     City ct = (City) cityService.findById(cityId);
     if (ct == null) {
-      return Response.status(400, "city not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "city not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
     
     ct.setName(city.getName());
@@ -228,7 +234,10 @@ public class MasterController extends GcsUtil{
                                BuildingType buildingType) {   
     BuildingType bt = (BuildingType) buildingTypeService.findById(buildingTypeId);
     if (buildingType == null) {
-      return Response.status(400, "buildingType not found").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "building type not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
 
     bt.setNameId(buildingType.getNameId());

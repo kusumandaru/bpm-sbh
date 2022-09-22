@@ -71,12 +71,6 @@ public class MasterTemplate {
   @Setter
   private String createdBy;
 
-  // @ManyToOne(targetEntity = MasterVendor.class)
-  // @JoinColumn(name="master_vendor_id",referencedColumnName="id",insertable=false,updatable=false)
-  // @Getter
-  // @Setter
-  // private MasterVendor vendor;
-
   public MasterTemplate() {
   }
 
