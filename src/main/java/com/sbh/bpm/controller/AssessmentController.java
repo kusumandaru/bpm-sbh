@@ -29,10 +29,10 @@ import com.sbh.bpm.model.Comment;
 import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
+import com.sbh.bpm.model.ExerciseScoreModifier;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterEvaluation;
-import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.ProjectAssessment;
 import com.sbh.bpm.model.ProjectAttachment;
@@ -43,10 +43,10 @@ import com.sbh.bpm.service.ICommentService;
 import com.sbh.bpm.service.ICriteriaScoringService;
 import com.sbh.bpm.service.IDocumentFileService;
 import com.sbh.bpm.service.IExerciseAssessmentService;
+import com.sbh.bpm.service.IExerciseScoreModifierService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterEvaluationService;
-import com.sbh.bpm.service.IMasterExerciseService;
 import com.sbh.bpm.service.IMasterLevelService;
 import com.sbh.bpm.service.IProjectAssessmentService;
 import com.sbh.bpm.service.IProjectAttachmentService;
@@ -94,9 +94,6 @@ public class AssessmentController extends GcsUtil {
   private IMasterEvaluationService masterEvaluationService;
 
   @Autowired
-  private IMasterExerciseService masterExerciseService;
-
-  @Autowired
   private IMasterCriteriaService masterCriteriaService;
 
   @Autowired
@@ -113,6 +110,9 @@ public class AssessmentController extends GcsUtil {
 
   @Autowired
   private IMasterLevelService masterLevelService;
+
+  @Autowired
+  private IExerciseScoreModifierService exerciseScoreModifierService;
 
   @Autowired
   private IUserService userService;
@@ -173,8 +173,6 @@ public class AssessmentController extends GcsUtil {
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-
-    String username = user.getUsername();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -513,7 +511,7 @@ public class AssessmentController extends GcsUtil {
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
     MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(projectAssessment.getMasterTemplateID());
-    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore() + projectAssessment.getScoreModifier()) >= minimumLevel.getMinimumScore();
+    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= minimumLevel.getMinimumScore();
   
     List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
     List<String> unselectedMasterCriteriaCodes = unselectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
@@ -714,7 +712,6 @@ public class AssessmentController extends GcsUtil {
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }
-    String username = user.getUsername();
 
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -1054,7 +1051,7 @@ public class AssessmentController extends GcsUtil {
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
     MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(projectAssessment.getMasterTemplateID());
-    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore() + projectAssessment.getScoreModifier()) >= minimumLevel.getMinimumScore();
+    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= minimumLevel.getMinimumScore();
   
     List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
     List<String> unselectedMasterCriteriaCodes = unselectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
@@ -1435,6 +1432,14 @@ public class AssessmentController extends GcsUtil {
                                 @PathParam("criteriaScoringId") Integer criteriaScoringId,
                                 CriteriaScoring scoring
     ) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
     
     List<CriteriaScoring> scoringSelecteds = criteriaScoringService.findByProjectAssessmentIDAndApprovalStatusIn(criteriaScoring.getProjectAssessmentID(), Arrays.asList(2,4));
@@ -1461,6 +1466,7 @@ public class AssessmentController extends GcsUtil {
 
     criteriaScoring.setApprovalStatus(2);
     criteriaScoring.setSelected(true);
+    criteriaScoring.setCreatedBy(user.getId());
 
     if (criteriaScoring.getCriteria().getExerciseType().equals("max_score")) {
       criteriaScoring.setSubmittedScore(scoring.getSubmittedScore());
@@ -1471,52 +1477,9 @@ public class AssessmentController extends GcsUtil {
     }
 
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
-    ExerciseAssessment selectedExerciseAssessment = exerciseAssessmentService.findById(criteriaScoring.getExerciseAssessmentID());
-    MasterExercise selectedExercise = masterExerciseService.findById(selectedExerciseAssessment.getMasterExerciseID());
-
-    selectedExerciseAssessment.setScoreModifier(selectedExercise.getScoreModifier());
-    exerciseAssessmentService.save(selectedExerciseAssessment);
 
     Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
-    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
-
-    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
-    for(ExerciseAssessment assessment : allAssessments) {
-      if(assessment.getExercise().getMaxScore() == null){
-        continue;
-       }
-      Integer assessmentID = assessment.getId();
-      Float approvedScore = allScorings.stream()
-                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
-                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
-      Float submittedScore = allScorings.stream()
-                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
-                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
-      if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
-        approvedScore = (float) assessment.getExercise().getMaxScore();
-      }
-      if (submittedScore > (float) assessment.getExercise().getMaxScore()) {
-        submittedScore = (float) assessment.getExercise().getMaxScore();
-      }
-      assessment.setApprovedScore(approvedScore);
-      assessment.setSubmittedScore(submittedScore);
-      assessment = exerciseAssessmentService.save(assessment);
-    }
-
-    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
-    Float approvedScore = allAssessments.stream()
-                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
-    Float submittedScore = allAssessments.stream()
-                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
-    Float scoreModifier = allAssessments.stream()
-                                        .map(ExerciseAssessment::getScoreModifier).reduce(0.0f, Float::sum);
-    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
-    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
-    projectAssessment.setProposedLevelID(level.getId());
-    projectAssessment.setSubmittedScore(submittedScore);
-    projectAssessment.setApprovedScore(approvedScore);
-    projectAssessment.setScoreModifier(scoreModifier);
-    projectAssessment = projectAssessmentService.save(projectAssessment);
+    ProjectAssessment projectAssessment = transactionCreationService.calculateProjectAssessment(projectAssessmentId);
 
     String json = new Gson().toJson(projectAssessment);
     return Response.ok(json).build();
@@ -1526,66 +1489,56 @@ public class AssessmentController extends GcsUtil {
   @Path(value = "/criteria_scoring/{criteriaScoringId}/untake_score")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response uUntakeScore(@HeaderParam("Authorization") String authorization,
+  public Response untakeScore(@HeaderParam("Authorization") String authorization,
                                 @PathParam("criteriaScoringId") Integer criteriaScoringId) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     CriteriaScoring criteriaScoring = criteriaScoringService.findById(criteriaScoringId);
 
     criteriaScoring.setApprovalStatus(1);
+    criteriaScoring.setCreatedBy(user.getId());
     criteriaScoring.setSelected(false);
     if (criteriaScoring.getCriteria().getScore() != null) {
       criteriaScoring.setSubmittedScore(0.0f);
     }
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
-    ExerciseAssessment selectedExerciseAssessment = exerciseAssessmentService.findById(criteriaScoring.getExerciseAssessmentID());
-
-    List<CriteriaScoring> criteriaScoringSelectedList = criteriaScoringService.findByExerciseAssessmentIDAndSelected(selectedExerciseAssessment.getId(), true);
-
-    if (criteriaScoringSelectedList.size() == 0) {
-      selectedExerciseAssessment.setScoreModifier(0.0f);
-      exerciseAssessmentService.save(selectedExerciseAssessment);
-    }
 
     Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
-    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
+    ProjectAssessment projectAssessment = transactionCreationService.calculateProjectAssessment(projectAssessmentId);
+    
+    String json = new Gson().toJson(projectAssessment);
+    return Response.ok(json).build();
+  }
 
-    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
-    for(ExerciseAssessment assessment : allAssessments) {
-      if(assessment.getExercise().getMaxScore() == null){
-        continue;
-       }
-      Integer assessmentID = assessment.getId();
-      Float approvedScore = allScorings.stream()
-                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
-                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
-      Float submittedScore = allScorings.stream()
-                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
-                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
-      if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
-        approvedScore = (float) assessment.getExercise().getMaxScore();
-      }
-      if (submittedScore > (float) assessment.getExercise().getMaxScore()) {
-        submittedScore = (float) assessment.getExercise().getMaxScore();
-      }
-      assessment.setApprovedScore(approvedScore);
-      assessment.setSubmittedScore(submittedScore);
-      assessment = exerciseAssessmentService.save(assessment);
+  @POST
+  @Path(value = "/exercise_score_modifier/{modifier_id}/enabled")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  public Response scoreModifierEnable(@HeaderParam("Authorization") String authorization,
+                                @PathParam("modifier_id") Integer modifierId,
+                                @FormDataParam("enabled") Boolean enabled) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
     }
 
-    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
-    Float approvedScore = allAssessments.stream()
-                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
-    Float submittedScore = allAssessments.stream()
-                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
-    Float scoreModifier = allAssessments.stream()
-                                        .map(ExerciseAssessment::getScoreModifier).reduce(0.0f, Float::sum);
-    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
-    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
-    projectAssessment.setProposedLevelID(level.getId());
-    projectAssessment.setSubmittedScore(submittedScore);
-    projectAssessment.setApprovedScore(approvedScore);
-    projectAssessment.setScoreModifier(scoreModifier);
-    projectAssessment = projectAssessmentService.save(projectAssessment);
+    ExerciseScoreModifier modifier = exerciseScoreModifierService.findById(modifierId);
+    modifier.setEnabled(enabled);
+    modifier.setCreatedBy(user.getId());
+    modifier = exerciseScoreModifierService.save(modifier);
 
+    Integer projectAssessmentId = modifier.getProjectAssessmentID();
+    ProjectAssessment projectAssessment = transactionCreationService.calculateProjectAssessment(projectAssessmentId);
+    
     String json = new Gson().toJson(projectAssessment);
     return Response.ok(json).build();
   }
@@ -1621,42 +1574,7 @@ public class AssessmentController extends GcsUtil {
     criteriaScoring = criteriaScoringService.save(criteriaScoring);
     
     Integer projectAssessmentId = criteriaScoring.getProjectAssessmentID();
-    List<CriteriaScoring> allScorings = criteriaScoringService.findByProjectAssessmentID(projectAssessmentId);
-
-    List<ExerciseAssessment> allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
-    for(ExerciseAssessment assessment : allAssessments) {
-      if(assessment.getExercise().getMaxScore() == null){
-        continue;
-       }
-      Integer assessmentID = assessment.getId();
-      Float approvedScore = allScorings.stream()
-                                       .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
-                                       .map(CriteriaScoring::getApprovedScore).reduce(0.0f, Float::sum);
-      Float submittedScore = allScorings.stream()
-                                        .filter(score -> score.getExerciseAssessmentID().equals(assessmentID))
-                                        .map(CriteriaScoring::getSubmittedScore).reduce(0.0f, Float::sum);
-      if (approvedScore > (float) assessment.getExercise().getMaxScore()) {
-        approvedScore = (float) assessment.getExercise().getMaxScore();
-      }
-      if (submittedScore > (float) assessment.getExercise().getMaxScore()) {
-        submittedScore = (float) assessment.getExercise().getMaxScore();
-      }
-      assessment.setApprovedScore(approvedScore);
-      assessment.setSubmittedScore(submittedScore);
-      assessment = exerciseAssessmentService.save(assessment);
-    }
-
-    allAssessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentId);
-    Float approvedScore = allAssessments.stream()
-                                       .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
-    Float submittedScore = allAssessments.stream()
-                                        .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
-    ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
-    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
-    projectAssessment.setProposedLevelID(level.getId());
-    projectAssessment.setSubmittedScore(submittedScore);
-    projectAssessment.setApprovedScore(approvedScore);
-    projectAssessment = projectAssessmentService.save(projectAssessment);
+    ProjectAssessment projectAssessment = transactionCreationService.calculateProjectAssessment(projectAssessmentId);
 
     String json = new Gson().toJson(projectAssessment);
     return Response.ok(json).build();

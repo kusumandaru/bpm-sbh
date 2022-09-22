@@ -71,7 +71,6 @@ public class MasterCertificationType {
   @Setter
   private String createdBy;
 
-
   public MasterCertificationType() {
   }
 

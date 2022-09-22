@@ -1,7 +1,5 @@
 package com.sbh.bpm.controller;
 
-import static org.mockito.ArgumentMatchers.contains;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,11 +17,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.sbh.bpm.model.ActivityHistory;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
-import com.sbh.bpm.service.ITransactionCreationService;
 import com.sbh.bpm.service.IUserService;
 
 import org.camunda.bpm.BpmPlatform;

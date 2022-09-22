@@ -89,9 +89,6 @@ public class MasterCriteria {
   @Setter
   private String createdBy;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterCriteria> criterias = new ArrayList<>();
-    
   public MasterCriteria() {
   }
 

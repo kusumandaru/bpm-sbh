@@ -1,7 +1,6 @@
 package com.sbh.bpm.model;
 
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,7 +10,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -19,19 +17,19 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "exercise_assessments")
-public class ExerciseAssessment {
+@Table(name = "exercise_score_modifiers")
+public class ExerciseScoreModifier {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Getter
   @Setter
   private Integer id;
 
-  @SerializedName("master_exercise_id")
-  @Column(name="master_exercise_id")
+  @SerializedName("master_score_modifier_id")
+  @Column(name="master_score_modifier_id")
   @Getter
   @Setter
-  private Integer masterExerciseID;
+  private Integer masterScoreModifierID;
 
   @SerializedName("project_assessment_id")
   @Column(name="project_assessment_id")
@@ -39,23 +37,23 @@ public class ExerciseAssessment {
   @Setter
   private Integer projectAssessmentID;
 
-  @SerializedName("selected")
-  @Column(name="selected")
+  @SerializedName("exercise_assessment_id")
+  @Column(name="exercise_assessment_id")
   @Getter
   @Setter
-  private Boolean selected;
+  private Integer exerciseAssessmentID;
 
-  @SerializedName("approved_score")
-  @Column(name="approved_score")
+  @SerializedName("score_modifier")
+  @Column(name="score_modifier")
   @Getter
   @Setter
-  private Float approvedScore;
+  private Float scoreModifier;
 
-  @SerializedName("submitted_score")
-  @Column(name="submitted_score")
+  @SerializedName("enabled")
+  @Column(name="enabled")
   @Getter
   @Setter
-  private Float submittedScore;
+  private Boolean enabled;
 
   @SerializedName("created_at")
   @Column(name="created_at")
@@ -66,7 +64,7 @@ public class ExerciseAssessment {
   @SerializedName("updated_at")
   @Column(name="updated_at")
   @Getter
-  @Setter
+  @Setter 
   private Date updatedAt;
 
   @SerializedName("created_by")
@@ -75,28 +73,19 @@ public class ExerciseAssessment {
   @Setter
   private String createdBy;
 
-  @ManyToOne(targetEntity = MasterExercise.class)
-  @JoinColumn(name="master_exercise_id",referencedColumnName="id",insertable=false,updatable=false)
+  @SerializedName("master_score_modifier")
+  @ManyToOne(targetEntity = MasterScoreModifier.class)
+  @JoinColumn(name="master_score_modifier_id",referencedColumnName="id",insertable=false,updatable=false)
   @Getter
   @Setter
-  private MasterExercise exercise;
+  private MasterScoreModifier masterScoreModifier;
 
-  @Transient
-  @Getter
-  @Setter
-  private List<CriteriaScoring> criterias;
-
-  @Transient
-  @Getter
-  @Setter
-  private List<ExerciseScoreModifier> modifiers;
-
-  public ExerciseAssessment() {
+  public ExerciseScoreModifier() {
   }
 
-  public ExerciseAssessment(Integer id, Integer masterExerciseID, Integer projectAssessmentID) {
+  public ExerciseScoreModifier(Integer id, Boolean enabled, Float scoreModifier) {
     this.id = id;
-    this.masterExerciseID = masterExerciseID;
-    this.projectAssessmentID = projectAssessmentID;
+    this.enabled = enabled;
+    this.scoreModifier = scoreModifier;
   }
 }

@@ -65,9 +65,6 @@ public class MasterVendor {
   @Setter
   private String createdBy;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterTemplate> templates = new ArrayList<>();
-    
   public MasterVendor() {
   }
 

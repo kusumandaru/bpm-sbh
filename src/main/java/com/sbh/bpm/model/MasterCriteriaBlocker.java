@@ -61,9 +61,6 @@ public class MasterCriteriaBlocker {
   @Setter
   private String createdBy;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterCriteriaBlocker> criterias = new ArrayList<>();
-
   @ManyToOne(targetEntity = MasterCriteria.class)
   @JoinColumn(name="blocker_id",referencedColumnName="id",insertable=false,updatable=false)
   @Getter
