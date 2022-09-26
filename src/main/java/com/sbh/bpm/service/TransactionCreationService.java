@@ -186,6 +186,7 @@ public class TransactionCreationService implements ITransactionCreationService {
 
         ExerciseScoreModifier modifier = new ExerciseScoreModifier();
         modifier.setMasterScoreModifierID(masterModifier.getId());
+        modifier.setProjectAssessmentID(projectAssessment.getId());
         modifier.setExerciseAssessmentID(assmnt.getId());
         modifier.setScoreModifier(masterModifier.getScoreModifier());
         modifier.setEnabled(false);
@@ -336,6 +337,7 @@ public class TransactionCreationService implements ITransactionCreationService {
 
         ExerciseScoreModifier modifier = new ExerciseScoreModifier();
         modifier.setMasterScoreModifierID(masterModifier.getId());
+        modifier.setProjectAssessmentID(projectAssessment.getId());
         modifier.setExerciseAssessmentID(assmnt.getId());
         modifier.setScoreModifier(masterModifier.getScoreModifier());
         modifier.setEnabled(false);
