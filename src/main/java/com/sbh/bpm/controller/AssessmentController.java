@@ -1175,7 +1175,12 @@ public class AssessmentController extends GcsUtil {
     String processInstanceId = task.getProcessInstanceId();
 
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "FA");
-
+    projectAssessments.stream().forEach(pa -> {
+      List<MasterLevel> levels = transactionCreationService.getAllLevelFromProjectAssessmentID(pa.getId());
+      MasterLevel proposedLevel = levels.stream().filter(l -> l.getId().equals(pa.getProposedLevelID())).findFirst().get();
+      pa.setProposedLevel(proposedLevel);
+    });
+    
     String json = new Gson().toJson(projectAssessments);
     return Response.status(200).entity(json).build();
   }
