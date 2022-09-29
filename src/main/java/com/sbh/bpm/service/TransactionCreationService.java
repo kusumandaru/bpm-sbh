@@ -479,7 +479,7 @@ public class TransactionCreationService implements ITransactionCreationService {
     Integer totalScore = Math.round(submittedScore + approvedScore);
 
     ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
-    List<MasterLevel> allLevels = getAllLevelFromProjectAssessmentID(projectAssessment.getMasterTemplateID());
+    List<MasterLevel> allLevels = getAllLevelFromProjectAssessmentID(projectAssessment.getId());
     List<MasterLevel> filteredLevels = allLevels.stream()
                         .filter(l -> l.getScore() <= totalScore )
                         .sorted(Comparator.comparingDouble(MasterLevel::getPercentage))
