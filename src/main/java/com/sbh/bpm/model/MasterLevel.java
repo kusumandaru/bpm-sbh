@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -35,11 +36,11 @@ public class MasterLevel {
   @Setter
   private String name;
 
-  @SerializedName("minimum_score")
-  @Column(name="minimum_score")
-  @Getter
-  @Setter
-  private Float minimumScore;
+  // @SerializedName("minimum_score")
+  // @Column(name="minimum_score")
+  // @Getter
+  // @Setter
+  // private Float minimumScore;
 
   @SerializedName("percentage")
   @Column(name="percentage")
@@ -52,6 +53,12 @@ public class MasterLevel {
   @Getter
   @Setter
   private Boolean active;
+
+  @SerializedName("rounddown")
+  @Column(name="rounddown")
+  @Getter
+  @Setter
+  private Boolean rounddown;
 
   @SerializedName("created_at")
   @Column(name="created_at")
@@ -71,13 +78,18 @@ public class MasterLevel {
   @Setter
   private String createdBy;
 
+  @Transient
+  @SerializedName("score")
+  @Getter
+  @Setter
+  private Integer score;
+
   public MasterLevel() {
   }
 
-  public MasterLevel(Integer id,  String name, Float minimumScore, Float percentage) {
+  public MasterLevel(Integer id,  String name, Float percentage) {
     this.id = id;
     this.name = name;
-    this.minimumScore = minimumScore;
     this.percentage = percentage;
   }
 }

@@ -1,11 +1,14 @@
 package com.sbh.bpm.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.sbh.bpm.model.Attachment;
@@ -129,25 +132,24 @@ public class TransactionCreationService implements ITransactionCreationService {
       //TODO: create if certifitionType ID null
       List<MasterTemplate> masterTemplates = masterTemplateService.findByMasterCertificationTypeID(certificationTypeId);
       MasterTemplate template = masterTemplates.stream().filter(t -> t.getProjectType().equals("design_recognition")).findFirst().get();
-      MasterTemplate masterTemplate = masterTemplateService.findById(template.getId());
-      MasterLevel masterLevel = masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(template.getId());
       Date newDate = new Date();
+      MasterLevel level = getMinimumLevelFromProjectAssessmentID(template.getId());
 
       ProjectAssessment projectAssessment = new ProjectAssessment();
-      projectAssessment.setMasterTemplateID(masterTemplate.getId());
+      projectAssessment.setMasterTemplateID(template.getId());
       projectAssessment.setProcessInstanceID(processInstanceID);
-      projectAssessment.setProjectName(masterTemplate.getProjectVersion());
+      projectAssessment.setProjectName(template.getProjectVersion());
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("DR");
-
-      projectAssessment.setProposedLevelID(masterLevel.getId());
+      projectAssessment.setProposedLevelID(level.getId());
+      projectAssessment.setTargetScore(level.getScore());
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 
-      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(masterTemplate.getId());
+      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(template.getId());
 
       List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
 
@@ -281,25 +283,25 @@ public class TransactionCreationService implements ITransactionCreationService {
       Integer certificationTypeId = (Integer) taskService.getVariable(task.getId(), "certification_type_id");
       List<MasterTemplate> masterTemplates = masterTemplateService.findByMasterCertificationTypeID(certificationTypeId);
       MasterTemplate template = masterTemplates.stream().filter(t -> t.getProjectType().equals("final_assessment")).findFirst().get();
-      MasterTemplate masterTemplate = masterTemplateService.findById(template.getId());
-      MasterLevel masterLevel = masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(template.getId());
+      MasterLevel level = getMinimumLevelFromProjectAssessmentID(template.getId());
       Date newDate = new Date();
 
       ProjectAssessment projectAssessment = new ProjectAssessment();
-      projectAssessment.setMasterTemplateID(masterTemplate.getId());
+      projectAssessment.setMasterTemplateID(template.getId());
       projectAssessment.setProcessInstanceID(processInstanceID);
-      projectAssessment.setProjectName(masterTemplate.getProjectVersion());
+      projectAssessment.setProjectName(template.getProjectVersion());
       projectAssessment.setPotentialScore(0.0f);
       projectAssessment.setApprovedScore(0.0f);
       projectAssessment.setSubmittedScore(0.0f);
 
       projectAssessment.setCreatedAt(newDate);
       projectAssessment.setAssessmentType("FA");
-      projectAssessment.setProposedLevelID(masterLevel.getId());
+      projectAssessment.setProposedLevelID(level.getId());
+      projectAssessment.setTargetScore(level.getScore());
 
       projectAssessment = projectAssessmentService.save(projectAssessment);
 
-      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(masterTemplate.getId());
+      List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(template.getId());
 
       List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
 
@@ -464,13 +466,57 @@ public class TransactionCreationService implements ITransactionCreationService {
                                        .map(ExerciseAssessment::getApprovedScore).reduce(0.0f, Float::sum);
     Float submittedScore = allAssessments.stream()
                                         .map(ExerciseAssessment::getSubmittedScore).reduce(0.0f, Float::sum);
+    Integer totalScore = Math.round(submittedScore + approvedScore);
+
     ProjectAssessment projectAssessment = projectAssessmentService.findById(projectAssessmentId);
-    MasterLevel level = masterLevelService.getLevelByScoreAndTemplateId(submittedScore+approvedScore, projectAssessment.getMasterTemplateID());
-    projectAssessment.setProposedLevelID(level.getId());
+    List<MasterLevel> allLevels = getAllLevelFromProjectAssessmentID(projectAssessment.getMasterTemplateID());
+    List<MasterLevel> filteredLevels = allLevels.stream()
+                        .filter(l -> l.getScore() <= totalScore )
+                        .sorted(Comparator.comparingDouble(MasterLevel::getPercentage))
+                        .collect(Collectors.toList());
+
+    MasterLevel level;
+    if (filteredLevels.isEmpty()) {
+      level = masterLevelService.findFirstByMasterTemplateIDOrderByPercentageAsc(projectAssessment.getMasterTemplateID());
+    } else {
+      level = filteredLevels.get(filteredLevels.size() - 1);
+    }
     projectAssessment.setSubmittedScore(submittedScore);
     projectAssessment.setApprovedScore(approvedScore);
+    projectAssessment.setProposedLevelID(level.getId());
+    projectAssessment.setTargetScore(level.getScore());
+
     projectAssessment = projectAssessmentService.save(projectAssessment);
 
     return projectAssessment;
+  }
+
+  @Override
+  public MasterLevel getMinimumLevelFromProjectAssessmentID(Integer projectAssessmentID) {
+    return getAllLevelFromProjectAssessmentID(projectAssessmentID).get(0);
+  }
+
+  @Override
+  public List<MasterLevel> getAllLevelFromProjectAssessmentID(Integer projectAssessmentID) {
+    List<ExerciseAssessment> assessments = exerciseAssessmentService.findByProjectAssessmentID(projectAssessmentID);
+    Integer sumMaxScore = assessments.stream().
+                          map(ExerciseAssessment::getExercise).
+                          filter(f-> f.getExerciseType().equals("score")).
+                          filter(f-> f.getBonusPoint().equals(false)).
+                          map(MasterExercise::getMaxScore).
+                          collect(Collectors.summingInt(Integer::intValue));
+
+    ProjectAssessment pa = projectAssessmentService.findById(projectAssessmentID);
+    List<MasterLevel> masterLevels = masterLevelService.findByMasterTemplateID(pa.getMasterTemplateID());
+    masterLevels.stream().sorted(Comparator.comparingDouble(MasterLevel::getPercentage)).forEach(l -> {
+      Float scr = sumMaxScore * l.getPercentage() / 100;
+      if (l.getRounddown()) {
+        l.setScore((int) Math.floor(scr));
+      } else {
+        l.setScore(Math.round(scr));
+      }
+    });
+
+    return masterLevels;
   }
 }

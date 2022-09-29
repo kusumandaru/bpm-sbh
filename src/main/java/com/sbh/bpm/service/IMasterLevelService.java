@@ -13,8 +13,7 @@ public interface IMasterLevelService {
   List<Integer> getAllIdsByTemplateIdAndActiveTrue(Integer templateId);
   MasterLevel findById(Integer masterLevelId);
   MasterLevel save(MasterLevel masterLevel);
-  MasterLevel findFirstByOrderByMinimumScoreAsc();
-  MasterLevel findFirstByMasterTemplateIDOrderByMinimumScoreAsc(Integer templateId);
+  MasterLevel findFirstByMasterTemplateIDOrderByPercentageAsc(Integer templateId);
   boolean deleteById(Integer levelId);
   MasterLevel getLevelByScoreAndTemplateId(Float score, Integer templateId);
 }

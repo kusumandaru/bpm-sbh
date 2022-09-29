@@ -33,6 +33,7 @@ import com.sbh.bpm.model.ExerciseScoreModifier;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
 import com.sbh.bpm.model.MasterEvaluation;
+import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.model.ProjectAssessment;
 import com.sbh.bpm.model.ProjectAttachment;
@@ -47,6 +48,7 @@ import com.sbh.bpm.service.IExerciseScoreModifierService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
 import com.sbh.bpm.service.IMasterEvaluationService;
+import com.sbh.bpm.service.IMasterExerciseService;
 import com.sbh.bpm.service.IMasterLevelService;
 import com.sbh.bpm.service.IProjectAssessmentService;
 import com.sbh.bpm.service.IProjectAttachmentService;
@@ -92,6 +94,9 @@ public class AssessmentController extends GcsUtil {
 
   @Autowired
   private IMasterEvaluationService masterEvaluationService;
+
+  @Autowired
+  private IMasterExerciseService masterExerciseService;
 
   @Autowired
   private IMasterCriteriaService masterCriteriaService;
@@ -510,8 +515,20 @@ public class AssessmentController extends GcsUtil {
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
-    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(projectAssessment.getMasterTemplateID());
-    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= minimumLevel.getMinimumScore();
+    MasterLevel selectedLevel = masterLevelService.findById(projectAssessment.getLevelID());
+
+    List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(projectAssessment.getMasterTemplateID());
+    List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
+    Integer sumMaxScore = masterExerciseList.stream().
+    filter(f -> f.getExerciseType().equals("score")).
+    map(MasterExercise::getMaxScore).
+    collect(Collectors.summingInt(Integer::intValue));
+
+    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessment.getId());
+    Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
+    Integer targetScore = (sumMaxScore+modifiers) * Math.round(selectedLevel.getPercentage()) / 100;
+
+    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= targetScore;
   
     List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
     List<String> unselectedMasterCriteriaCodes = unselectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());
@@ -602,7 +619,12 @@ public class AssessmentController extends GcsUtil {
     String processInstanceID = task.getProcessInstanceId();
 
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceID, "DR");
-
+    projectAssessments.stream().forEach(pa -> {
+      List<MasterLevel> levels = transactionCreationService.getAllLevelFromProjectAssessmentID(pa.getId());
+      MasterLevel proposedLevel = levels.stream().filter(l -> l.getId().equals(pa.getProposedLevelID())).findFirst().get();
+      pa.setProposedLevel(proposedLevel);
+    });
+    
     String json = new Gson().toJson(projectAssessments);
     return Response.status(200).entity(json).build();
   }
@@ -1050,8 +1072,19 @@ public class AssessmentController extends GcsUtil {
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "FA");
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
-    MasterLevel minimumLevel = (MasterLevel) masterLevelService.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(projectAssessment.getMasterTemplateID());
-    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= minimumLevel.getMinimumScore();
+    MasterLevel selectedLevel = masterLevelService.findById(projectAssessment.getLevelID());
+
+    List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(projectAssessment.getMasterTemplateID());
+    List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
+    Integer sumMaxScore = masterExerciseList.stream().
+    filter(f -> f.getExerciseType().equals("score")).
+    map(MasterExercise::getMaxScore).
+    collect(Collectors.summingInt(Integer::intValue));
+
+    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessment.getId());
+    Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
+    Integer targetScore = (sumMaxScore+modifiers) * Math.round(selectedLevel.getPercentage()) / 100;
+    Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= targetScore;
   
     List<MasterCriteria> unselectedMasterCriterias = masterCriteriaService.findByProjectAssessmentIDAndSelectedAndPrequisite(projectAssessment.getId(), false);
     List<String> unselectedMasterCriteriaCodes = unselectedMasterCriterias.stream().map(MasterCriteria::getCode).collect(Collectors.toList());

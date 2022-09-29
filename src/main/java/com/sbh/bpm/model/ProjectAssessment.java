@@ -130,6 +130,11 @@ public class ProjectAssessment {
   @Transient
   @Getter
   @Setter
+  private Integer targetScore;
+
+  @Transient
+  @Getter
+  @Setter
   private List<MasterEvaluation> masterEvaluations;
 
   public ProjectAssessment() {

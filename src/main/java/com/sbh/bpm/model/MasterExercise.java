@@ -53,6 +53,12 @@ public class MasterExercise {
   @Setter
   private Integer maxScore;
 
+  @SerializedName("bonus_point")
+  @Column(name="bonus_point")
+  @Getter
+  @Setter
+  private Boolean bonusPoint;
+
   @SerializedName("active")
   @Column(name="active")
   @Getter
