@@ -36,13 +36,15 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import lombok.Getter;
 import lombok.Setter;
 
 @Service
 @Transactional
 public class TransactionCreationService implements ITransactionCreationService {
+  private static final Logger logger = LoggerFactory.getLogger(TransactionCreationService.class);
 
   @Autowired
   private IMasterTemplateService masterTemplateService;
@@ -242,6 +244,7 @@ public class TransactionCreationService implements ITransactionCreationService {
       transactionManager.rollback(transactionStatus);
 
       Map<String, String> map = new HashMap<String, String>();
+      ex.printStackTrace();
       map.put("message", ex.getMessage());
 
       return new TransactionCreationResponse(false, map);
@@ -394,6 +397,7 @@ public class TransactionCreationService implements ITransactionCreationService {
 
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", ex.getMessage());
+      ex.printStackTrace();
 
       return new TransactionCreationResponse(false, map);
     }
