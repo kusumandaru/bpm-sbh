@@ -515,14 +515,14 @@ public class AssessmentController extends GcsUtil {
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceID(processInstanceId);
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
-    MasterLevel selectedLevel = masterLevelService.findById(projectAssessment.getLevelID());
+    MasterLevel selectedLevel = masterLevelService.findById(projectAssessment.getProposedLevelID());
 
     List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(projectAssessment.getMasterTemplateID());
     List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
     Integer sumMaxScore = masterExerciseList.stream().
-    filter(f -> f.getExerciseType().equals("score")).
-    map(MasterExercise::getMaxScore).
-    collect(Collectors.summingInt(Integer::intValue));
+                          filter(f -> f.getExerciseType().equals("score")).
+                          map(MasterExercise::getMaxScore).
+                          collect(Collectors.summingInt(Integer::intValue));
 
     List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessment.getId());
     Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
@@ -1072,14 +1072,14 @@ public class AssessmentController extends GcsUtil {
     List<ProjectAssessment> projectAssessments = projectAssessmentService.findByProcessInstanceIDAndAssessmentType(processInstanceId, "FA");
     ProjectAssessment projectAssessment = projectAssessments.get(0);
 
-    MasterLevel selectedLevel = masterLevelService.findById(projectAssessment.getLevelID());
+    MasterLevel selectedLevel = masterLevelService.findById(projectAssessment.getProposedLevelID());
 
     List<Integer> evaluationIds = masterEvaluationService.getAllIdsByTemplateIdAndActiveTrue(projectAssessment.getMasterTemplateID());
     List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
     Integer sumMaxScore = masterExerciseList.stream().
-    filter(f -> f.getExerciseType().equals("score")).
-    map(MasterExercise::getMaxScore).
-    collect(Collectors.summingInt(Integer::intValue));
+                          filter(f -> f.getExerciseType().equals("score")).
+                          map(MasterExercise::getMaxScore).
+                          collect(Collectors.summingInt(Integer::intValue));
 
     List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessment.getId());
     Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
