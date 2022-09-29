@@ -11,8 +11,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MasterLevelRepository extends CrudRepository<MasterLevel, Integer> {
-  MasterLevel findFirstByOrderByMinimumScoreAsc();
-  MasterLevel findFirstByMasterTemplateIDOrderByMinimumScoreAsc(Integer templateId);
+  MasterLevel findFirstByMasterTemplateIDOrderByPercentageAsc(Integer templateId);
   List<MasterLevel> findByMasterTemplateID(Integer templateId);
   @Query("select id FROM MasterLevel WHERE masterTemplateID = :templateId")
   List<Integer> getAllIdsByTemplateId(@Param("templateId") Integer templateId);

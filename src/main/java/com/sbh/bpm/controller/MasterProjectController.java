@@ -175,16 +175,6 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
-  @GET
-  @Path(value = "/levels/minimum_score")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response masterLevelMinimumScore(@HeaderParam("Authorization") String authorization) {      
-    MasterLevel level = (MasterLevel) masterLevelService.findFirstByOrderByMinimumScoreAsc();
-
-    String json = new Gson().toJson(level);
-    return Response.ok(json).build();
-  }
-
   @PATCH
   @Path(value = "/levels/{levelId}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -194,7 +184,7 @@ public class MasterProjectController extends GcsUtil{
     MasterLevel masterLevel = masterLevelService.findById(levelId);
     masterLevel.setMasterTemplateID(level.getMasterTemplateID());
     masterLevel.setName(level.getName());
-    masterLevel.setMinimumScore(level.getMinimumScore());
+    masterLevel.setRounddown(level.getRounddown());
     masterLevel.setPercentage(level.getPercentage());
     masterLevel.setActive(level.getActive());
     masterLevel = masterLevelService.save(masterLevel);
@@ -649,6 +639,7 @@ public class MasterProjectController extends GcsUtil{
     } else {
       masterExercise.setMaxScore(exercise.getMaxScore());
     }
+    masterExercise.setBonusPoint(exercise.getBonusPoint());
     masterExercise.setActive(exercise.getActive());
 
     masterExercise = masterExerciseService.save(masterExercise);
@@ -798,7 +789,7 @@ public class MasterProjectController extends GcsUtil{
     List<ExerciseScoreModifier> blockers = (List<ExerciseScoreModifier>) exerciseScoreModifierService.findByMasterScoreModifierID(scoreModifierId);
     if(blockers.size()>0) {
       Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "Cannot delete, there is any master blocker refer this subject, delete them first");
+      map.put("message", "Cannot delete, there is any master score modifier refer this subject, delete them first");
       String json = new Gson().toJson(map);
       return Response.status(400).entity(json).build();
     }

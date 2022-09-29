@@ -30,13 +30,8 @@ public class MasterLevelService implements IMasterLevelService {
   }
 
   @Override
-  public MasterLevel findFirstByOrderByMinimumScoreAsc() {
-    return repository.findFirstByOrderByMinimumScoreAsc();
-  }
-
-  @Override
-  public MasterLevel findFirstByMasterTemplateIDOrderByMinimumScoreAsc(Integer templateId) {
-    return repository.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(templateId);
+  public MasterLevel findFirstByMasterTemplateIDOrderByPercentageAsc(Integer templateId) {
+    return repository.findFirstByMasterTemplateIDOrderByPercentageAsc(templateId);
   }
 
   @Override
@@ -70,7 +65,7 @@ public class MasterLevelService implements IMasterLevelService {
   public MasterLevel getLevelByScoreAndTemplateId(Float score, Integer templateId) {
     MasterLevel level = repository.getLevelByScoreAndTemplateId(score, templateId);
     if (Objects.isNull(level)) {
-      level = repository.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(templateId);
+      level = repository.findFirstByMasterTemplateIDOrderByPercentageAsc(templateId);
     }
     return level;
   }
