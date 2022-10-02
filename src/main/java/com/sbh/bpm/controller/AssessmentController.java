@@ -544,6 +544,7 @@ public class AssessmentController extends GcsUtil {
     map.put("attachment", prequisiteAttachment);
     map.put("prequisite", prequisiteTask);
     map.put("prequisite_codes", unselectedMasterCriteriaCodes);
+    map.put("level_name", projectAssessment.getProposedLevel().getName());
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
@@ -1100,6 +1101,7 @@ public class AssessmentController extends GcsUtil {
     map.put("attachment", prequisiteAttachment);
     map.put("prequisite", prequisiteTask);
     map.put("prequisite_codes", unselectedMasterCriteriaCodes);
+    map.put("level_name", projectAssessment.getProposedLevel().getName());
 
     String json = new Gson().toJson(map);
     return Response.status(200).entity(json).build();
