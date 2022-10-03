@@ -15,4 +15,5 @@ public interface IExerciseScoreModifierService {
   boolean deleteById(Integer id);
   Iterable<ExerciseScoreModifier> saveAll(List<ExerciseScoreModifier> modifiers);
   List<ExerciseScoreModifier> findByProjectAssessmentID(Integer projectAssessmentId);
+  List<ExerciseScoreModifier> findByProjectAssessmentIDAndEnabled(Integer projectAssessmentId, boolean enabled);
 }

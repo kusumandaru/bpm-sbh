@@ -14,5 +14,6 @@ public interface ExerciseScoreModifierRepository extends CrudRepository<Exercise
   List<ExerciseScoreModifier> findByMasterScoreModifierIDIn(List<Integer> modifierIds);
   void deleteByMasterScoreModifierID(Integer modifierId);
   List<ExerciseScoreModifier> findByProjectAssessmentID(Integer projectAssessmentId);
+  List<ExerciseScoreModifier> findByProjectAssessmentIDAndEnabled(Integer projectAssessmentId, boolean enabled);
 }
 

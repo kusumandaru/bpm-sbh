@@ -521,10 +521,11 @@ public class AssessmentController extends GcsUtil {
     List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
     Integer sumMaxScore = masterExerciseList.stream().
                           filter(f -> f.getExerciseType().equals("score")).
+                          filter(f -> f.getBonusPoint().equals(false)).
                           map(MasterExercise::getMaxScore).
                           collect(Collectors.summingInt(Integer::intValue));
 
-    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessment.getId());
+    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentIDAndEnabled(projectAssessment.getId(), true);
     Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
     Integer targetScore = (sumMaxScore+modifiers) * Math.round(selectedLevel.getPercentage()) / 100;
 
@@ -1079,10 +1080,11 @@ public class AssessmentController extends GcsUtil {
     List<MasterExercise> masterExerciseList = masterExerciseService.findByMasterEvaluationIDInAndActiveTrue(evaluationIds);
     Integer sumMaxScore = masterExerciseList.stream().
                           filter(f -> f.getExerciseType().equals("score")).
+                          filter(f -> f.getBonusPoint().equals(false)).
                           map(MasterExercise::getMaxScore).
                           collect(Collectors.summingInt(Integer::intValue));
 
-    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(projectAssessment.getId());
+    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentIDAndEnabled(projectAssessment.getId(), true);
     Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
     Integer targetScore = (sumMaxScore+modifiers) * Math.round(selectedLevel.getPercentage()) / 100;
     Boolean prequisiteScore = (projectAssessment.getSubmittedScore() + projectAssessment.getApprovedScore()) >= targetScore;

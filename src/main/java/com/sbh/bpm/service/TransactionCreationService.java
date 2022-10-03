@@ -519,8 +519,11 @@ public class TransactionCreationService implements ITransactionCreationService {
 
     ProjectAssessment pa = projectAssessmentService.findById(projectAssessmentID);
     List<MasterLevel> masterLevels = masterLevelService.findByMasterTemplateID(pa.getMasterTemplateID());
+    List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentIDAndEnabled(pa.getId(), true);
+    Integer modifiers = (int) scoreModifiers.stream().mapToDouble(ExerciseScoreModifier::getScoreModifier).sum();
+
     masterLevels.stream().sorted(Comparator.comparingDouble(MasterLevel::getPercentage)).forEach(l -> {
-      Float scr = sumMaxScore * l.getPercentage() / 100;
+      Float scr = (sumMaxScore+modifiers) * l.getPercentage() / 100;
       if (l.getRounddown()) {
         l.setScore((int) Math.floor(scr));
       } else {

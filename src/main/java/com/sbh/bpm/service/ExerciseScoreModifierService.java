@@ -60,4 +60,9 @@ public class ExerciseScoreModifierService implements IExerciseScoreModifierServi
   public List<ExerciseScoreModifier> findByProjectAssessmentID(Integer projectAssessmentId) {
     return repository.findByProjectAssessmentID(projectAssessmentId);
   }
+
+  @Override
+  public List<ExerciseScoreModifier> findByProjectAssessmentIDAndEnabled(Integer projectAssessmentId, boolean enabled) {
+    return repository.findByProjectAssessmentIDAndEnabled(projectAssessmentId, enabled);
+  }
 }
