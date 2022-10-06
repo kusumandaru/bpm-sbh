@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/bpm_sbh?serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/bpm_sbh?serverTimezone=Asia/Jakarta
     username: root
     password: 
   profiles.active: @activatedProperties@

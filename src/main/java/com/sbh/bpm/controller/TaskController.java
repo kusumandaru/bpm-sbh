@@ -32,6 +32,7 @@ import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.PaginationRequest;
 import com.sbh.bpm.model.PaginationResult;
+import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.Province;
@@ -43,6 +44,7 @@ import com.sbh.bpm.service.IActivityNameService;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProjectUserService;
 import com.sbh.bpm.service.IProjectVerificatorService;
 import com.sbh.bpm.service.IProvinceService;
@@ -99,6 +101,9 @@ public class TaskController {
 
   @Autowired
   private IProjectUserService projectUserService;
+
+  @Autowired
+  private IProjectAttachmentService projectAttachmentService;
 
   @Autowired
   private IProjectVerificatorService projectVerificatorService;
@@ -971,6 +976,13 @@ public class TaskController {
     try {
       BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
       variableMap.put("building_type_name", buildingType.getNameId());
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+
+    try {
+      List<ProjectAttachment> projectAttachmentList = projectAttachmentService.findByProcessInstanceIDAndFileType(task.getProcessInstanceId(), "sign_post");
+      variableMap.put("any_sign_post", (projectAttachmentList.size() > 0));
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
