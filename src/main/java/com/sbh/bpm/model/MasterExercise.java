@@ -53,11 +53,11 @@ public class MasterExercise {
   @Setter
   private Integer maxScore;
 
-  @SerializedName("score_modifier")
-  @Column(name="score_modifier")
+  @SerializedName("bonus_point")
+  @Column(name="bonus_point")
   @Getter
   @Setter
-  private Float scoreModifier;
+  private Boolean bonusPoint;
 
   @SerializedName("active")
   @Column(name="active")
@@ -83,9 +83,6 @@ public class MasterExercise {
   @Setter
   private String createdBy;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterEvaluation> evaluations = new ArrayList<>();
-    
   public MasterExercise() {
   }
 

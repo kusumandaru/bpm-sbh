@@ -6,6 +6,7 @@ import com.sbh.bpm.controller.AssessmentController;
 import com.sbh.bpm.controller.DocumentBuildingController;
 import com.sbh.bpm.controller.FileController;
 import com.sbh.bpm.controller.GoogleCloudStorageController;
+import com.sbh.bpm.controller.HistoryController;
 import com.sbh.bpm.controller.MasterController;
 import com.sbh.bpm.controller.MasterProjectController;
 import com.sbh.bpm.controller.NewBuildingController;
@@ -29,6 +30,7 @@ public class JerseyConfig extends CamundaJerseyResourceConfig {
     register(FileController.class);
     register(NewBuildingController.class);
     register(AssessmentController.class);
+    register(HistoryController.class);
     register(ProjectController.class);
     register(TaskController.class);
     register(DocumentBuildingController.class);

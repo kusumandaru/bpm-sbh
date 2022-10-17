@@ -128,6 +128,11 @@ public class UserService implements IUserService{
   }
 
   @Override
+  public List<User> findByGroupId(String groupId) {
+    return userRepository.findByGroupId(groupId);
+  }
+
+  @Override
   public List<User> findAll() {
     return (List<User>) userRepository.findAll();
   }

@@ -27,10 +27,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.ActivityName;
 import com.sbh.bpm.model.BuildingType;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.PaginationRequest;
 import com.sbh.bpm.model.PaginationResult;
+import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.Province;
@@ -38,9 +40,11 @@ import com.sbh.bpm.model.SbhTask;
 import com.sbh.bpm.model.Tenant;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
+import com.sbh.bpm.service.IActivityNameService;
 import com.sbh.bpm.service.IBuildingTypeService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IMailerService;
+import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProjectUserService;
 import com.sbh.bpm.service.IProjectVerificatorService;
 import com.sbh.bpm.service.IProvinceService;
@@ -70,9 +74,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Path(value = "/new-building")
 public class TaskController {
   private static final Logger logger = LoggerFactory.getLogger(TaskController.class);
-  private final String[] adminTasks = {"check-registration-project", "check-document-building", "agreement", "check-first-payment", "workshop", "check-second-payment", "check-third-payment", "design-recognition-evaluation-assessment", "design-recognition-trial", "design-recognition-letter", "check-third-payment-fa"};
-  private final String[] clientTasks = {"fill-registration-project", "fill-document-building", "first-payment", "second-payment", "design-recognition-submission", "third-payment", "design-recognition-trial-revision", "final-assessment-submission", "third-payment-fa", "on-site-revision-submission", "final-assessment-trial-revision", "final-assessment-letter"};
-  private final String[] verificatorTasks = {"design-recognition-review", "design-recognition-revision-review", "final-assessment-review", "on-site-verification", "final-assessment-evaluation-assessment", "final-assessment-revision-review"};
+  private final String[] adminTasks = {"check-registration-project", "check-document-building", "agreement", "check-first-payment", "workshop", "check-second-payment", "check-third-payment", "design-recognition-evaluation-assessment", "design-recognition-trial", "design-recognition-letter", "check-third-payment-fa", "final-assessment-evaluation-assessment"};
+  private final String[] clientTasks = {"fill-registration-project", "fill-document-building", "first-payment", "agreement", "second-payment", "design-recognition-submission", "third-payment", "design-recognition-trial-revision", "final-assessment-submission", "third-payment-fa", "on-site-revision-submission", "final-assessment-trial-revision", "final-assessment-letter"};
+  private final String[] verificatorTasks = {"design-recognition-review", "design-recognition-revision-review", "final-assessment-review", "on-site-verification", "final-assessment-revision-review"};
 
   @Autowired
   private IProvinceService provinceService;
@@ -99,7 +103,13 @@ public class TaskController {
   private IProjectUserService projectUserService;
 
   @Autowired
+  private IProjectAttachmentService projectAttachmentService;
+
+  @Autowired
   private IProjectVerificatorService projectVerificatorService;
+
+  @Autowired
+  private IActivityNameService activityNameService;
 
   @Context
   UriInfo uriInfo;
@@ -112,6 +122,7 @@ public class TaskController {
     TaskService taskService = processEngine.getTaskService();
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
     List<Task> tasks = taskService.createTaskQuery().taskDefinitionKeyIn("check-registration-project", "check-document-building").active().orderByTaskCreateTime().desc().list();
+    List<ActivityName> activityNames = activityNameService.findAll();
 
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -120,6 +131,11 @@ public class TaskController {
       if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      final SbhTask innerTask = sbhTask;
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
       }
       sbhTasks.add(sbhTask);
     }
@@ -148,6 +164,7 @@ public class TaskController {
     List<Task> tasks = taskService.createTaskQuery().active().orderByTaskCreateTime().desc().list();
     List<Tenant> tenants = tenantService.findAll();
     List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(userId);
+    List<ActivityName> activityNames = activityNameService.findAll();
 
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -163,7 +180,10 @@ public class TaskController {
       final SbhTask innerTask = sbhTask;
       Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
       sbhTask.setAssigned(assigned);
-      
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
+      }
       sbhTasks.add(sbhTask);
     }
     String json = new Gson().toJson(sbhTasks);
@@ -178,6 +198,7 @@ public class TaskController {
     TaskService taskService = processEngine.getTaskService();
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
     List<Task> tasks = taskService.createTaskQuery().taskDefinitionKeyIn("fill-registration-project", "fill-document-building").active().orderByTaskCreateTime().desc().list();
+    List<ActivityName> activityNames = activityNameService.findAll();
 
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -186,6 +207,11 @@ public class TaskController {
       if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      final SbhTask innerTask = sbhTask;
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
       }
       sbhTasks.add(sbhTask);
     }
@@ -242,6 +268,7 @@ public class TaskController {
     TaskService taskService = processEngine.getTaskService();
     List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
     List<Task> tasks = taskService.createTaskQuery().active().orderByTaskCreateTime().desc().list();
+    List<ActivityName> activityNames = activityNameService.findAll();
 
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -250,6 +277,11 @@ public class TaskController {
       if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      final SbhTask innerTask = sbhTask;
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
       }
       sbhTasks.add(sbhTask);
     }
@@ -272,6 +304,73 @@ public class TaskController {
       taskQuery = taskQuery.processVariableValueEquals("tenant", t.getId());
       dict.put(t.getName(), taskQuery.count());
     });
+
+    String json = new Gson().toJson(dict);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/grouped_task_by_verificator")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response TaskCountGroupByVerificator(@HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Map<String, Long> dict = new TreeMap<>();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    List<Tenant> tenantList = tenantService.findAll();
+
+    tenantList.stream().forEach(t -> {
+      TaskQuery taskQuery = taskService.createTaskQuery();
+      taskQuery = taskQuery.processVariableValueEquals("tenant", t.getId());
+      taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+      dict.put(t.getName(), taskQuery.count());
+    });
+
+    dict.values().removeIf(f -> f == 0f);
+
+    String json = new Gson().toJson(dict);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/grouped_pending_task_by_verificator")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response PendingTaskCountGroupByVerificator(@HeaderParam("Authorization") String authorization) { 
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+
+    Map<String, Long> dict = new TreeMap<>();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    List<Tenant> tenantList = tenantService.findAll();
+
+    tenantList.stream().forEach(t -> {
+      TaskQuery taskQuery = taskService.createTaskQuery();
+      taskQuery = taskQuery.processVariableValueEquals("tenant", t.getId());
+      taskQuery = taskQuery.taskDefinitionKeyIn(verificatorTasks);
+      taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+      dict.put(t.getName(), taskQuery.count());
+    });
+
+    dict.values().removeIf(f -> f == 0f);
 
     String json = new Gson().toJson(dict);
     return Response.ok(json).build();
@@ -303,6 +402,8 @@ public class TaskController {
     List<Task> tasks = taskQuery.list();
 
     List<ProjectUser> projectUsers = projectUserService.findByUserId(userId);
+    List<ActivityName> activityNames = activityNameService.findAll();
+
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
@@ -314,7 +415,10 @@ public class TaskController {
       final SbhTask innerTask = sbhTask;
       Boolean assigned = projectUsers.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
       sbhTask.setAssigned(assigned);
-      
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
+      }
       sbhTasks.add(sbhTask);
     }
     String json = new Gson().toJson(sbhTasks);
@@ -364,8 +468,8 @@ public class TaskController {
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
+    List<ActivityName> activityNames = activityNameService.findAll();
 
-    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
     List<Tenant> tenants = tenantService.findAll();
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
@@ -378,12 +482,88 @@ public class TaskController {
       String tenantId = sbhTask.getTenantId();
       Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
       sbhTask.setTenantName(selectedTenant.getName());
+      sbhTask.setAssigned(true);
+
       final SbhTask innerTask = sbhTask;
-      if (user.getGroupId().equals("verificator")) {
-        Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
-        sbhTask.setAssigned(assigned);
-      } else {
-        sbhTask.setAssigned(true);
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
+      }
+
+      sbhTasks.add(sbhTask);
+    }
+
+    PaginationResult result = new PaginationResult(sbhTasks, taskSize);
+    String json = new Gson().toJson(result);
+    return Response.ok(json).build();
+  }
+
+  @POST
+  @Path(value = "/tasks/verificator/pagi")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response VerificatorPaginationTasks(@HeaderParam("Authorization") String authorization,
+                                  PaginationRequest pagiRequest) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    List<SbhTask> sbhTasks =  new ArrayList<SbhTask>();
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    taskQuery = taskQuery.or();
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getAssignee())) {
+      taskQuery = taskQuery.taskAssigneeLike("%"+pagiRequest.getFilter().getAssignee()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingTypeName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_type", pagiRequest.getFilter().getBuildingTypeName());
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getBuildingName())) {
+      taskQuery =  taskQuery.processVariableValueLike("building_name", "%"+pagiRequest.getFilter().getBuildingName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getName())) {
+      taskQuery = taskQuery.taskNameLike("%"+pagiRequest.getFilter().getName()+"%");
+    }
+    if (!StringUtils.isEmpty(pagiRequest.getFilter().getCertificationType())) {
+      taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
+    }
+    taskQuery = taskQuery.endOr();
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+
+    List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
+    Long taskSize = taskQuery.count();
+
+    List<Tenant> tenants = tenantService.findAll();
+    List<ActivityName> activityNames = activityNameService.findAll();
+
+    for (Task task : tasks) {
+      SbhTask sbhTask = SbhTask.CreateFromTask(task);
+      Map<String, Object> variableMap = taskService.getVariables(task.getId());
+      sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
+        BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
+        sbhTask.setBuildingTypeName(buildingType.getNameId());
+      }
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
+      final SbhTask innerTask = sbhTask;
+      Boolean assigned = projectVerificators.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
+      sbhTask.setAssigned(assigned);
+
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
       }
 
       sbhTasks.add(sbhTask);
@@ -434,22 +614,40 @@ public class TaskController {
       taskQuery = taskQuery.processVariableValueLike("certification_type", "%"+pagiRequest.getFilter().getCertificationType()+"%");
     }
     taskQuery = taskQuery.endOr();
+
+    String[] processInstanceIds = projectUsers.stream().map(pu -> pu.getProcessInstanceID()).toArray(String[]::new);
+    taskQuery = taskQuery.or();
+    taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
     taskQuery = taskQuery.processVariableValueEquals("tenant", user.getTenant().getId());
+    taskQuery = taskQuery.endOr();
+
     taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
 
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<Tenant> tenants = tenantService.findAll();
+    List<ActivityName> activityNames = activityNameService.findAll();
+
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
       sbhTask = SbhTask.AssignTaskVariables(sbhTask, variableMap);
+      String tenantId = sbhTask.getTenantId();
+      Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
+      sbhTask.setTenantName(selectedTenant.getName());
+      sbhTask.setInternal(user.getTenantId().equals(tenantId));
       if (NumberUtils.isCreatable(sbhTask.getBuildingType())) {
         BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(sbhTask.getBuildingType()));
         sbhTask.setBuildingTypeName(buildingType.getNameId());
         final SbhTask innerTask = sbhTask;
         Boolean assigned = projectUsers.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
         sbhTask.setAssigned(assigned);
+      }
+      final SbhTask innerTask = sbhTask;
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
       }
       sbhTasks.add(sbhTask);
     }
@@ -507,6 +705,8 @@ public class TaskController {
     List<Task> tasks = taskQuery.listPage(pagiRequest.getPage(), pagiRequest.getSize());
     Long taskSize = taskQuery.count();
 
+    List<ActivityName> activityNames = activityNameService.findAll();
+
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
@@ -517,6 +717,11 @@ public class TaskController {
         final SbhTask innerTask = sbhTask;
         Boolean assigned = projectUsers.stream().anyMatch(project -> project.getProcessInstanceID().equals(innerTask.getProcessInstanceId()));
         sbhTask.setAssigned(assigned);
+      }
+      final SbhTask innerTask = sbhTask;
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
       }
       sbhTasks.add(sbhTask);
     }
@@ -574,6 +779,8 @@ public class TaskController {
     Long taskSize = taskQuery.count();
 
     List<Tenant> tenants = tenantService.findAll();
+    List<ActivityName> activityNames = activityNameService.findAll();
+
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
@@ -592,7 +799,10 @@ public class TaskController {
       } else {
         sbhTask.setAssigned(true);
       }
-
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
+      }
       sbhTasks.add(sbhTask);
     }
 
@@ -646,6 +856,8 @@ public class TaskController {
     Long taskSize = taskQuery.count();
 
     List<Tenant> tenants = tenantService.findAll();
+    List<ActivityName> activityNames = activityNameService.findAll();
+
     for (Task task : tasks) {
       SbhTask sbhTask = SbhTask.CreateFromTask(task);
       Map<String, Object> variableMap = taskService.getVariables(task.getId());
@@ -658,6 +870,11 @@ public class TaskController {
       Tenant selectedTenant = tenants.stream().filter(tnt -> tnt.getId().equals(tenantId)).findFirst().get();
       sbhTask.setTenantName(selectedTenant.getName());
       sbhTask.setAssigned(true);
+      final SbhTask innerTask = sbhTask;
+      java.util.Optional<ActivityName> activity = activityNames.stream().filter(act -> act.getActive() == true && act.getActivityID().equals(innerTask.getTaskDefinitionKey()) && act.getMasterCertificationTypeID().equals(innerTask.getCertificationTypeID())).findFirst();
+      if (activity.isPresent()) {
+        sbhTask.setName(activity.get().getName());
+      }
       sbhTasks.add(sbhTask);
     }
 
@@ -666,6 +883,33 @@ public class TaskController {
     return Response.ok(json).build();
   }
 
+  @GET
+  @Path(value = "/tasks/verificator/pagi/count")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response VerificatorPaginationTaskCounts(@HeaderParam("Authorization") String authorization) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    List<ProjectVerificator> projectVerificators = projectVerificatorService.findByUserId(user.getId());
+    TaskQuery taskQuery = taskService.createTaskQuery();
+    taskQuery = taskQuery.matchVariableValuesIgnoreCase();
+
+    String[] processInstanceIds = projectVerificators.stream().map(pv -> pv.getProcessInstanceID()).toArray(String[]::new);
+    taskQuery = taskQuery.processInstanceIdIn(processInstanceIds);
+    taskQuery = taskQuery.active().orderByTaskCreateTime().desc();
+    Long taskSize = taskQuery.count();
+
+    String json = new Gson().toJson(taskSize);
+    return Response.ok(json).build();
+  }
 
   @GET
   @Path(value = "/variables/client/{taskId}")
@@ -697,18 +941,10 @@ public class TaskController {
       return Response.status(400).entity(json).build();
     }
 
-    List<ProjectUser> projectUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getUsername(), task.getProcessInstanceId());
+    List<ProjectUser> projectUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getId(), task.getProcessInstanceId());
     if (projectUsers.size() <= 0) {
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "User not assigned or owned these project");
-      String json = new Gson().toJson(map);
-
-      return Response.status(400).entity(json).build();
-    }
-
-    if (!variableMap.get("tenant").equals(user.getTenant().getId())) {
-      Map<String, String> map = new HashMap<String, String>();
-      map.put("message", "Project not eligible to access for current user");
       String json = new Gson().toJson(map);
 
       return Response.status(400).entity(json).build();
@@ -718,7 +954,12 @@ public class TaskController {
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
-    variableMap.put("task_name", task.getName());
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeIDAndActivityID((Integer) variableMap.get("certification_type_id"), task.getTaskDefinitionKey());
+    if (!activityNames.isEmpty()) {
+      variableMap.put("task_name",activityNames.get(0).getName());
+    } else {
+      variableMap.put("task_name", task.getName());
+    }
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));
@@ -735,6 +976,13 @@ public class TaskController {
     try {
       BuildingType buildingType = buildingTypeService.findById(Integer.parseInt(String.valueOf(variableMap.get("building_type"))));
       variableMap.put("building_type_name", buildingType.getNameId());
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+
+    try {
+      List<ProjectAttachment> projectAttachmentList = projectAttachmentService.findByProcessInstanceIDAndFileType(task.getProcessInstanceId(), "sign_post");
+      variableMap.put("any_sign_post", (projectAttachmentList.size() > 0));
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
@@ -794,7 +1042,12 @@ public class TaskController {
     variableMap.put("created_at", task.getCreateTime());
     variableMap.put("due_date", task.getDueDate());
     variableMap.put("definition_key", task.getTaskDefinitionKey());
-    variableMap.put("task_name", task.getName());
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeIDAndActivityID((Integer) variableMap.get("certification_type_id"), task.getTaskDefinitionKey());
+    if (!activityNames.isEmpty()) {
+      variableMap.put("task_name",activityNames.get(0).getName());
+    } else {
+      variableMap.put("task_name", task.getName());
+    }
 
     if (variableMap.get("province") != null) {
       String provinceId = String.valueOf(variableMap.get("province"));
@@ -841,6 +1094,14 @@ public class TaskController {
     @HeaderParam("Authorization") String authorization,
     @FormDataParam("task_id") String taskId
   ) {
+    User user = userService.GetUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
 
@@ -883,9 +1144,11 @@ public class TaskController {
     }
 
     taskService.setVariable(taskId, "approved", true);
+    taskService.setVariable(taskId, "rejected_reason", null);
     taskService.setVariable(taskId, "read", false);
     if (!Objects.nonNull(task.getAssignee())) {
-      taskService.claim(taskId, "admin");
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
     }
     taskService.complete(taskId);
 
@@ -943,15 +1206,17 @@ public class TaskController {
     taskService.setVariable(taskId, "rejected_reason", rejectedReason);
     taskService.setVariable(taskId, "read", false);
     if (!Objects.nonNull(task.getAssignee())) {
-      taskService.claim(taskId, "admin");
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
     }
     taskService.complete(taskId);
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
     String assignee = taskService.getVariable(task.getId(), "assignee").toString();
-    task.setAssignee(assignee);
-    taskService.claim(task.getId(), assignee);
-
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), assignee);
+      taskService.setAssignee(task.getId(), assignee);
+    }
     mailerService.SendRejectionEmail(rejectedReason, task);
 
     return Response.ok().build();
@@ -1085,8 +1350,7 @@ public class TaskController {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
     RuntimeService runtimeService = processEngine.getRuntimeService();
-    HistoryService historyService = processEngine.getHistoryService();
- 
+
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();

@@ -5,6 +5,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.google.gson.annotations.SerializedName;
@@ -50,6 +52,24 @@ public class ProjectUser {
   @Getter
   @Setter
   private Boolean owner;
+
+  @SerializedName("external_party")
+  @Column(name="external_party")
+  @Getter
+  @Setter
+  private Boolean externalParty;
+
+  @ManyToOne(targetEntity = User.class)
+  @JoinColumn(name="user_id",referencedColumnName="ID_",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private User user;
+
+  @ManyToOne(targetEntity = Tenant.class)
+  @JoinColumn(name="tenant_id",referencedColumnName="ID_",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private Tenant tenant;
 
   public ProjectUser() {
   }

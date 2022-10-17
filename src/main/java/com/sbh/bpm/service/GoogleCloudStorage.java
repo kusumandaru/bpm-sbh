@@ -8,7 +8,6 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
-import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
@@ -49,22 +48,26 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
   public void InitCloudStorage() throws IOException{
     // Use this variation to read the Google authorization JSON from the resources directory with a path
     // and a project name.
-    try {
-      URL url = Resources.getResource(gcsJsonFile);
-      initGoogleCloudStorage(url.getPath(), gcsProject);
-    } catch (IOException e) {
-      logger.error(e.getMessage());
+    if (bucket == null) {
+      try {
+        URL url = Resources.getResource(gcsJsonFile);
+        initGoogleCloudStorage(url.getPath(), gcsProject);
+      } catch (IOException e) {
+        logger.error(e.getMessage());
+      }
+    
+      // Bucket require globally unique names, so you'll probably need to change this
+      bucket = getBucket(bucketName);
     }
-  
-    // Bucket require globally unique names, so you'll probably need to change this
-    bucket = getBucket(bucketName);
   }
   
   
   // Use path and project name
   private void initGoogleCloudStorage(String pathToConfig, String projectId) throws FileNotFoundException, IOException {
+    if (storage == null) {
       Credentials credentials = GoogleCredentials.fromStream(new FileInputStream(pathToConfig));
       storage = StorageOptions.newBuilder().setCredentials(credentials).setProjectId(projectId).build().getService();
+    }
   }
   
   // Check for bucket existence and create if needed.
@@ -120,13 +123,15 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
       logger.error(e.getMessage());
     }
 
-    Page<Blob> blobs = bucket.list();
-    for (Blob blob: blobs.getValues()) {
-        if (name.equals(blob.getName())) {
-            return blob;
-        }
-    }
-    return null;
+    Blob blob = bucket.get(name);
+    return blob;
+    // Page<Blob> blobs = bucket.list();
+    // for (Blob blob: blobs.getValues()) {
+    //     if (name.equals(blob.getName())) {
+    //         return blob;
+    //     }
+    // }
+    // return null;
   }
 
   // delete blob
@@ -156,6 +161,18 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
         channel.write(ByteBuffer.wrap(object));
         channel.close();
     }
+  }
+
+
+  @Override
+  public byte[] ReadAllByte(String name) {
+    try {
+      InitCloudStorage();
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+
+    return storage.readAllBytes(bucketName, name);
   }
 }
 

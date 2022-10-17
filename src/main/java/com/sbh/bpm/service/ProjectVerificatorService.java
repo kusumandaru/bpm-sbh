@@ -9,8 +9,6 @@ import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.UserDetail;
 import com.sbh.bpm.repository.ProjectVerificatorRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -23,8 +21,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 @Service
 @Transactional
 public class ProjectVerificatorService implements IProjectVerificatorService{
-
-  private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+  // private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
   @Autowired
   private ProjectVerificatorRepository projectVerificatorRepository;
@@ -67,8 +64,8 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
     TransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
     TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
     
-    List<ProjectVerificator> existingProjectVerificators = findByUserId(userId);
-    List<String> existingProjectVerificatorIds = existingProjectVerificators.stream().map(project -> project.getProcessInstanceID()).collect(Collectors.toList());
+    List<ProjectVerificator> allProjectVerificators = findByUserId(userId);
+    List<String> existingProjectVerificatorIds = allProjectVerificators.stream().map(project -> project.getProcessInstanceID()).collect(Collectors.toList());
     
     String[] projectIdArray = projectIds.split(",");
     List<String> projectIdList = Arrays.asList(projectIdArray);
@@ -82,7 +79,7 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
     newProjectIds.removeIf(item -> item == null || "".equals(item));
 
     try {
-      Iterable<ProjectVerificator> deletedIterable = existingProjectVerificators.stream().filter(project -> deletedProjectIds.contains(project.getProcessInstanceID())).collect(Collectors.toList());
+      Iterable<ProjectVerificator> deletedIterable = allProjectVerificators.stream().filter(project -> deletedProjectIds.contains(project.getProcessInstanceID())).collect(Collectors.toList());
       deleteAll(deletedIterable);
 
       Iterable<ProjectVerificator> newIterable = newProjectIds.stream().map(processInstanceID -> new ProjectVerificator(userId, userDetail.getGroup().getId(), processInstanceID, userDetail.getUsername())).collect(Collectors.toList());
@@ -103,5 +100,15 @@ public class ProjectVerificatorService implements IProjectVerificatorService{
   @Override
   public List<ProjectVerificator> findByUserIdAndProcessInstanceID(String userId, String processInstanceID) {
     return projectVerificatorRepository.findByUserIdAndProcessInstanceID(userId, processInstanceID);
+  }
+
+  @Override
+  public List<ProjectVerificator> findByProcessInstanceID(String processInstanceID) {
+    return projectVerificatorRepository.findByProcessInstanceID(processInstanceID);
+  }
+
+  @Override
+  public void delete(ProjectVerificator projectVerificator) {
+    projectVerificatorRepository.deleteById(projectVerificator.getId());
   }
 }

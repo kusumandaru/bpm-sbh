@@ -5,6 +5,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.google.gson.annotations.SerializedName;
@@ -44,6 +46,12 @@ public class ProjectVerificator {
   @Getter
   @Setter
   private String groupId;
+
+  @ManyToOne(targetEntity = User.class)
+  @JoinColumn(name="user_id",referencedColumnName="ID_",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private User user;
 
   public ProjectVerificator() {
   }

@@ -11,6 +11,7 @@ import com.sbh.bpm.model.Comment;
 import com.sbh.bpm.model.CriteriaScoring;
 import com.sbh.bpm.model.DocumentFile;
 import com.sbh.bpm.model.ExerciseAssessment;
+import com.sbh.bpm.model.ExerciseScoreModifier;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterEvaluation;
 import com.sbh.bpm.model.MasterExercise;
@@ -62,6 +63,9 @@ public class TransactionFetchService implements ITransactionFetchService {
   private IAttachmentService attachmentService;
 
   @Autowired
+  private IExerciseScoreModifierService exerciseScoreModifierService;
+
+  @Autowired
   private PlatformTransactionManager transactionManager;
   
   public class TransactionFetchResponse {
@@ -108,6 +112,7 @@ public class TransactionFetchService implements ITransactionFetchService {
         List<MasterEvaluation> masterEvaluations = masterEvaluationService.findByMasterTemplateID(pa.getMasterTemplateID());
         List<ExerciseAssessment> exerciseAssessments = exerciseAssessmentService.findByProjectAssessmentID(pa.getId());
         List<CriteriaScoring> criteriaScorings = criteriaScoringService.findByProjectAssessmentID(pa.getId());
+        List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(pa.getId());
 
         List<Integer> criteriaScoringIds = criteriaScorings.stream().map(CriteriaScoring::getId).collect(Collectors.toList());
         List<Comment> comments = commentService.findByCriteriaScoringIDIn(criteriaScoringIds);
@@ -133,6 +138,9 @@ public class TransactionFetchService implements ITransactionFetchService {
 
           List<CriteriaScoring> crts = criteriaScorings.stream().filter(exercise -> masterCriteriaIds.contains(exercise.getMasterCriteriaID())).collect(Collectors.toList());
           exerciseAsessment.setCriterias(crts);
+
+          List<ExerciseScoreModifier> modifiers = scoreModifiers.stream().filter(modifier -> modifier.getExerciseAssessmentID().equals(exerciseAsessment.getId())).collect(Collectors.toList());
+          exerciseAsessment.setModifiers(modifiers);
         }
 
         for (MasterEvaluation masterEvaluation : masterEvaluations) {
@@ -183,6 +191,7 @@ public class TransactionFetchService implements ITransactionFetchService {
         List<MasterEvaluation> masterEvaluations = masterEvaluationService.findByMasterTemplateID(pa.getMasterTemplateID());
         List<ExerciseAssessment> exerciseAssessments = exerciseAssessmentService.findByProjectAssessmentID(pa.getId());
         List<CriteriaScoring> criteriaScorings = criteriaScoringService.findByProjectAssessmentID(pa.getId());
+        List<ExerciseScoreModifier> scoreModifiers = exerciseScoreModifierService.findByProjectAssessmentID(pa.getId());
 
         List<Integer> criteriaScoringIds = criteriaScorings.stream().map(CriteriaScoring::getId).collect(Collectors.toList());
         List<Comment> comments = commentService.findByCriteriaScoringIDIn(criteriaScoringIds);
@@ -208,6 +217,9 @@ public class TransactionFetchService implements ITransactionFetchService {
 
           List<CriteriaScoring> crts = criteriaScorings.stream().filter(exercise -> masterCriteriaIds.contains(exercise.getMasterCriteriaID())).collect(Collectors.toList());
           exerciseAsessment.setCriterias(crts);
+
+          List<ExerciseScoreModifier> modifiers = scoreModifiers.stream().filter(modifier -> modifier.getExerciseAssessmentID().equals(exerciseAsessment.getId())).collect(Collectors.toList());
+          exerciseAsessment.setModifiers(modifiers);
         }
 
         for (MasterEvaluation masterEvaluation : masterEvaluations) {

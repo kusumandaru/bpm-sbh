@@ -1,6 +1,7 @@
 package com.sbh.bpm.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.sbh.bpm.model.MasterLevel;
 import com.sbh.bpm.repository.MasterLevelRepository;
@@ -29,13 +30,8 @@ public class MasterLevelService implements IMasterLevelService {
   }
 
   @Override
-  public MasterLevel findFirstByOrderByMinimumScoreAsc() {
-    return repository.findFirstByOrderByMinimumScoreAsc();
-  }
-
-  @Override
-  public MasterLevel findFirstByMasterTemplateIDOrderByMinimumScoreAsc(Integer templateId) {
-    return repository.findFirstByMasterTemplateIDOrderByMinimumScoreAsc(templateId);
+  public MasterLevel findFirstByMasterTemplateIDOrderByPercentageAsc(Integer templateId) {
+    return repository.findFirstByMasterTemplateIDOrderByPercentageAsc(templateId);
   }
 
   @Override
@@ -63,5 +59,14 @@ public class MasterLevelService implements IMasterLevelService {
   public boolean deleteById(Integer levelId) {
     repository.deleteById(levelId);
     return !repository.existsById(levelId);
+  }
+
+  @Override
+  public MasterLevel getLevelByScoreAndTemplateId(Float score, Integer templateId) {
+    MasterLevel level = repository.getLevelByScoreAndTemplateId(score, templateId);
+    if (Objects.isNull(level)) {
+      level = repository.findFirstByMasterTemplateIDOrderByPercentageAsc(templateId);
+    }
+    return level;
   }
 }

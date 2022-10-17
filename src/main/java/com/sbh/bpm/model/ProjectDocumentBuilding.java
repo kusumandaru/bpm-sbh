@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.google.gson.annotations.SerializedName;
@@ -28,6 +30,12 @@ public class ProjectDocumentBuilding {
   @Getter
   @Setter
   private Integer masterCertificationTypeID;
+
+  @SerializedName("project_document_category_id")
+  @Column(name="project_document_category_id")
+  @Getter
+  @Setter
+  private Integer projectDocumentCategoryID;
 
   @SerializedName("name")
   @Column(name="name")
@@ -83,12 +91,19 @@ public class ProjectDocumentBuilding {
   @Setter
   private String createdBy;
 
+  @ManyToOne(targetEntity = ProjectDocumentCategory.class)
+  @JoinColumn(name="project_document_category_id",referencedColumnName="id",insertable=false,updatable=false)
+  @Getter
+  @Setter
+  private ProjectDocumentCategory category;
 
   public ProjectDocumentBuilding() {
   }
 
-  public ProjectDocumentBuilding(Integer id, Integer masterCertificationTypeID) {
-    this.id = id;
-    this.masterCertificationTypeID = masterCertificationTypeID;
+  public ProjectDocumentBuilding(String code, String name) {
+    this.code = code;
+    this.name = name;
+    this.active = true;
+    this.mandatory = true;
   }
 }

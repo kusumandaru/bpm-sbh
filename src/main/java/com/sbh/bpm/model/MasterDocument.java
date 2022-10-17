@@ -65,9 +65,6 @@ public class  MasterDocument {
   @Setter
   private String createdBy;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterDocument> documents = new ArrayList<>();
-    
   public MasterDocument() {
   }
 

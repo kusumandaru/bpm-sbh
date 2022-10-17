@@ -41,6 +41,12 @@ public class MasterCertificationType {
   @Setter
   private String certificationName;
 
+  @SerializedName("design_recognition")
+  @Column(name="design_recognition")
+  @Getter
+  @Setter
+  private Boolean designRecognition;
+
   @SerializedName("active")
   @Column(name="active")
   @Getter
@@ -64,7 +70,6 @@ public class MasterCertificationType {
   @Getter
   @Setter
   private String createdBy;
-
 
   public MasterCertificationType() {
   }

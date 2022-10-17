@@ -57,12 +57,6 @@ public class ExerciseAssessment {
   @Setter
   private Float submittedScore;
 
-  @SerializedName("score_modifier")
-  @Column(name="score_modifier")
-  @Getter
-  @Setter
-  private Float scoreModifier;
-
   @SerializedName("created_at")
   @Column(name="created_at")
   @Getter
@@ -91,6 +85,11 @@ public class ExerciseAssessment {
   @Getter
   @Setter
   private List<CriteriaScoring> criterias;
+
+  @Transient
+  @Getter
+  @Setter
+  private List<ExerciseScoreModifier> modifiers;
 
   public ExerciseAssessment() {
   }

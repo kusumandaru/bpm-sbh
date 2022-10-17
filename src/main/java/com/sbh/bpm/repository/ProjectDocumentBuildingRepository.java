@@ -11,7 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProjectDocumentBuildingRepository extends CrudRepository<ProjectDocumentBuilding, Integer> {
   List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndActiveTrue(Integer certificationTypeID);
+  List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndProjectDocumentCategoryIDAndActiveTrue(Integer certificationTypeID, Integer categoryID);
   List<ProjectDocumentBuilding> findByMasterCertificationTypeID(Integer certificationTypeID);
+  List<ProjectDocumentBuilding> findByMasterCertificationTypeIDAndProjectDocumentCategoryID(Integer certificationTypeID, Integer categoryID);
   ProjectDocumentBuilding findByMasterCertificationTypeIDAndId(Integer certificationTypeID, Integer documentBuildingId);
 }
 

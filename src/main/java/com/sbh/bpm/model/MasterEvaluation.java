@@ -84,9 +84,6 @@ public class MasterEvaluation {
   @Setter
   private Float submittedScore;
 
-  // @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)//
-  // private List<MasterTemplate> templates = new ArrayList<>();
-    
   public MasterEvaluation() {
   }
 

@@ -64,12 +64,6 @@ public class ProjectAssessment {
   @Setter
   private Float potentialScore;
 
-  @SerializedName("score_modifier")
-  @Column(name="score_modifier")
-  @Getter
-  @Setter
-  private Float scoreModifier;
-
   @SerializedName("level_id")
   @Column(name="level_id")
   @Getter
@@ -132,6 +126,11 @@ public class ProjectAssessment {
   @Getter
   @Setter
   private MasterLevel proposedLevel;
+
+  @Transient
+  @Getter
+  @Setter
+  private Integer targetScore;
 
   @Transient
   @Getter

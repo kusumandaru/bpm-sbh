@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.HeaderParam;
@@ -135,8 +136,10 @@ public class ProjectController extends GcsUtil{
     
     TaskService taskService = processEngine.getTaskService();
     Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
-    taskService.claim(task.getId(), username);
-    taskService.setAssignee(task.getId(), username);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(task.getId());
 
     task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).orderByTaskCreateTime().desc().singleResult();
@@ -255,12 +258,13 @@ public class ProjectController extends GcsUtil{
     }
 
     taskService.setVariable(task.getId(), "tenant", user.getTenant().getId());
-    taskService.claim(task.getId(), username);
-    taskService.setAssignee(task.getId(), username);
+    if (!Objects.nonNull(task.getAssignee())) {
+      taskService.claim(task.getId(), user.getId());
+      taskService.setAssignee(task.getId(), user.getId());
+    }
     taskService.complete(task.getId());
 
     task = taskService.createTaskQuery().processInstanceId(processInstanceId).orderByTaskCreateTime().desc().singleResult();
-    taskService.claim(task.getId(), "admin");
 
     Map<String, String> map = new HashMap<String, String>();
     map.put("process_instance_id", processInstanceId);

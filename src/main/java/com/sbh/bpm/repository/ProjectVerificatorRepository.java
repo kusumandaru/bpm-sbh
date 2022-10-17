@@ -13,4 +13,5 @@ public interface ProjectVerificatorRepository extends CrudRepository<ProjectVeri
   List<ProjectVerificator> findByUserId(String userId);
   List<ProjectVerificator> findByGroupId(String groupId);
   List<ProjectVerificator> findByUserIdAndProcessInstanceID(String userId, String processInstanceID);
+  List<ProjectVerificator> findByProcessInstanceID(String processInstanceID);
 }

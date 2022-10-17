@@ -22,6 +22,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.gson.Gson;
+import com.sbh.bpm.model.ActivityName;
+import com.sbh.bpm.model.ExerciseScoreModifier;
 import com.sbh.bpm.model.MasterCertificationType;
 import com.sbh.bpm.model.MasterCriteria;
 import com.sbh.bpm.model.MasterCriteriaBlocker;
@@ -29,9 +31,12 @@ import com.sbh.bpm.model.MasterDocument;
 import com.sbh.bpm.model.MasterEvaluation;
 import com.sbh.bpm.model.MasterExercise;
 import com.sbh.bpm.model.MasterLevel;
+import com.sbh.bpm.model.MasterScoreModifier;
 import com.sbh.bpm.model.MasterTemplate;
 import com.sbh.bpm.model.MasterVendor;
 import com.sbh.bpm.model.ProjectAssessment;
+import com.sbh.bpm.service.IActivityNameService;
+import com.sbh.bpm.service.IExerciseScoreModifierService;
 import com.sbh.bpm.service.IMasterCertificationTypeService;
 import com.sbh.bpm.service.IMasterCriteriaBlockerService;
 import com.sbh.bpm.service.IMasterCriteriaService;
@@ -39,6 +44,7 @@ import com.sbh.bpm.service.IMasterDocumentService;
 import com.sbh.bpm.service.IMasterEvaluationService;
 import com.sbh.bpm.service.IMasterExerciseService;
 import com.sbh.bpm.service.IMasterLevelService;
+import com.sbh.bpm.service.IMasterScoreModifierService;
 import com.sbh.bpm.service.IMasterTemplateService;
 import com.sbh.bpm.service.IMasterVendorService;
 import com.sbh.bpm.service.IProjectAssessmentService;
@@ -47,13 +53,11 @@ import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(value = "/master-project")
 public class MasterProjectController extends GcsUtil{
-  private static final Logger logger = LoggerFactory.getLogger(MasterProjectController.class);
+  // private static final Logger logger = LoggerFactory.getLogger(MasterProjectController.class);
 
   @Autowired
   private IMasterTemplateService masterTemplateService;
@@ -80,10 +84,19 @@ public class MasterProjectController extends GcsUtil{
   private IMasterExerciseService masterExerciseService;
 
   @Autowired
+  private IMasterScoreModifierService masterScoreModifierService;
+
+  @Autowired
+  private IExerciseScoreModifierService exerciseScoreModifierService;
+
+  @Autowired
   private IMasterLevelService masterLevelService;
 
   @Autowired
   private IProjectAssessmentService projectAssessmentService;
+
+  @Autowired
+  private IActivityNameService activityNameService;
 
   @GET
   @Path(value = "/levels")
@@ -162,16 +175,6 @@ public class MasterProjectController extends GcsUtil{
     return Response.ok(json).build();
   }
 
-  @GET
-  @Path(value = "/levels/minimum_score")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response masterLevelMinimumScore(@HeaderParam("Authorization") String authorization) {      
-    MasterLevel level = (MasterLevel) masterLevelService.findFirstByOrderByMinimumScoreAsc();
-
-    String json = new Gson().toJson(level);
-    return Response.ok(json).build();
-  }
-
   @PATCH
   @Path(value = "/levels/{levelId}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -181,7 +184,7 @@ public class MasterProjectController extends GcsUtil{
     MasterLevel masterLevel = masterLevelService.findById(levelId);
     masterLevel.setMasterTemplateID(level.getMasterTemplateID());
     masterLevel.setName(level.getName());
-    masterLevel.setMinimumScore(level.getMinimumScore());
+    masterLevel.setRounddown(level.getRounddown());
     masterLevel.setPercentage(level.getPercentage());
     masterLevel.setActive(level.getActive());
     masterLevel = masterLevelService.save(masterLevel);
@@ -590,6 +593,15 @@ public class MasterProjectController extends GcsUtil{
 
       return Response.status(400).entity(json).build();
     }
+
+    List<MasterScoreModifier> score_modifiers = (List<MasterScoreModifier>) masterScoreModifierService.findByMasterExerciseID(exerciseId);
+    if(score_modifiers.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master score modifier refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
     
     boolean status = masterExerciseService.deleteById(exerciseId);
     return Response.status(status ? 200 : 400).build();
@@ -622,12 +634,12 @@ public class MasterProjectController extends GcsUtil{
     masterExercise.setExerciseType(exercise.getExerciseType());
     masterExercise.setCode(exercise.getCode());
     masterExercise.setName(exercise.getName());
-    masterExercise.setScoreModifier(exercise.getScoreModifier());
     if (masterExercise.getExerciseType().equals("prequisite")) {
       masterExercise.setMaxScore(null);
     } else {
       masterExercise.setMaxScore(exercise.getMaxScore());
     }
+    masterExercise.setBonusPoint(exercise.getBonusPoint());
     masterExercise.setActive(exercise.getActive());
 
     masterExercise = masterExerciseService.save(masterExercise);
@@ -675,7 +687,10 @@ public class MasterProjectController extends GcsUtil{
   ) {
     List<MasterCriteriaBlocker> blockers = (List<MasterCriteriaBlocker>) masterCriteriaBlockerService.findBymasterCriteriaID(criteriaId);
     if(blockers.size()>0) {
-      return Response.status(400, "Cannot delete, there is any master blocker refer this subject, delete them first").build();
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master blocker refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
     }
 
     List<MasterDocument> documents = (List<MasterDocument>) masterDocumentService.findBymasterCriteriaID(criteriaId);
@@ -731,6 +746,95 @@ public class MasterProjectController extends GcsUtil{
     masterCriteria = masterCriteriaService.save(masterCriteria);
 
     String json = new Gson().toJson(masterCriteria);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/exercises/{exercise_id}/score_modifiers")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response allScoreModifiersByExercise(@HeaderParam("Authorization") String authorization, @PathParam("exercise_id") Integer exerciseID) { 
+    List<MasterScoreModifier> criterias = (List<MasterScoreModifier>) masterScoreModifierService.findByMasterExerciseID(exerciseID);
+
+    String json = new Gson().toJson(criterias);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/score_modifiers")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response allMasterScoreModifier(@HeaderParam("Authorization") String authorization) {      
+    List<MasterScoreModifier> score_modifiers = (List<MasterScoreModifier>) masterScoreModifierService.findAll();
+
+    String json = new Gson().toJson(score_modifiers);
+    return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/score_modifiers/{score_modifier_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetMasterScoreModifier(@HeaderParam("Authorization") String authorization, @PathParam("score_modifier_id") Integer score_modifier_id) {      
+    MasterScoreModifier score_modifier = masterScoreModifierService.findById(score_modifier_id);
+
+    String json = new Gson().toJson(score_modifier);
+    return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/score_modifiers/{score_modifier_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ScoreModifierDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("score_modifier_id") Integer scoreModifierId
+  ) {
+    List<ExerciseScoreModifier> blockers = (List<ExerciseScoreModifier>) exerciseScoreModifierService.findByMasterScoreModifierID(scoreModifierId);
+    if(blockers.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot delete, there is any master score modifier refer this subject, delete them first");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    boolean status = masterScoreModifierService.deleteById(scoreModifierId);
+    return Response.status(status ? 200 : 400).build();
+  }
+
+  @POST
+  @Path(value = "/score_modifiers")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response saveScoreModifiers(@HeaderParam("Authorization") String authorization,
+                                MasterScoreModifier scoreModifier) {
+    List<MasterScoreModifier> masters = (List<MasterScoreModifier>) masterScoreModifierService.findByMasterExerciseID(scoreModifier.getMasterExerciseID());
+      if(masters.size()>0) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Cannot Add more than 1 score modifier");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    scoreModifier.setCreatedAt(new Date());             
+    scoreModifier = masterScoreModifierService.save(scoreModifier);
+
+    String json = new Gson().toJson(scoreModifier);
+    return Response.ok(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/score_modifiers/{score_modifier_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response editScoreModifiers(@HeaderParam("Authorization") String authorization,
+                                MasterScoreModifier score_modifier, @PathParam("score_modifier_id") Integer scoreModifierId) {
+    MasterScoreModifier masterScoreModifier = masterScoreModifierService.findById(scoreModifierId);
+    masterScoreModifier.setMasterExerciseID(score_modifier.getMasterExerciseID());
+    masterScoreModifier.setTitle(score_modifier.getTitle());
+    masterScoreModifier.setDescription(score_modifier.getDescription());
+    masterScoreModifier.setScoreModifier(score_modifier.getScoreModifier());
+    masterScoreModifier.setActive(score_modifier.getActive());
+
+    masterScoreModifier = masterScoreModifierService.save(masterScoreModifier);
+
+    String json = new Gson().toJson(masterScoreModifier);
     return Response.ok(json).build();
   }
 
@@ -909,5 +1013,121 @@ public class MasterProjectController extends GcsUtil{
     List<MasterCriteriaBlocker> blockers = masterCriteriaBlockerService.findBymasterCriteriaID(criteriaId);
     String json = new Gson().toJson(blockers);
     return Response.ok(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetAllActivityName(@HeaderParam("Authorization") String authorization) {
+    List<ActivityName> activityNames = activityNameService.findAll();
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names/{id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActivityNameDetail(@HeaderParam("Authorization") String authorization,
+    @PathParam("id") Integer id
+  ) {
+    ActivityName activityName = activityNameService.findById(id);
+
+    String json = new Gson().toJson(activityName);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names/{master_certification_type_id}/activity/{activity_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActivityNameByActivityId(@HeaderParam("Authorization") String authorization,
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID,
+    @PathParam("activity_id") String activityID
+
+  ) {
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeIDAndActivityID(masterCertificationTypeID, activityID);
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/active_activity_names/{master_certification_type_id}/master_certification_type")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetActiveAcitivityName(@HeaderParam("Authorization") String authorization, 
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
+  ) {
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeIDAndActiveTrue(masterCertificationTypeID);
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @GET
+  @Path(value = "/activity_names/{master_certification_type_id}/master_certification_type")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GeActivityNameByMasterCertificationType(@HeaderParam("Authorization") String authorization, 
+    @PathParam("master_certification_type_id") Integer masterCertificationTypeID
+  ) {
+    List<ActivityName> activityNames = activityNameService.findByMasterCertificationTypeID(masterCertificationTypeID);
+
+    String json = new Gson().toJson(activityNames);
+    return Response.status(200).entity(json).build();
+  }
+
+  @POST
+  @Path(value = "/activity_names")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ActivityNameCreation(
+    @HeaderParam("Authorization") String authorization,
+    ActivityName activityName
+  ) {
+    activityName.setCreatedAt(new Date()); 
+    activityName.setCreatedBy("system");       
+    activityName = activityNameService.save(activityName);
+
+    String json = new Gson().toJson(activityName);
+    return Response.status(200).entity(json).build();
+  }
+
+  @PATCH
+  @Path(value = "/activity_names/{activity_name_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response updatActivityName(@HeaderParam("Authorization") String authorization,
+                               @PathParam("activity_name_id") Integer activityNameId, 
+                               ActivityName activityName) {   
+    ActivityName act = (ActivityName) activityNameService.findById(activityNameId);
+    if (act == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "project document activity name not found");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json.toString()).build();
+    }
+
+    act.setName(activityName.getName());
+    act.setActivityID(activityName.getActivityID());
+    act.setActive(activityName.getActive());
+    act.setMasterCertificationTypeID(activityName.getMasterCertificationTypeID());
+    act.setCreatedBy(activityName.getCreatedBy());
+
+    act = activityNameService.save(act);
+
+    String json = new Gson().toJson(act);
+    return Response.ok(json).build();
+  }
+
+  @DELETE
+  @Path(value = "/activity_names/{activity_name_id}")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response ActivityNameDeletion(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("activity_name_id") Integer activityNameId
+
+  ) {
+    boolean status = activityNameService.deleteById(activityNameId);
+    return Response.status(status ? 200 : 400).build();
   }
 }

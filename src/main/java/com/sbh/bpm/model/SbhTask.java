@@ -72,6 +72,11 @@ public class SbhTask {
   @Column(name="certification_type")
   private String certificationType;
 
+  @SerializedName("certification_type_id")
+  @Getter @Setter
+  @Column(name="certification_type_id")
+  private Integer certificationTypeID;
+
   @Getter @Setter
   @SerializedName("building_type")
   @Column(name="building_type")
@@ -95,6 +100,10 @@ public class SbhTask {
   @Column(name="assigned")
   private Boolean assigned;
 
+  @Getter @Setter
+  @Column(name="internal")
+  private Boolean internal;
+
   public static SbhTask CreateFromTask(Task cTask) {
     SbhTask sbhTask = new SbhTask();
     sbhTask.id = cTask.getId();
@@ -114,6 +123,7 @@ public class SbhTask {
     sbhTask.buildingName =  String.valueOf(variableMap.get("building_name"));
     sbhTask.buildingType =  String.valueOf(variableMap.get("building_type"));
     sbhTask.certificationType =  String.valueOf(variableMap.get("certification_type"));
+    sbhTask.certificationTypeID =  (Integer) variableMap.get("certification_type_id");
     sbhTask.tenantId = String.valueOf(variableMap.get("tenant"));
     if (variableMap.get("read") != null) {
       sbhTask.read = ((Boolean) variableMap.get("read")).booleanValue();

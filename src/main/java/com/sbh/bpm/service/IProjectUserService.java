@@ -11,8 +11,10 @@ public interface IProjectUserService {
   List<ProjectUser> findByUserId(String userId);
   List<ProjectUser> findByUserIdAndProcessInstanceID(String userId, String processInstanceID);
   List<ProjectUser> findByTenantId(String tenantId);
+  List<ProjectUser> findByProcessInstanceID(String processInstanceID);
   ProjectUser save(ProjectUser projectUser);
   Iterable<ProjectUser> saveAll(Iterable<ProjectUser> projectUsers);
   void deleteAll(Iterable<ProjectUser> projectUsers);
+  void delete(ProjectUser projectUser);
   List<ProjectUser> assignProjectUsers(UserDetail userDetail, String userId, String projectIds);
 }

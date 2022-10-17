@@ -15,6 +15,7 @@ import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -32,8 +33,10 @@ import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
+import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.payload.RegisterClientRequest;
 import com.sbh.bpm.payload.RegisterRequest;
+import com.sbh.bpm.security.JwtUtil;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IPasswordTokenService;
 import com.sbh.bpm.service.IProjectUserService;
@@ -48,20 +51,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.BpmPlatform;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
+import org.camunda.bpm.engine.task.Task;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import net.coobird.thumbnailator.Thumbnails;
 
 @Path(value = "/user")
 public class UserController extends GcsUtil{
-  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+  // private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
   @Autowired
   private IUserService userService;
@@ -83,6 +86,25 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IMailerService mailerService;
+
+  @Autowired
+  private JwtUtil jwtUtil;
+
+  @GET
+  @Path(value = "/refresh_token")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response refreshToken(@HeaderParam("Authorization") String authorization) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    AuthResponse response = jwtUtil.generateTokenFromId(user.getId());
+    return Response.status(200).entity(response).build();
+  }
 
   @GET
   @Path(value = "/profile")
@@ -260,7 +282,7 @@ public class UserController extends GcsUtil{
       }
 
       ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
-      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroupId()))) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Only administrator permitted");
         String json = new Gson().toJson(map);
@@ -287,7 +309,7 @@ public class UserController extends GcsUtil{
       }
 
       ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
-      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroupId()))) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Only administrator permitted");
         String json = new Gson().toJson(map);
@@ -314,7 +336,7 @@ public class UserController extends GcsUtil{
       }
 
       ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin", "verificator"));
-      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroupId()))) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Only administrator permitted");
         String json = new Gson().toJson(map);
@@ -369,7 +391,7 @@ public class UserController extends GcsUtil{
       }
 
       ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin"));
-      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroupId()))) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Only administrator permitted");
         String json = new Gson().toJson(map);
@@ -475,7 +497,7 @@ public class UserController extends GcsUtil{
       }
 
       ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin"));
-      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroup().getId()))) {
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroupId()))) {
         Map<String, String> map = new HashMap<String, String>();
         map.put("message", "Only administrator permitted");
         String json = new Gson().toJson(map);
@@ -521,6 +543,55 @@ public class UserController extends GcsUtil{
 
       String json = new Gson().toJson(user);
       return Response.status(200).entity(json).build();
+    }
+
+  @DELETE
+  @Path(value = "/users/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response UserDelete(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ArrayList<String> adminRoles = new ArrayList<String>(Arrays.asList("admin", "camunda-admin"));
+      if (!adminRoles.stream().anyMatch(role -> role.equals(userDetail.getGroupId()))) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "Only administrator permitted");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      IdentityService identityService = processEngine.getIdentityService();
+
+      UserDetail deletedUser = userService.GetUserDetailFromId(userId);
+      if (deletedUser == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "deleted user not found");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      try {
+        identityService.deleteMembership(deletedUser.getId(), deletedUser.getGroupId());
+        if(deletedUser.getTenantId() != null) {
+          identityService.deleteTenantUserMembership(deletedUser.getTenant().getId(), deletedUser.getId());
+        }
+        identityService.deleteUser(deletedUser.getId());
+      } catch(Exception ex) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", ex.getMessage());
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      return Response.ok().build();
     }
 
   @GET
@@ -669,6 +740,53 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @DELETE
+  @Path(value = "/members/{user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response MemberDelete(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      User user = userService.findById(userId);
+      Tenant tenant = userService.TenantFromUser(user);
+      if (user == null || !tenant.getId().equals(userDetail.getTenant().getId())) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "selected user not valid");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      UserDetail deletedUser = userService.GetUserDetailFromId(userId);
+      if (deletedUser == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "deleted user not found");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      try {
+        identityService.deleteMembership(deletedUser.getId(), deletedUser.getGroupId());
+        if(deletedUser.getTenantId() != null) {
+          identityService.deleteTenantUserMembership(deletedUser.getTenant().getId(), deletedUser.getId());
+        }
+        identityService.deleteUser(deletedUser.getId());
+      } catch(Exception ex) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", ex.getMessage());
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      return Response.ok().build();
+    }
+
   @GET
   @Path(value = "/members/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -717,6 +835,41 @@ public class UserController extends GcsUtil{
     }
 
   @GET
+  @Path(value = "/project_users_by_process_instance_id/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectUserByProcessInstanceID(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("taskId") String taskID
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      TaskService taskService = processEngine.getTaskService();
+  
+      Task task;
+      try {
+        task = taskService.createTaskQuery().taskId(taskID).singleResult();
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "task id not found");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
+      String processInstanceID = task.getProcessInstanceId();
+      List<ProjectUser> projectUsers = projectUserService.findByProcessInstanceID(processInstanceID);
+
+      String json = new Gson().toJson(projectUsers);
+      return Response.status(200).entity(json).build();
+    }
+
+  @GET
   @Path(value = "/project_users/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response GetProjectUserByUserId(
@@ -737,11 +890,75 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @POST
+  @Path(value = "/project_users/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response AddProjectUserByUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("taskId") String taskID,
+    User u
+    ) {
+      UserDetail currentUser = userService.GetCompleteUserFromAuthorization(authorization);
+      if (currentUser == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      TaskService taskService = processEngine.getTaskService();
+  
+      Task task;
+      try {
+        task = taskService.createTaskQuery().taskId(taskID).singleResult();
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "task id not found");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
+      String processInstanceID = task.getProcessInstanceId();
+
+      User user = userService.FindByEmail(u.getEmail());
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "User email not exist or registered");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<ProjectUser> existingUsers = projectUserService.findByUserIdAndProcessInstanceID(user.getId(), processInstanceID);
+      if (!existingUsers.isEmpty()) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "User already become viewer to current project");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      UserDetail ud = userService.GetUserDetailFromId(user.getId());
+      ProjectUser projectUser = new ProjectUser(user.getId(), ud.getTenantId(), processInstanceID, currentUser.getId(), false);
+
+      try {
+        projectUser = projectUserService.save(projectUser);
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", e.getMessage());
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      String json = new Gson().toJson(projectUser);
+      return Response.status(200).entity(json).build();
+    }
+
   @PATCH
   @Path(value = "/project_users/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-  public Response SaveProjectUserByUserId(
+  public Response UpdateProjectUserByUserId(
     @HeaderParam("Authorization") String authorization,
     @PathParam("user_id") String userId,
     @FormParam("project_ids") String projectIds
@@ -768,6 +985,83 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @DELETE
+  @Path(value = "/project_users/{project_user_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response DeleteProjectUserByProjectUserId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("project_user_id") Integer projectUserId
+    ) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProjectUser projectUser = projectUserService.findById(projectUserId);
+      projectUserService.delete(projectUser);
+
+      return Response.ok().build();
+    }
+  
+  @GET
+  @Path(value = "/verificators")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetAllVerificators(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("user_id") String userId
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      List<User> users = userService.findByGroupId("verificator");
+      String json = new Gson().toJson(users);
+      return Response.status(200).entity(json).build();
+    }
+
+  @GET
+  @Path(value = "/project_verificators_by_process_instance_id/{taskId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetProjectVerificatorByProcessInstanceID(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("taskId") String taskID
+    ) {
+      User user = userService.GetUserFromAuthorization(authorization);
+      if (user == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+      TaskService taskService = processEngine.getTaskService();
+  
+      Task task;
+      try {
+        task = taskService.createTaskQuery().taskId(taskID).singleResult();
+      } catch (Exception e) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "task id not found");
+        String json = new Gson().toJson(map);
+  
+        return Response.status(400).entity(json).build();
+      }
+      String processInstanceID = task.getProcessInstanceId();
+      List<ProjectVerificator> projectVerificators = projectVerificatorService.findByProcessInstanceID(processInstanceID);
+
+      String json = new Gson().toJson(projectVerificators);
+      return Response.status(200).entity(json).build();
+    }
+
   @GET
   @Path(value = "/project_verificators/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -789,6 +1083,70 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
 
+  @POST
+  @Path(value = "/project_verificators/{task_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response AddProjectVerificatorByUserId(
+      @HeaderParam("Authorization") String authorization,
+      @PathParam("task_id") String taskID,
+      User u
+      ) {
+        UserDetail currentUser = userService.GetCompleteUserFromAuthorization(authorization);
+        if (currentUser == null) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "login expired, please logout and relogin");
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+        TaskService taskService = processEngine.getTaskService();
+    
+        Task task;
+        try {
+          task = taskService.createTaskQuery().taskId(taskID).singleResult();
+        } catch (Exception e) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "task id not found");
+          String json = new Gson().toJson(map);
+    
+          return Response.status(400).entity(json).build();
+        }
+        String processInstanceID = task.getProcessInstanceId();
+  
+        User user = userService.findById(u.getId());
+        if (user == null) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "User email not exist or registered");
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        List<ProjectVerificator> existingVerificators = projectVerificatorService.findByUserIdAndProcessInstanceID(user.getId(), processInstanceID);
+        if (!existingVerificators.isEmpty()) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", "Verificator already assigned to current project");
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        UserDetail ud = userService.GetUserDetailFromId(user.getId());
+        ProjectVerificator projectVerificator = new ProjectVerificator(user.getId(), ud.getGroupId(), processInstanceID, currentUser.getId());
+  
+        try {
+          projectVerificator = projectVerificatorService.save(projectVerificator);
+        } catch (Exception e) {
+          Map<String, String> map = new HashMap<String, String>();
+          map.put("message", e.getMessage());
+          String json = new Gson().toJson(map);
+          return Response.status(400).entity(json).build();
+        }
+  
+        String json = new Gson().toJson(projectVerificator);
+        return Response.status(200).entity(json).build();
+      }
+  
   @PATCH
   @Path(value = "/project_verificators/{user_id}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -820,6 +1178,28 @@ public class UserController extends GcsUtil{
       return Response.status(200).entity(json).build();
     }
   
+  @DELETE
+  @Path(value = "/project_verificators/{project_verificator_id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response DeleteProjectVerificatorByProjectVerificatorId(
+    @HeaderParam("Authorization") String authorization,
+    @PathParam("project_verificator_id") Integer projectVerificatorId
+    ) {
+      UserDetail userDetail = userService.GetCompleteUserFromAuthorization(authorization);
+      if (userDetail == null) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("message", "login expired, please logout and relogin");
+        String json = new Gson().toJson(map);
+        return Response.status(400).entity(json).build();
+      }
+
+      ProjectVerificator projectVerificator = projectVerificatorService.findById(projectVerificatorId);
+      projectVerificatorService.delete(projectVerificator);
+
+      return Response.ok().build();
+    }
+    
   @GET
   @Path(value = "/groups")
   @Produces(MediaType.APPLICATION_JSON)

@@ -36,27 +36,25 @@ import javax.ws.rs.core.StreamingOutput;
 
 import com.google.cloud.storage.Blob;
 import com.google.gson.Gson;
-import com.sbh.bpm.model.Attachment;
+import com.sbh.bpm.heap.MemoryStats;
 import com.sbh.bpm.model.City;
 import com.sbh.bpm.model.ProjectAttachment;
 import com.sbh.bpm.model.Province;
 import com.sbh.bpm.model.UserDetail;
-import com.sbh.bpm.service.IAttachmentService;
 import com.sbh.bpm.service.ICityService;
 import com.sbh.bpm.service.IGoogleCloudStorage;
-import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IMasterAdminService;
 import com.sbh.bpm.service.IPdfGeneratorUtil;
 import com.sbh.bpm.service.IProjectAttachmentService;
 import com.sbh.bpm.service.IProvinceService;
 import com.sbh.bpm.service.ISequenceNumberService;
 import com.sbh.bpm.service.IUserService;
+import com.sbh.bpm.service.IZipService;
 import com.sbh.bpm.service.SequenceNumberService;
 import com.sbh.bpm.service.SequenceNumberService.NUMBER_FORMAT;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.BpmPlatform;
@@ -85,9 +83,6 @@ public class FileController extends GcsUtil{
   private ICityService cityService;
 
   @Autowired
-  private IMailerService mailerService;
-
-  @Autowired
   private IPdfGeneratorUtil pdfGeneratorUtil;
 
   @Autowired
@@ -100,10 +95,10 @@ public class FileController extends GcsUtil{
   private IProjectAttachmentService projectAttachmentService;
 
   @Autowired
-  private IAttachmentService attachmentService;
+  private IUserService userService;
 
   @Autowired
-  private IUserService userService;
+  private IZipService zipService;
 
   @Autowired
   private IGoogleCloudStorage cloudStorage;
@@ -215,6 +210,19 @@ public class FileController extends GcsUtil{
     String fileName = definition.getDiagramResourceName();
 
     return Response.ok(fileName).build();
+  }
+
+  @GET
+  @Path(value = "/memory-status")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response GetMemoryStatus(@HeaderParam("Authorization") String authorization) { 
+    MemoryStats stats = new MemoryStats();
+    stats.setHeapSize(Runtime.getRuntime().totalMemory());
+    stats.setHeapMaxSize(Runtime.getRuntime().maxMemory());
+    stats.setHeapFreeSize(Runtime.getRuntime().freeMemory());
+
+    String json = new Gson().toJson(stats);
+    return Response.ok().entity(json).build();
   }
 
   @GET
@@ -873,11 +881,12 @@ public class FileController extends GcsUtil{
   }
 
   @GET
-  @Path(value = "project/attachments/{task_id}/archived_scoring/{master_template_id}")
+  @Path(value = "project/attachments/{task_id}/archived_scoring/{certification_type_id}/{project_type}")
   @Produces(MediaType.APPLICATION_JSON)
   public Response DesignRecognitionAttachmentArchived(@HeaderParam("Authorization") String authorization, 
     @PathParam("task_id") String taskId,
-    @PathParam("master_template_id") Integer masterTemplateId
+    @PathParam("certification_type_id") Integer certificationTypeId,
+    @PathParam("project_type") String projectType
   ) {
     ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
     TaskService taskService = processEngine.getTaskService();
@@ -885,87 +894,73 @@ public class FileController extends GcsUtil{
     Task task;
     try {
       task = taskService.createTaskQuery().taskId(taskId).singleResult();
-    } catch (Exception e) {
+    } catch (Exception e1) {
+      e1.printStackTrace(System.out);
+
       Map<String, String> map = new HashMap<String, String>();
       map.put("message", "task id not found");
       String json = new Gson().toJson(map);
 
       return Response.status(400).entity(json).build();
     }
-    String processInstanceId = task.getProcessInstanceId();
 
-    List<Attachment> attachments = attachmentService.findByProcessInstanceIdAndMasterTemplateId(processInstanceId, masterTemplateId);
-
-    ExecutorService executor = Executors.newCachedThreadPool();
-    List<Callable<Pair<Blob, String>>> listOfCallable = new ArrayList<Callable<Pair<Blob, String>>>();
-
-    for (Attachment attachment : attachments) {
-      listOfCallable.add(() -> new ImmutablePair<>(GetBlob(attachment.getLink()), attachment.getCriteriaCode()));
-    }
-
-    FileOutputStream fos;
-    ZipOutputStream zipOut;
-    String zipfilename = taskId + ".zip";
-    try {
-      fos = new FileOutputStream(zipfilename);
-      zipOut = new ZipOutputStream(fos);
-    } catch (FileNotFoundException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-    }
-    try {
-      List<Future<Pair<Blob, String>>> futures = executor.invokeAll(listOfCallable);
-      List<String> filenames = new ArrayList<String>();
-      futures.stream().forEach(f -> {
-          try {
-            Pair<Blob, String> result = f.get();
-            Blob blob = result.getLeft();
-            String criteriaCode = result.getRight();
-
-            if (blob != null) {
-              String name = FilenameUtils.getName(blob.getName());
-              String filename = criteriaCode + '/' + name;
-              if (ArrayUtils.contains(filenames.toArray(), filename)) {
-                return;
-              }
-              filenames.add(filename);
-              ZipEntry zipEntry = new ZipEntry(filename);
-              zipOut.putNextEntry(zipEntry);
-              byte[] byteArray = blob.getContent();
-              zipOut.write(byteArray);
-            }
-          } catch (Exception e) {
-            throw new IllegalStateException(e);
-          }
-      });
-
-    } catch (InterruptedException e) {// thread was interrupted
-        logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
-
-    } finally {
-        // shut down the executor manually
-        executor.shutdown();
-    }
+    String archivedVar = "finish_archived_" + projectType;
+    taskService.setVariable(task.getId(),archivedVar, "started");
 
     try {
-      zipOut.close();
-      fos.close();
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      return Response.status(400, e.getMessage()).build();
+      zipService.CreateProjectAttachmentArchived(task, certificationTypeId, projectType);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-  
 
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("message", "Archiving on process");
+    String json = new Gson().toJson(map);
+    return Response.ok().entity(json).build();
+  }
+
+  @GET
+  @Path(value = "project/attachments/{task_id}/download_archived_scoring/{certification_type_id}/{project_type}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response DesignRecognitionAttachmentArchivedDownload(@HeaderParam("Authorization") String authorization, 
+    @PathParam("task_id") String taskId,
+    @PathParam("certification_type_id") Integer certificationTypeId,
+    @PathParam("project_type") String projectType
+  ) {
+    ProcessEngine processEngine = BpmPlatform.getDefaultProcessEngine();
+    TaskService taskService = processEngine.getTaskService();
+    
+    Task task;
+    try {
+      task = taskService.createTaskQuery().taskId(taskId).singleResult();
+    } catch (Exception e1) {
+      e1.printStackTrace(System.out);
+
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "task id not found");
+      String json = new Gson().toJson(map);
+
+      return Response.status(400).entity(json).build();
+    }
+    String archivedVar = "finish_archived_" + projectType;
+    String archiveStatus = (String) taskService.getVariable(task.getId(), archivedVar);
+    if (archiveStatus == null || !archiveStatus.equals("finished")) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "Archive process not done yet");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    String zipfilename = task.getProcessInstanceId() + "_" + certificationTypeId + "_" + projectType + ".zip";
     File zipFile = new File(zipfilename);
     StreamingOutput stream = new StreamingOutput() {
       @Override
       public void write(OutputStream output) throws IOException {
-        try {
-            output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-        }
+          try {
+              output.write(IOUtils.toByteArray(new FileInputStream(zipFile)));
+          } catch (Exception e) {
+              logger.error(e.getMessage());
+          }
       }
     };
 
