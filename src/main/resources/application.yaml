@@ -44,4 +44,4 @@ camunda.bpm:
 
 JWT:
   secret: 5dr9LiH^*vh$9o
-  expiryDuration: 36000000
+  expiryDuration: 7200000
