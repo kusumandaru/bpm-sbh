@@ -66,33 +66,43 @@ public class StatelessUserAuthenticationFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
 
-        ProcessEngine engine = BpmPlatform.getDefaultProcessEngine();
+        if ("OPTIONS".equals(req.getMethod())) {
+            chain.doFilter(request, response);
 
-        if (engine == null) {
-            engine = ProcessEngines.getDefaultProcessEngine(false);
-        }
-
-        AuthenticationResult authenticationResult = authenticationProvider.extractAuthenticatedUser(req, engine, jwtValidatorClass, jwtSecret);
-
-        if (authenticationResult.isAuthenticated()) {
-            try {
-                String authenticatedUser = authenticationResult.getAuthenticatedUser();
-
-                List<String> groupIds = authenticationResult.getGroups() == null ? Arrays.asList() : authenticationResult.getGroups();
-                List<String> tenantIds = authenticationResult.getTenants() == null ? Arrays.asList() : authenticationResult.getTenants();
-
-                setAuthenticatedUser(engine, authenticatedUser, groupIds, tenantIds);
-
-                chain.doFilter(request, response);
-
-            } finally {
-                clearAuthentication(engine);
-            }
+            resp.setStatus(HttpServletResponse.SC_OK);
         } else {
-            resp.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-            authenticationProvider.augmentResponseByAuthenticationChallenge(resp, engine);
-        }
+            ProcessEngine engine = BpmPlatform.getDefaultProcessEngine();
 
+            if (engine == null) {
+                engine = ProcessEngines.getDefaultProcessEngine(false);
+            }
+
+            AuthenticationResult authenticationResult = new AuthenticationResult(AUTHENTICATION_PROVIDER_PARAM, false);
+            try {
+                authenticationResult = authenticationProvider.extractAuthenticatedUser(req, engine, jwtValidatorClass, jwtSecret);
+            } catch (Exception e) {
+                // clearAuthentication(engine);
+            }
+
+            if (authenticationResult.isAuthenticated()) {
+                try {
+                    String authenticatedUser = authenticationResult.getAuthenticatedUser();
+
+                    List<String> groupIds = authenticationResult.getGroups() == null ? Arrays.asList() : authenticationResult.getGroups();
+                    List<String> tenantIds = authenticationResult.getTenants() == null ? Arrays.asList() : authenticationResult.getTenants();
+
+                    setAuthenticatedUser(engine, authenticatedUser, groupIds, tenantIds);
+
+                    chain.doFilter(request, response);
+
+                } finally {
+                    clearAuthentication(engine);
+                }
+            } else {
+                resp.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+                authenticationProvider.augmentResponseByAuthenticationChallenge(resp, engine);
+            }
+        } 
     }
 
     @Override

@@ -33,8 +33,10 @@ import com.sbh.bpm.model.ProjectUser;
 import com.sbh.bpm.model.ProjectVerificator;
 import com.sbh.bpm.model.User;
 import com.sbh.bpm.model.UserDetail;
+import com.sbh.bpm.payload.AuthResponse;
 import com.sbh.bpm.payload.RegisterClientRequest;
 import com.sbh.bpm.payload.RegisterRequest;
+import com.sbh.bpm.security.JwtUtil;
 import com.sbh.bpm.service.IMailerService;
 import com.sbh.bpm.service.IPasswordTokenService;
 import com.sbh.bpm.service.IProjectUserService;
@@ -84,6 +86,25 @@ public class UserController extends GcsUtil{
 
   @Autowired
   private IMailerService mailerService;
+
+  @Autowired
+  private JwtUtil jwtUtil;
+
+  @GET
+  @Path(value = "/refresh_token")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response refreshToken(@HeaderParam("Authorization") String authorization) {
+    UserDetail user = userService.GetCompleteUserFromAuthorization(authorization);
+    if (user == null) {
+      Map<String, String> map = new HashMap<String, String>();
+      map.put("message", "login expired, please logout and relogin");
+      String json = new Gson().toJson(map);
+      return Response.status(400).entity(json).build();
+    }
+
+    AuthResponse response = jwtUtil.generateTokenFromId(user.getId());
+    return Response.status(200).entity(response).build();
+  }
 
   @GET
   @Path(value = "/profile")

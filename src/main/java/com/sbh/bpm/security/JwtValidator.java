@@ -1,16 +1,17 @@
 package com.sbh.bpm.security;
 
+import java.util.Date;
+import java.util.List;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
-import java.util.List;
 
 @Service
 public class JwtValidator extends AbstractValidator {
@@ -26,7 +27,7 @@ public class JwtValidator extends AbstractValidator {
                     .build();
             DecodedJWT jwt = verifier.verify(encodedCredentials);
 
-            String username = jwt.getClaim("username").asString();
+            String username = jwt.getClaim("sub").asString();
             List<String> groupIds = jwt.getClaim("groupIds").asList(String.class);
             List<String> tenantIds = jwt.getClaim("tenantIds").asList(String.class);
 

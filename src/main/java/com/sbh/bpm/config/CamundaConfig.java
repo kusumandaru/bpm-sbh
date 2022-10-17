@@ -14,10 +14,10 @@ import org.springframework.core.Ordered;
 @Configuration
 public class CamundaConfig {
 
-    @Value("${JWT.secret}")
+    @Value(value = "${JWT.secret}")
     private String jwtSecret;
 
-    @Value("${JWT.expiryDuration}")
+    @Value(value = "${JWT.expiryDuration}")
     private Integer jwtExpiry;
 
     @Bean
@@ -29,12 +29,12 @@ public class CamundaConfig {
     public FilterRegistrationBean<Filter> statelessUserAuthenticationFilter() {
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<Filter>();
         registration.setName("camunda-jwt-filter");
-        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        registration.setOrder(Ordered.LOWEST_PRECEDENCE);
         registration.addInitParameter("authentication-provider", "com.sbh.bpm.security.JwtAuthenticationProvider");
         registration.addInitParameter("jwt-secret", jwtSecret);
         registration.addInitParameter("jwt-expiry", jwtExpiry.toString());
         registration.addInitParameter("jwt-validator", JwtValidator.class.getName());
-        registration.addUrlPatterns("/rest/*");
+        registration.addUrlPatterns("/engine-rest/*");
         registration.setFilter(new StatelessUserAuthenticationFilter());
         return registration;
     }
