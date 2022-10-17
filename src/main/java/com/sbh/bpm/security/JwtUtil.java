@@ -69,6 +69,37 @@ public class JwtUtil {
         throw new JWTCreationException("Error create jwt token", null);
     }
 
+    public AuthResponse generateTokenFromId(String userId) {
+        User u = userService.findById(userId);
+        if (u == null) {
+            throw new BadRequestException("User not found");
+        }
+        String username = u.getId();
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            
+            List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
+            List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
+            UserDetail user = userService.GetUserDetailFromId(username);
+            String name = user.getFullName();
+            Tenant tnt = user.getTenant();
+            String tenantName = "";
+            if (tnt != null) {
+                tenantName = tnt.getName();
+            }
+            // TODO: create token with groupIds and tenantIds
+            String accessToken =  JWT.create()
+                    .withSubject(user.getUsername())
+                    .withIssuedAt(new Date(System.currentTimeMillis()))
+                    .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
+                    .sign(algorithm);
+            return new AuthResponse(accessToken, "", name, username, tenantName, groupIds);
+        } catch (Exception e) {
+            throw new BadRequestException("Error create jwt token");
+        }
+    }
+
+
     private boolean isAuthenticated(String userName, String password) {
         return identityService.checkPassword(userName, password);
     }
