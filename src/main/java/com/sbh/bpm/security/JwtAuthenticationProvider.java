@@ -1,5 +1,7 @@
 package com.sbh.bpm.security;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -22,7 +24,9 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
             AuthenticationResult validationResult = validator.validateToken(jwt, jwtSecret);
             if (validationResult.isAuthenticated()) {
                 String username = validationResult.getAuthenticatedUser();
-                AuthenticationResult authenticationResult = new AuthenticationResult(username, true, null, null);
+                List<String> groupIds = validationResult.getGroups();
+                List<String> tenantIds = validationResult.getTenants();
+                AuthenticationResult authenticationResult = new AuthenticationResult(username, true, groupIds, tenantIds);
                 return authenticationResult;
             }
 

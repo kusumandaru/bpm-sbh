@@ -1,5 +1,6 @@
 package com.sbh.bpm.security;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ public class JwtUtil {
             throw new BadRequestException("Email or password is invalid");
         }
         String username = u.getId();
+        com.sbh.bpm.model.Group group = userService.GroupFromUser(u);
         if(isAuthenticated(username, password)) {
             try {
                 Algorithm algorithm = Algorithm.HMAC256(secret);
@@ -48,19 +50,19 @@ public class JwtUtil {
                 List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
                 List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
                 UserDetail user = userService.GetUserDetailFromId(username);
+                List<String> tenantIds = Arrays.asList(new String[]{user.getTenantId()});
                 String name = user.getFullName();
                 Tenant tnt = user.getTenant();
-                String tenantName = "";
-                if (tnt != null) {
-                    tenantName = tnt.getName();
-                }
-                // TODO: create token with groupIds and tenantIds
+                String tenantId = tnt.getId();
+
                 String accessToken =  JWT.create()
                         .withSubject(user.getUsername())
+                        .withClaim("groupIds", groupIds)
+                        .withClaim("tenantIds", tenantIds)
                         .withIssuedAt(new Date(System.currentTimeMillis()))
                         .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                         .sign(algorithm);
-                return new AuthResponse(accessToken, "", name, username, tenantName, groupIds);
+                return new AuthResponse(accessToken, "", name, username, tenantId, groupIds);
             } catch (Exception e) {
                 throw new BadRequestException("Error create jwt token");
             }
@@ -81,6 +83,7 @@ public class JwtUtil {
             List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
             List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
             UserDetail user = userService.GetUserDetailFromId(username);
+            List<String> tenantIds = Arrays.asList(new String[]{user.getTenantId()});
             String name = user.getFullName();
             Tenant tnt = user.getTenant();
             String tenantName = "";
@@ -90,6 +93,8 @@ public class JwtUtil {
             // TODO: create token with groupIds and tenantIds
             String accessToken =  JWT.create()
                     .withSubject(user.getUsername())
+                    .withClaim("groupIds", groupIds)
+                    .withClaim("tenantIds", tenantIds)
                     .withIssuedAt(new Date(System.currentTimeMillis()))
                     .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                     .sign(algorithm);
