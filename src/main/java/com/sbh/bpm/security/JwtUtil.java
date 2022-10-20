@@ -3,9 +3,11 @@ package com.sbh.bpm.security;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.sbh.bpm.exception.BadRequestException;
@@ -42,24 +44,29 @@ public class JwtUtil {
             throw new BadRequestException("Email or password is invalid");
         }
         String username = u.getId();
-        com.sbh.bpm.model.Group group = userService.GroupFromUser(u);
         if(isAuthenticated(username, password)) {
             try {
                 Algorithm algorithm = Algorithm.HMAC256(secret);
                 
+                UserDetail user = userService.GetUserDetailFromId(username);
+                
+                String name = user.getFullName();
+                String tenantId = user.getTenantId();
                 List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
                 List<String> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
-                UserDetail user = userService.GetUserDetailFromId(username);
-                List<String> tenantIds = Arrays.asList(new String[]{user.getTenantId()});
-                String name = user.getFullName();
-                Tenant tnt = user.getTenant();
-                String tenantId = tnt.getId();
 
-                String accessToken =  JWT.create()
-                        .withSubject(user.getUsername())
-                        .withClaim("groupIds", groupIds)
-                        .withClaim("tenantIds", tenantIds)
-                        .withIssuedAt(new Date(System.currentTimeMillis()))
+                Builder builder = JWT.create().withSubject(user.getUsername());
+                
+                if (!Objects.isNull(user.getGroupId())) {
+                    builder = builder.withClaim("groupIds", groupIds);
+                }
+
+                if (!Objects.isNull(user.getTenantId())) {
+                    List<String> tenantIds = Arrays.asList(new String[]{user.getTenantId()});
+                    builder = builder.withClaim("tenantIds", tenantIds);
+                }
+
+                String accessToken =  builder.withIssuedAt(new Date(System.currentTimeMillis()))
                         .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                         .sign(algorithm);
                 return new AuthResponse(accessToken, "", name, username, tenantId, groupIds);
