@@ -66,6 +66,12 @@ public class StatelessUserAuthenticationFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
 
+        String path = req.getRequestURI();
+        if ("/engine-rest/user/reset_password".equals(path)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         if ("OPTIONS".equals(req.getMethod())) {
             chain.doFilter(request, response);
 
