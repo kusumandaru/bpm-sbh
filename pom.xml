@@ -170,7 +170,7 @@
     <dependency>
         <groupId>com.sendgrid</groupId>
         <artifactId>sendgrid-java</artifactId>
-        <version>4.7.3</version>
+        <version>4.10.1</version>
     </dependency>
 
     <dependency>
@@ -187,7 +187,7 @@
     <dependency>
         <groupId>com.itextpdf</groupId>
         <artifactId>kernel</artifactId>
-        <version>7.1.12</version>
+        <version>8.0.0</version>
     </dependency>
 
     <dependency>
