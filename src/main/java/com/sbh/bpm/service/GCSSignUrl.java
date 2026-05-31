@@ -6,11 +6,22 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.io.FileInputStream;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.*;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
+import org.springframework.core.io.ClassPathResource;
+
 
 @Service
 public class GCSSignUrl implements IGCSSignUrl {
@@ -27,6 +38,9 @@ public class GCSSignUrl implements IGCSSignUrl {
 
   @Value("${gcs.bucket}")
   String gcsBucket;
+
+  @Value("${gcs.json-file}")
+  String gcsJsonFile;
 
   private static String clientAccount;
   private static String privateKey;
@@ -62,27 +76,56 @@ public class GCSSignUrl implements IGCSSignUrl {
     return url + objectPath();
   }
 
-
+  @Override
   public String GetSignedUrl() {
-    init_static();;
+      init_static();
+      try {
+          ClassPathResource jsonResource = new ClassPathResource(gcsJsonFile);
+          Credentials credentials = GoogleCredentials.fromStream(jsonResource.getInputStream());
+          // URL jsonurl = Resources.getResource(gcsJsonFile);
+          // Credentials credentials = GoogleCredentials.fromStream(new FileInputStream(jsonurl.getPath()));          
+          Storage storage = StorageOptions.newBuilder()
+              .setCredentials(credentials)
+              .build()
+              .getService();
 
-    setExpiryTimeInEpoch();
-    String stringToSign = getSignInput();
-    String signedString = "";
-    PrivateKey pk;
+          BlobInfo blobInfo = BlobInfo.newBuilder(
+              BlobId.of(bucketName, blobName)
+          ).build();
 
-    try {
-      pk = getPrivateKey();
-      signedString = getSignedString(stringToSign, pk);
-      // URL encode the signed string so that we can add this URL
-      signedString = URLEncoder.encode(signedString, "UTF-8");
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-    }
-    
-    String signedUrl = getSignedUrl(signedString);
-    return signedUrl;
+          URL url = storage.signUrl(
+              blobInfo,
+              10, TimeUnit.MINUTES,
+              Storage.SignUrlOption.withV4Signature()
+          );
+
+          return url.toString();
+      } catch (Exception e) {
+          throw new RuntimeException("Failed to generate GCS signed URL", e);
+      }
   }
+
+
+  // public String GetSignedUrl() {
+  //   init_static();;
+
+  //   setExpiryTimeInEpoch();
+  //   String stringToSign = getSignInput();
+  //   String signedString = "";
+  //   PrivateKey pk;
+
+  //   try {
+  //     pk = getPrivateKey();
+  //     signedString = getSignedString(stringToSign, pk);
+  //     // URL encode the signed string so that we can add this URL
+  //     signedString = URLEncoder.encode(signedString, "UTF-8");
+  //   } catch (Exception e) {
+  //     logger.error(e.getMessage());
+  //   }
+    
+  //   String signedUrl = getSignedUrl(signedString);
+  //   return signedUrl;
+  // }
 
   // Set an expiry date for the signed url. Sets it at one minute ahead of
   // current time.

@@ -9,7 +9,7 @@ edit `application-dev.yaml` with your config
 mvn clean
 
 migrate database:
-mvn clean flyway:migrate -DskipTests -Dflyway.configFiles=flyway.properties
+mvn flyway:migrate -DskipTests -Dflyway.configFiles=flyway.properties
 
 run:
 mvn spring-boot:run  

@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.core.io.ClassPathResource;
+
+
 
 @Service
 public class GoogleCloudStorage implements IGoogleCloudStorage {
@@ -65,7 +68,9 @@ public class GoogleCloudStorage implements IGoogleCloudStorage {
   // Use path and project name
   private void initGoogleCloudStorage(String pathToConfig, String projectId) throws FileNotFoundException, IOException {
     if (storage == null) {
-      Credentials credentials = GoogleCredentials.fromStream(new FileInputStream(pathToConfig));
+      ClassPathResource jsonResource = new ClassPathResource(gcsJsonFile);
+      Credentials credentials = GoogleCredentials.fromStream(jsonResource.getInputStream());
+      // Credentials credentials = GoogleCredentials.fromStream(new FileInputStream(pathToConfig));
       storage = StorageOptions.newBuilder().setCredentials(credentials).setProjectId(projectId).build().getService();
     }
   }
